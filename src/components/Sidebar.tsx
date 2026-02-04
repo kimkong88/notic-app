@@ -1287,6 +1287,8 @@ interface FoldersTabListProps {
     toggleFolderExpanded: (folderId: string, inSidebar: boolean) => void;
     openInPipNoteIds: string[];
     addNoteToPip: (noteId: string, setActive?: boolean) => void;
+    /** Open PiP with this note (add to tabs, set active, open or refresh window). Used by context menu "Open". */
+    openNoteInPip: (noteId: string) => void;
     pipIsOpen: boolean;
     setIsTrashView: (v: boolean) => void;
     currentWorkspaceId: string | null;
