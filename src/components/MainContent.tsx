@@ -1070,6 +1070,8 @@ export function MainContent() {
                       const workspaceId = currentWorkspaceId ?? undefined
                       const newId = addNote({ workspaceId })
                       setSelectedNoteId(newId)
+                      const newNote = useNotesStore.getState().notes[newId]
+                      if (newNote) openNoteInPip(newNote)
                     }}
                   >
                     Create your first note
