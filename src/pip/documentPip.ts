@@ -168,24 +168,46 @@ export function refreshPipWindowUrl(noteIds: string[], activeId: string | null):
   setPipIframeUrl(win.document, dark, noteIds, activeId)
 }
 
+/** Minimal note fields sent to PiP so it can populate its store when opening a note from main app (avoids empty/Untitled overwrite). */
+export type PipNotePayload = {
+  content?: string
+  title?: string
+  displayName?: string
+  color?: string
+  workspaceId?: string
+}
+
 /**
  * Send notesUpdate to PiP window so the iframe updates in place (no reload, no flicker).
  * Step 1 single-source-of-truth: include noteTitles (and noteColors) from main store so PiP tab bar uses main as source of truth.
+ * When opening a note from sidebar/main, pass notePayloads so PiP store has content/title before editor runs (prevents empty save overwriting main).
  */
 export function sendNotesUpdateToPip(
   noteIds: string[],
   activeId: string | null,
-  options?: { noteTitles?: Record<string, string>; noteColors?: Record<string, string> }
+  options?: {
+    noteTitles?: Record<string, string>
+    noteColors?: Record<string, string>
+    notePayloads?: Record<string, PipNotePayload>
+  }
 ): void {
   const win = getPipWindow()
   if (!win || win.closed) return
-  const payload: { type: 'notesUpdate'; noteIds: string[]; activeId: string | null; noteTitles?: Record<string, string>; noteColors?: Record<string, string> } = {
+  const payload: {
+    type: 'notesUpdate'
+    noteIds: string[]
+    activeId: string | null
+    noteTitles?: Record<string, string>
+    noteColors?: Record<string, string>
+    notePayloads?: Record<string, PipNotePayload>
+  } = {
     type: 'notesUpdate',
     noteIds,
     activeId,
   }
   if (options?.noteTitles != null) payload.noteTitles = options.noteTitles
   if (options?.noteColors != null) payload.noteColors = options.noteColors
+  if (options?.notePayloads != null) payload.notePayloads = options.notePayloads
   win.postMessage(payload, '*')
 }
 

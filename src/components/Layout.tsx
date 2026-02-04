@@ -133,12 +133,14 @@ export function Layout() {
       const notes = useNotesStore.getState().notes
       const noteTitles: Record<string, string> = {}
       const noteColors: Record<string, string> = {}
+      const notePayloads: Record<string, { content?: string; title?: string; displayName?: string; color?: string; workspaceId?: string }> = {}
       ui.openInPipNoteIds.forEach((id) => {
         const n = notes[id]
         noteTitles[id] = n?.displayName ?? n?.title ?? 'Untitled'
         if (n?.color) noteColors[id] = n.color
+        notePayloads[id] = { content: n?.content ?? '', title: n?.title ?? 'Untitled', displayName: n?.displayName, color: n?.color, workspaceId: n?.workspaceId }
       })
-      sendNotesUpdateToPip(ui.openInPipNoteIds, ui.openInPipActiveNoteId, { noteTitles, noteColors })
+      sendNotesUpdateToPip(ui.openInPipNoteIds, ui.openInPipActiveNoteId, { noteTitles, noteColors, notePayloads })
     })
     return unsubNotes
   }, [])
@@ -187,12 +189,14 @@ export function Layout() {
         const notes = useNotesStore.getState().notes
         const noteTitles: Record<string, string> = {}
         const noteColors: Record<string, string> = {}
+        const notePayloads: Record<string, { content?: string; title?: string; displayName?: string; color?: string; workspaceId?: string }> = {}
         after.openInPipNoteIds.forEach((id) => {
           const n = notes[id]
           noteTitles[id] = n?.displayName ?? n?.title ?? 'Untitled'
           if (n?.color) noteColors[id] = n.color
+          notePayloads[id] = { content: n?.content ?? '', title: n?.title ?? 'Untitled', displayName: n?.displayName, color: n?.color, workspaceId: n?.workspaceId }
         })
-        sendNotesUpdateToPip(after.openInPipNoteIds, after.openInPipActiveNoteId, { noteTitles, noteColors })
+        sendNotesUpdateToPip(after.openInPipNoteIds, after.openInPipActiveNoteId, { noteTitles, noteColors, notePayloads })
       } else if (t === 'notic-pip-close-tab' && event.data.noteId) {
         const noteId = event.data.noteId as string
         const isEmpty = event.data.isEmpty === true
@@ -207,24 +211,28 @@ export function Layout() {
         const notesAfterClose = useNotesStore.getState().notes
         const noteTitlesClose: Record<string, string> = {}
         const noteColorsClose: Record<string, string> = {}
+        const notePayloadsClose: Record<string, { content?: string; title?: string; displayName?: string; color?: string; workspaceId?: string }> = {}
         after.openInPipNoteIds.forEach((id) => {
           const n = notesAfterClose[id]
           noteTitlesClose[id] = n?.displayName ?? n?.title ?? 'Untitled'
           if (n?.color) noteColorsClose[id] = n.color
+          notePayloadsClose[id] = { content: n?.content ?? '', title: n?.title ?? 'Untitled', displayName: n?.displayName, color: n?.color, workspaceId: n?.workspaceId }
         })
-        sendNotesUpdateToPip(after.openInPipNoteIds, after.openInPipActiveNoteId, { noteTitles: noteTitlesClose, noteColors: noteColorsClose })
+        sendNotesUpdateToPip(after.openInPipNoteIds, after.openInPipActiveNoteId, { noteTitles: noteTitlesClose, noteColors: noteColorsClose, notePayloads: notePayloadsClose })
       } else if (t === 'notic-pip-switch-tab' && event.data.noteId) {
         ui.setPipActiveNote(event.data.noteId)
         const after = useUIStore.getState()
         const notesAfterSwitch = useNotesStore.getState().notes
         const noteTitlesSwitch: Record<string, string> = {}
         const noteColorsSwitch: Record<string, string> = {}
+        const notePayloadsSwitch: Record<string, { content?: string; title?: string; displayName?: string; color?: string; workspaceId?: string }> = {}
         after.openInPipNoteIds.forEach((id) => {
           const n = notesAfterSwitch[id]
           noteTitlesSwitch[id] = n?.displayName ?? n?.title ?? 'Untitled'
           if (n?.color) noteColorsSwitch[id] = n.color
+          notePayloadsSwitch[id] = { content: n?.content ?? '', title: n?.title ?? 'Untitled', displayName: n?.displayName, color: n?.color, workspaceId: n?.workspaceId }
         })
-        sendNotesUpdateToPip(after.openInPipNoteIds, after.openInPipActiveNoteId, { noteTitles: noteTitlesSwitch, noteColors: noteColorsSwitch })
+        sendNotesUpdateToPip(after.openInPipNoteIds, after.openInPipActiveNoteId, { noteTitles: noteTitlesSwitch, noteColors: noteColorsSwitch, notePayloads: notePayloadsSwitch })
       }
     }
     window.addEventListener('message', handler)

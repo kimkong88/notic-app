@@ -22,6 +22,7 @@ import { getSyncChangeLog } from '../sync-change-log'
 import type { SyncLogEntry } from '../sync-change-log'
 import { useSubscriptionStore } from '../store/useSubscriptionStore'
 import { publishNote, unpublishNote } from '../api/backend'
+import { FREE_PIP_TAB_LIMIT } from '../constants'
 
 const FREE_NOTE_LIMIT = 10
 const SHARE_PUBLIC_BASE =
@@ -336,7 +337,7 @@ import {
   isDocumentPipSupported,
   openPipWithNote,
   getPipWindow,
-  refreshPipWindowUrl,
+  sendNotesUpdateToPip,
   requestPipFlushSave,
 } from '../pip/documentPip'
 import { NoteEditor } from './NoteEditor'
@@ -493,16 +494,42 @@ export function MainContent() {
       setPipUnsupportedModalOpen(true)
       return
     }
-    addNoteToPip(note.sessionId, true)
-    setOpenInPipActiveNoteId(note.sessionId)
+    const noteId = note.sessionId
+    const ui = useUIStore.getState()
+    const ids = ui.openInPipNoteIds
+    const isSubscribed = useSubscriptionStore.getState().isSubscribed
+    const atLimit =
+      isSubscribed !== true &&
+      ids.length >= FREE_PIP_TAB_LIMIT &&
+      !ids.includes(noteId)
+    if (atLimit) {
+      // Replace oldest tab so the new note opens and the previous newest remains
+      const newIds = [...ids.slice(1), noteId]
+      ui.setOpenInPipNoteIds(newIds)
+      ui.setOpenInPipActiveNoteId(noteId)
+      ui.setToastMessage(
+        `Replaced oldest tab (${FREE_PIP_TAB_LIMIT} tabs on free plan). Upgrade to open more.`
+      )
+    } else {
+      addNoteToPip(noteId, true)
+      setOpenInPipActiveNoteId(noteId)
+    }
 
     if (pipWindow && !pipWindow.closed) {
-      const ui = useUIStore.getState()
-      refreshPipWindowUrl(ui.openInPipNoteIds, ui.openInPipActiveNoteId)
+      const state = useUIStore.getState()
+      const notes = useNotesStore.getState().notes
+      const noteTitles: Record<string, string> = {}
+      const noteColors: Record<string, string> = {}
+      state.openInPipNoteIds.forEach((id) => {
+        const n = notes[id]
+        noteTitles[id] = n?.displayName ?? n?.title ?? 'Untitled'
+        if (n?.color) noteColors[id] = n.color
+      })
+      sendNotesUpdateToPip(state.openInPipNoteIds, state.openInPipActiveNoteId, { noteTitles, noteColors })
       return
     }
 
-    const ui = useUIStore.getState()
+    const state = useUIStore.getState()
     void openPipWithNote(null, {
       isDarkMode,
       onClose: () => {
@@ -516,8 +543,8 @@ export function MainContent() {
         useUIStore.getState().setOpenInPipNoteIds([])
         useUIStore.getState().setOpenInPipActiveNoteId(null)
       },
-      noteIds: ui.openInPipNoteIds,
-      activeId: ui.openInPipActiveNoteId,
+      noteIds: state.openInPipNoteIds,
+      activeId: state.openInPipActiveNoteId,
       onError: () => setPipUnsupportedModalOpen(true),
     })
   }
@@ -527,7 +554,23 @@ export function MainContent() {
     const win = getPipWindow()
     if (win && !win.closed) {
       const ui = useUIStore.getState()
-      refreshPipWindowUrl(ui.openInPipNoteIds, ui.openInPipActiveNoteId)
+      const notes = useNotesStore.getState().notes
+      const noteTitles: Record<string, string> = {}
+      const noteColors: Record<string, string> = {}
+      const notePayloads: Record<string, { content?: string; title?: string; displayName?: string; color?: string; workspaceId?: string }> = {}
+      ui.openInPipNoteIds.forEach((id) => {
+        const n = notes[id]
+        noteTitles[id] = n?.displayName ?? n?.title ?? 'Untitled'
+        if (n?.color) noteColors[id] = n.color
+        notePayloads[id] = {
+          content: n?.content ?? '',
+          title: n?.title ?? 'Untitled',
+          displayName: n?.displayName,
+          color: n?.color,
+          workspaceId: n?.workspaceId,
+        }
+      })
+      sendNotesUpdateToPip(ui.openInPipNoteIds, ui.openInPipActiveNoteId, { noteTitles, noteColors, notePayloads })
     }
   }
 

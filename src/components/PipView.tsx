@@ -3,9 +3,9 @@ import { useNotesStore, useUIStore, useWorkspaceStore, useSubscriptionStore } fr
 import { NoteEditor } from './NoteEditor'
 import { Plus, X, Pin } from 'lucide-react'
 import { NOTE_CHAR_WARNING, NOTE_CHAR_LIMIT } from '../utils/noteUtils'
+import { FREE_PIP_TAB_LIMIT } from '../constants'
 
 const SAVE_DEBOUNCE_MS = 700
-const FREE_PIP_TAB_LIMIT = 2
 const PIP_COLOR_OPTIONS: Array<{ label: string; value: string }> = [
   { label: 'Color: Default', value: '' },
   { label: 'Color: Blue', value: '#3b82f6' },
@@ -126,6 +126,14 @@ export function PipView() {
     const handler = (e: MessageEvent) => {
       const d = e.data
       if (d && d.type === 'notesUpdate' && Array.isArray(d.noteIds)) {
+        // Apply note payloads first so PiP store has content/title before render (prevents empty save overwriting main when opening from sidebar)
+        if (d.notePayloads != null && typeof d.notePayloads === 'object') {
+          const updateNoteStore = useNotesStore.getState().updateNote
+          d.noteIds.forEach((id: string) => {
+            const payload = d.notePayloads[id]
+            if (payload && typeof payload === 'object') updateNoteStore(id, payload)
+          })
+        }
         setNoteIds(d.noteIds)
         setActiveTabId(d.activeId ?? d.noteIds[0] ?? null)
         if (d.noteTitles != null && typeof d.noteTitles === 'object') setNoteTitlesFromMain(d.noteTitles)
