@@ -4,7 +4,7 @@ import { NoteEditor } from './NoteEditor'
 import { Plus, X, Pin } from 'lucide-react'
 import { NOTE_CHAR_WARNING, NOTE_CHAR_LIMIT } from '../utils/noteUtils'
 
-const SAVE_DEBOUNCE_MS = 400
+const SAVE_DEBOUNCE_MS = 700
 const FREE_PIP_TAB_LIMIT = 2
 const PIP_COLOR_OPTIONS: Array<{ label: string; value: string }> = [
   { label: 'Color: Default', value: '' },
@@ -158,18 +158,35 @@ export function PipView() {
     setOpenInPipActiveNoteId(newId)
   }, [addNote, currentWorkspaceId, noteIds, setOpenInPipNoteIds, setOpenInPipActiveNoteId])
 
+  /** Match extension: flush current tab to store before switching so content isn't lost (extension showActiveTab saves previous editor first). */
   const handleSwitchTab = useCallback((noteId: string) => {
+    if (effectiveActiveId != null && effectiveActiveId !== noteId) {
+      if (contentTimeoutRef.current) {
+        clearTimeout(contentTimeoutRef.current)
+        contentTimeoutRef.current = null
+      }
+      pipEditorFlushRef.current?.()
+    }
     setActiveTabId(noteId)
     setOpenInPipActiveNoteId(noteId)
     if (window.parent !== window) {
       window.parent.postMessage({ type: 'notic-pip-switch-tab', noteId }, '*')
     }
-  }, [setOpenInPipActiveNoteId])
+  }, [effectiveActiveId, setOpenInPipActiveNoteId])
 
+  /** Flush active tab before closing so its content is saved (match extension closeNotesOrdered). */
   const handleCloseTab = useCallback(
     (e: React.MouseEvent, noteId: string) => {
       e.stopPropagation()
-      const isEmpty = (notes[noteId]?.content?.trim() ?? '') === ''
+      if (effectiveActiveId === noteId) {
+        if (contentTimeoutRef.current) {
+          clearTimeout(contentTimeoutRef.current)
+          contentTimeoutRef.current = null
+        }
+        pipEditorFlushRef.current?.()
+      }
+      const noteAfterFlush = useNotesStore.getState().notes[noteId]
+      const isEmpty = (noteAfterFlush?.content?.trim() ?? '') === ''
       const next = noteIds.filter((id) => id !== noteId)
       const nextActive = effectiveActiveId === noteId ? (next[0] ?? null) : effectiveActiveId
       setOpenInPipNoteIds(next)
@@ -179,18 +196,25 @@ export function PipView() {
         window.parent.postMessage({ type: 'notic-pip-close-tab', noteId, isEmpty }, '*')
       }
     },
-    [noteIds, effectiveActiveId, notes, setOpenInPipNoteIds, setOpenInPipActiveNoteId]
+    [noteIds, effectiveActiveId, setOpenInPipNoteIds, setOpenInPipActiveNoteId]
   )
 
+  /** Update store immediately so PiP tab title reflects content; debounce only postMessage to parent. */
   const handleContentChange = useCallback(
     (noteId: string) => (newContent: string) => {
+      updateNote(noteId, { content: newContent })
       if (contentTimeoutRef.current) clearTimeout(contentTimeoutRef.current)
       contentTimeoutRef.current = setTimeout(() => {
         contentTimeoutRef.current = null
-        applyNoteUpdate(noteId, { content: newContent })
+        if (window.parent !== window) {
+          const latest = useNotesStore.getState().notes[noteId]?.content
+          if (latest !== undefined) {
+            window.parent.postMessage({ type: 'notic-pip-note-update', noteId, patch: { content: latest } }, '*')
+          }
+        }
       }, SAVE_DEBOUNCE_MS)
     },
-    [applyNoteUpdate]
+    [updateNote]
   )
 
   /** Flush current tab to store immediately (tab switch / beforeunload). */
@@ -224,6 +248,13 @@ export function PipView() {
       setContextMenu(null)
       const idx = noteIds.indexOf(noteId)
       const next = noteIds.slice(0, idx + 1)
+      if (effectiveActiveId && !next.includes(effectiveActiveId)) {
+        if (contentTimeoutRef.current) {
+          clearTimeout(contentTimeoutRef.current)
+          contentTimeoutRef.current = null
+        }
+        pipEditorFlushRef.current?.()
+      }
       setNoteIds(next)
       if (effectiveActiveId && !next.includes(effectiveActiveId)) {
         setActiveTabId(next[0] ?? null)
@@ -236,6 +267,11 @@ export function PipView() {
 
   const handleCloseAll = useCallback(() => {
     setContextMenu(null)
+    if (contentTimeoutRef.current) {
+      clearTimeout(contentTimeoutRef.current)
+      contentTimeoutRef.current = null
+    }
+    pipEditorFlushRef.current?.()
     setNoteIds([])
     setActiveTabId(null)
     setOpenInPipNoteIds([])

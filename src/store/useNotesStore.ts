@@ -77,7 +77,26 @@ export const useNotesStore = create<NotesState & NotesActions>((set, get) => ({
   updateNote: (sessionId, patch) =>
     set((state) => {
       const existing = state.notes[sessionId]
-      if (!existing) return state
+      const now = Date.now()
+      if (!existing) {
+        // PiP (and others) may have noteIds but no note in this store yet – upsert so local state is kept
+        const content = patch.content ?? ''
+        const trimmed = content.trim()
+        const newNote: NoteData = {
+          sessionId,
+          content: content.length > NOTE_CHAR_LIMIT ? content.slice(0, NOTE_CHAR_LIMIT) : content,
+          title: patch.content !== undefined ? extractTitle(patch.content, 'Untitled') : (patch.title ?? 'Untitled'),
+          lastModified: now,
+          createdAt: now,
+          wordCount: trimmed ? trimmed.split(/\s+/).length : 0,
+          folderId: patch.folderId,
+          workspaceId: patch.workspaceId ?? 'workspace_1',
+          hasEverHadContent: trimmed.length > 0,
+        }
+        if (patch.displayName !== undefined) newNote.displayName = patch.displayName
+        if (patch.color !== undefined) newNote.color = patch.color
+        return { notes: { ...state.notes, [sessionId]: newNote } }
+      }
       const updated = { ...existing, ...patch }
       if (patch.content !== undefined) {
         let content = patch.content
@@ -87,6 +106,7 @@ export const useNotesStore = create<NotesState & NotesActions>((set, get) => ({
         updated.wordCount = trimmed ? trimmed.split(/\s+/).length : 0
         updated.lastModified = Date.now()
         updated.title = extractTitle(content, existing.title)
+        if (trimmed) updated.hasEverHadContent = true
       }
       if (patch.title !== undefined) updated.lastModified = Date.now()
       return { notes: { ...state.notes, [sessionId]: updated } }

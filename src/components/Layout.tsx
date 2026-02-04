@@ -127,10 +127,12 @@ export function Layout() {
     const handler = (event: MessageEvent) => {
       const t = event.data?.type
       if (!t) return
-      // PiP note content/displayName/color updates: only accept from our PiP window so sidebar reflects autosave
+      // PiP note update: same as extension saveContent – accept so sidebar and PiP tabs stay in sync
       if (t === 'notic-pip-note-update') {
-        const pipWin = getPipWindow()
-        if (pipWin && event.source === pipWin && event.data?.noteId != null && event.data?.patch != null) {
+        const fromPip =
+          event.origin === window.location.origin ||
+          (getPipWindow() != null && event.source === getPipWindow())
+        if (fromPip && event.data?.noteId != null && event.data?.patch != null) {
           useNotesStore.getState().updateNote(event.data.noteId, event.data.patch)
         }
         return
