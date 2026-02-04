@@ -672,7 +672,7 @@ export interface TriggerFullSyncOptions {
 export async function triggerFullSync(db: NoticDB, options?: TriggerFullSyncOptions): Promise<void> {
   // Prevent concurrent full syncs (return existing promise if one is in progress)
   if (fullSyncInProgress) {
-    console.log('[triggerFullSync] Already in progress, waiting for it to complete')
+    if (import.meta.env.DEV) console.log('[triggerFullSync] Already in progress, waiting for it to complete')
     return fullSyncInProgress
   }
 
@@ -696,26 +696,30 @@ export async function triggerFullSync(db: NoticDB, options?: TriggerFullSyncOpti
     const lastPullAt = await getLastPullAt(db)
     const server = await withRetry(() => pullFromServer(db, lastPullAt > 0 ? lastPullAt : undefined))
     const local = buildLocalPayload()
-    console.log('[triggerFullSync] server:', { 
-      notes: server.notes.length, 
-      notesWithDeletedAt: server.notes.filter(n => n.deletedAt).length,
-      folders: server.folders.length, 
-      workspaces: server.workspaces.length, 
-      deletedNoteIds: server.deletedNoteIds?.length ?? 0 
-    })
-    console.log('[triggerFullSync] local:', { 
-      notes: local.notes.length, 
-      notesWithDeletedAt: local.notes.filter(n => n.deletedAt).length,
-      folders: local.folders.length, 
-      workspaces: local.workspaces.length 
-    })
+    if (import.meta.env.DEV) {
+      console.log('[triggerFullSync] server:', { 
+        notes: server.notes.length, 
+        notesWithDeletedAt: server.notes.filter(n => n.deletedAt).length,
+        folders: server.folders.length, 
+        workspaces: server.workspaces.length,
+        deletedNoteIds: server.deletedNoteIds?.length ?? 0 
+      })
+      console.log('[triggerFullSync] local:', { 
+        notes: local.notes.length, 
+        notesWithDeletedAt: local.notes.filter(n => n.deletedAt).length,
+        folders: local.folders.length, 
+        workspaces: local.workspaces.length 
+      })
+    }
     const merged = computeMergedState(local, server)
-    console.log('[triggerFullSync] merged:', { 
-      notes: merged.notes.length, 
-      notesWithDeletedAt: merged.notes.filter(n => n.deletedAt).length,
-      folders: merged.folders.length, 
-      workspaces: merged.workspaces.length 
-    })
+    if (import.meta.env.DEV) {
+      console.log('[triggerFullSync] merged:', { 
+        notes: merged.notes.length, 
+        notesWithDeletedAt: merged.notes.filter(n => n.deletedAt).length,
+        folders: merged.folders.length, 
+        workspaces: merged.workspaces.length 
+      })
+    }
     const overwriteEntries = computeServerOverwriteLogEntries(local, server)
 
     const skipPush = options?.ignorePaused && (await getSyncPaused(db))
@@ -778,7 +782,7 @@ export function triggerSyncAfterUserAction(db: NoticDB): void {
     if (p === 'local') return
     if (debouncedDeltaSync) clearTimeout(debouncedDeltaSync)
     debouncedDeltaSync = setTimeout(() => {
-      console.log('[sync] User action sync triggered')
+      if (import.meta.env.DEV) console.log('[sync] User action sync triggered')
       void triggerSync(db)
       debouncedDeltaSync = null
     }, DELTA_SYNC_DEBOUNCE_MS)
@@ -786,7 +790,7 @@ export function triggerSyncAfterUserAction(db: NoticDB): void {
 }
 
 export async function triggerSync(db: NoticDB): Promise<void> {
-  console.log('[triggerSync] Delta sync starting')
+  if (import.meta.env.DEV) console.log('[triggerSync] Delta sync starting')
   if (await getSyncPaused(db)) return
 
   const tokens = await getStoredTokens(db)
