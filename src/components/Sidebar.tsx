@@ -973,7 +973,10 @@ function RecentTabList({
                                         const newId = duplicateNote(
                                             noteContextMenuAnchor.noteId
                                         );
-                                        if (newId) setSelectedNoteId(newId);
+                                        if (newId) {
+                                            setSelectedNoteId(newId);
+                                            triggerSyncAfterUserAction(db);
+                                        }
                                         setNoteContextMenuAnchor(null);
                                     }}
                                 >
@@ -1913,6 +1916,7 @@ function FoldersTabList({
         const trimmed = value.trim();
         if (trimmed && trimmed !== originalName) {
             updateFolder(folderId, { name: trimmed, displayName: undefined });
+            triggerSyncAfterUserAction(db);
         }
         setFolderRenameState(null);
     };
@@ -2717,8 +2721,10 @@ function FoldersTabList({
                                         workspaceId: wsId,
                                         folderId: folder.id,
                                     });
+                                    triggerSyncAfterUserAction(db);
                                     setSelectedFolderId(folder.id);
                                     setSelectedNoteId(newId);
+                                    triggerSyncAfterUserAction(db);
                                     trackEvent("note_created");
                                     setFolderContextMenuAnchor(null);
                                 }}
@@ -2745,6 +2751,7 @@ function FoldersTabList({
                                             parentId: folder.id,
                                             workspaceId: wsId,
                                         });
+                                        triggerSyncAfterUserAction(db);
                                         trackEvent("folder_created");
                                         setExpandedSidebarFolderIds([
                                             ...expandedSidebarFolderIds,
@@ -2976,7 +2983,10 @@ function FoldersTabList({
                                     const newId = duplicateNote(
                                         noteContextMenuAnchor.noteId
                                     );
-                                    if (newId) setSelectedNoteId(newId);
+                                    if (newId) {
+                                        setSelectedNoteId(newId);
+                                        triggerSyncAfterUserAction(db);
+                                    }
                                     setNoteContextMenuAnchor(null);
                                 }}
                             >
@@ -3245,10 +3255,11 @@ function FoldersTabList({
                             <button
                                 type="button"
                                 className="modal-btn pip-modal-btn-danger"
-                                onClick={() => {
-                                    removeFolder(folderDeleteConfirm.folderId);
-                                    setFolderDeleteConfirm(null);
-                                }}
+                            onClick={() => {
+                                removeFolder(folderDeleteConfirm.folderId);
+                                setFolderDeleteConfirm(null);
+                                triggerSyncAfterUserAction(db);
+                            }}
                             >
                                 Delete
                             </button>
@@ -4064,6 +4075,7 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
         const effectiveWorkspaceId = currentWorkspaceId ?? "workspace_1";
         const newId = addNote({ workspaceId: effectiveWorkspaceId });
         setSelectedNoteId(newId);
+        triggerSyncAfterUserAction(db);
         if (currentTab === "recent") {
             setSelectedSidebarContext(formatDateKey(Date.now()));
         }
@@ -4095,6 +4107,7 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
             workspaceId: effectiveWorkspaceId,
         });
         setSelectedSidebarContext(newId);
+        triggerSyncAfterUserAction(db);
         setExpandedSidebarFolderIds([
             ...expandedSidebarFolderIds,
             ROOT_SENTINEL,
@@ -4447,6 +4460,7 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
         deleteNotesAndFoldersByWorkspace(id);
         deleteWorkspace(id);
         setWorkspaceDeleteConfirm(null);
+        triggerSyncAfterUserAction(db);
         closeWorkspaceDropdown();
     }, [
         workspaceDeleteConfirm,

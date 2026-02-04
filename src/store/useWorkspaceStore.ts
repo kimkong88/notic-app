@@ -49,6 +49,12 @@ export const useWorkspaceStore = create<WorkspaceState & WorkspaceActions>((set,
         [workspaceId]: { ...ws, ...patch },
       },
     });
+    // Trigger sync after updating workspace metadata
+    void import('../db').then(({ db }) => 
+      import('../sync').then(({ triggerSyncAfterUserAction }) => 
+        triggerSyncAfterUserAction(db)
+      )
+    )
   },
   renameWorkspace: (workspaceId, newName) => {
     const ws = get().workspaces[workspaceId];
@@ -61,6 +67,12 @@ export const useWorkspaceStore = create<WorkspaceState & WorkspaceActions>((set,
         [workspaceId]: { ...ws, name: nameToSave, lastModified: Date.now() },
       },
     });
+    // Trigger sync after renaming workspace
+    void import('../db').then(({ db }) => 
+      import('../sync').then(({ triggerSyncAfterUserAction }) => 
+        triggerSyncAfterUserAction(db)
+      )
+    )
   },
   addWorkspace: () => {
     const list = Object.values(get().workspaces);
@@ -76,6 +88,12 @@ export const useWorkspaceStore = create<WorkspaceState & WorkspaceActions>((set,
     set((state) => ({
       workspaces: { ...state.workspaces, [id]: newWs },
     }));
+    // Trigger sync after creating workspace
+    void import('../db').then(({ db }) => 
+      import('../sync').then(({ triggerSyncAfterUserAction }) => 
+        triggerSyncAfterUserAction(db)
+      )
+    )
     return newWs;
   },
   deleteWorkspace: (workspaceId) => {
@@ -89,5 +107,11 @@ export const useWorkspaceStore = create<WorkspaceState & WorkspaceActions>((set,
         ? Object.values(next).find((w) => w.isDefault)?.id ?? Object.keys(next)[0] ?? DEFAULT_WORKSPACE_ID
         : current;
     set({ workspaces: next, currentWorkspaceId: newCurrent });
+    // Trigger sync after deleting workspace
+    void import('../db').then(({ db }) => 
+      import('../sync').then(({ triggerSyncAfterUserAction }) => 
+        triggerSyncAfterUserAction(db)
+      )
+    )
   },
 }));

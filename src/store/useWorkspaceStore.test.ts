@@ -122,15 +122,15 @@ describe('getWorkspacesInDisplayOrder', () => {
     expect(ordered[1].id).toBe('w2')
   })
 
-  it('sorts non-default by lastModified desc', () => {
+  it('sorts non-default by lastModified asc (oldest first)', () => {
     const workspaces = {
       w1: { id: 'w1', name: 'A', isDefault: true, lastModified: 100 },
       w2: { id: 'w2', name: 'B', isDefault: false, lastModified: 200 },
       w3: { id: 'w3', name: 'C', isDefault: false, lastModified: 150 },
     }
     const ordered = getWorkspacesInDisplayOrder(workspaces)
-    expect(ordered[0].id).toBe('w1')
-    expect(ordered[1].id).toBe('w2')
-    expect(ordered[2].id).toBe('w3')
+    expect(ordered[0].id).toBe('w1') // default first
+    expect(ordered[1].id).toBe('w3') // lastModified: 150 (older)
+    expect(ordered[2].id).toBe('w2') // lastModified: 200 (newer)
   })
 })

@@ -69,6 +69,10 @@ function createMockDb(): MockDbRecord & {
         rec.prefsPuts.push(...rows)
       },
     },
+    transaction: async (_mode: string, _tables: unknown[], fn: () => Promise<void>) => {
+      // Execute the transaction function immediately in tests
+      await fn()
+    },
     get prefsPuts() {
       return rec.prefsPuts
     },

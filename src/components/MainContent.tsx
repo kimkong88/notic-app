@@ -18,7 +18,7 @@ const FOLDER_DROP_TYPE = 'application/x-notic-folder-id'
 import { BOOKMARKS_SENTINEL, ROOT_SENTINEL } from '../store/types'
 import { useAuthStore } from '../store/useAuthStore'
 import { db } from '../db'
-import { getSyncStatus, subscribeSyncStatus, getLastPullAt, getSyncPaused, setSyncPaused } from '../sync'
+import { getSyncStatus, subscribeSyncStatus, getLastPullAt, getSyncPaused, setSyncPaused, triggerSyncAfterUserAction } from '../sync'
 import { getSyncChangeLog } from '../sync-change-log'
 import type { SyncLogEntry } from '../sync-change-log'
 import { useSubscriptionStore } from '../store/useSubscriptionStore'
@@ -780,6 +780,7 @@ export function MainContent() {
       saveNoteContentDebounceRef.current = setTimeout(() => {
         saveNoteContentDebounceRef.current = null
         updateNote(selectedNoteId, { content })
+        triggerSyncAfterUserAction(db)
       }, SAVE_DEBOUNCE_MS)
     },
     [selectedNoteId, updateNote]
@@ -791,7 +792,10 @@ export function MainContent() {
         clearTimeout(saveNoteContentDebounceRef.current)
         saveNoteContentDebounceRef.current = null
       }
-      if (selectedNoteId) updateNote(selectedNoteId, { content })
+      if (selectedNoteId) {
+        updateNote(selectedNoteId, { content })
+        triggerSyncAfterUserAction(db)
+      }
     },
     [selectedNoteId, updateNote]
   )

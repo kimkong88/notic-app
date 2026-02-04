@@ -74,7 +74,7 @@ export const useNotesStore = create<NotesState & NotesActions>((set, get) => ({
   expandedMainFolderIds: [],
 
   setNotes: (notes) => set({ notes: { ...notes } }),
-  updateNote: (sessionId, patch) =>
+  updateNote: (sessionId, patch) => {
     set((state) => {
       const existing = state.notes[sessionId]
       const now = Date.now()
@@ -120,9 +120,16 @@ export const useNotesStore = create<NotesState & NotesActions>((set, get) => ({
       if (patch.color !== undefined && patch.color !== existing.color) shouldBumpLastModified = true
       if (patch.displayName !== undefined && patch.displayName !== existing.displayName) shouldBumpLastModified = true
       if (patch.isBookmarked !== undefined && patch.isBookmarked !== existing.isBookmarked) shouldBumpLastModified = true
-      if (shouldBumpLastModified) updated.lastModified = Date.now()
-      return { notes: { ...state.notes, [sessionId]: updated } }
-    }),
+        if (shouldBumpLastModified) updated.lastModified = Date.now()
+        return { notes: { ...state.notes, [sessionId]: updated } }
+      })
+    // Trigger sync after user modifies note (debounced in triggerSyncAfterUserAction)
+    void import('../db').then(({ db }) => 
+      import('../sync').then(({ triggerSyncAfterUserAction }) => 
+        triggerSyncAfterUserAction(db)
+      )
+    )
+  },
   addNote: (options) => {
     const sessionId = crypto.randomUUID()
     const now = Date.now()
@@ -156,6 +163,12 @@ export const useNotesStore = create<NotesState & NotesActions>((set, get) => ({
       createdAt: now,
     }
     set((state) => ({ notes: { ...state.notes, [newId]: clone } }))
+    // Trigger sync after duplicating note
+    void import('../db').then(({ db }) => 
+      import('../sync').then(({ triggerSyncAfterUserAction }) => 
+        triggerSyncAfterUserAction(db)
+      )
+    )
     return newId
   },
   setFolders: (folders) => set({ folders: { ...folders } }),
@@ -171,17 +184,30 @@ export const useNotesStore = create<NotesState & NotesActions>((set, get) => ({
       workspaceId: wsId,
     }
     set((state) => ({ folders: { ...state.folders, [id]: folder } }))
+    // Trigger sync after creating folder
+    void import('../db').then(({ db }) => 
+      import('../sync').then(({ triggerSyncAfterUserAction }) => 
+        triggerSyncAfterUserAction(db)
+      )
+    )
     return id
   },
-  updateFolder: (folderId, patch) =>
+  updateFolder: (folderId, patch) => {
     set((state) => {
       const folder = state.folders[folderId]
       if (!folder) return state
       const updated = { ...folder, ...patch }
       if (patch.name !== undefined) updated.displayName = undefined
       return { folders: { ...state.folders, [folderId]: updated } }
-    }),
-  removeFolder: (folderId) =>
+    })
+    // Trigger sync after updating folder
+    void import('../db').then(({ db }) => 
+      import('../sync').then(({ triggerSyncAfterUserAction }) => 
+        triggerSyncAfterUserAction(db)
+      )
+    )
+  },
+  removeFolder: (folderId) => {
     set((state) => {
       const folder = state.folders[folderId]
       if (!folder) return state
@@ -213,7 +239,14 @@ export const useNotesStore = create<NotesState & NotesActions>((set, get) => ({
         selectedFolderIds,
         selectedNoteId,
       }
-    }),
+    })
+    // Trigger sync after deleting folder
+    void import('../db').then(({ db }) => 
+      import('../sync').then(({ triggerSyncAfterUserAction }) => 
+        triggerSyncAfterUserAction(db)
+      )
+    )
+  },
   setCurrentTab: (tab) => set({ currentTab: tab }),
   setSelectedNoteId: (id) => set({ selectedNoteId: id }),
   setSelectedSidebarContext: (context) => set({ selectedSidebarContext: context }),
@@ -294,6 +327,12 @@ export const useNotesStore = create<NotesState & NotesActions>((set, get) => ({
       delete updated.deletedAt;
       return { notes: { ...state.notes, [sessionId]: updated } };
     });
+    // Trigger sync after restoring note
+    void import('../db').then(({ db }) => 
+      import('../sync').then(({ triggerSyncAfterUserAction }) => 
+        triggerSyncAfterUserAction(db)
+      )
+    )
   },
   removeNote: (sessionId) => {
     set((state) => {
@@ -308,5 +347,11 @@ export const useNotesStore = create<NotesState & NotesActions>((set, get) => ({
         selectedNoteIds,
       };
     });
+    // Trigger sync after permanently deleting note
+    void import('../db').then(({ db }) => 
+      import('../sync').then(({ triggerSyncAfterUserAction }) => 
+        triggerSyncAfterUserAction(db)
+      )
+    )
   },
 }));
