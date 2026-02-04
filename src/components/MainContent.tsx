@@ -1,4 +1,5 @@
 import { useMemo, useCallback, useEffect, useRef, useState, Fragment } from 'react'
+import { createPortal } from 'react-dom'
 import { useUIStore, useWorkspaceStore, useNotesStore } from '../store'
 import { Search, ExternalLink, FileText, Pencil, Check, Share2, MoreHorizontal, Folder as FolderIcon, HardDrive, ChevronDown, WifiOff, Cloud, AlertCircle, Loader2, Copy, Pause, FilePlus, PanelTop, CloudSync } from 'lucide-react'
 import { SettingsView } from './SettingsView'
@@ -412,6 +413,7 @@ export function MainContent() {
   const setCurrentTab = useNotesStore((s) => s.setCurrentTab)
   const setSelectedSidebarContext = useNotesStore((s) => s.setSelectedSidebarContext)
   const updateNote = useNotesStore((s) => s.updateNote)
+  const duplicateNote = useNotesStore((s) => s.duplicateNote)
   const updateFolder = useNotesStore((s) => s.updateFolder)
   /** Derive tab-specific context from unified selectedSidebarContext (date key on Recent, folder id on Folders). */
   const selectedFolderDate = currentTab === 'recent' ? selectedSidebarContext : null
@@ -428,7 +430,9 @@ export function MainContent() {
   const setSettingsSubView = useUIStore((s) => s.setSettingsSubView)
   const detailEditNoteId = useUIStore((s) => s.detailEditNoteId)
   const setDetailEditNoteId = useUIStore((s) => s.setDetailEditNoteId)
+  const noteContextMenuAnchor = useUIStore((s) => s.noteContextMenuAnchor)
   const setNoteContextMenuAnchor = useUIStore((s) => s.setNoteContextMenuAnchor)
+  const setMoveToFolderModal = useUIStore((s) => s.setMoveToFolderModal)
   const shareModalNoteId = useUIStore((s) => s.shareModalNoteId)
   const setShareModalNoteId = useUIStore((s) => s.setShareModalNoteId)
   const authUser = useAuthStore((s) => s.user)
@@ -485,6 +489,34 @@ export function MainContent() {
       if (el) clearSearchHighlightInElement(el)
     }
   }, [searchQuery, selectedNoteId, detailEditNoteId])
+
+  // Close detail-view note context menu on outside click or Escape
+  const isDetailNoteMenuOpen =
+    noteContextMenuAnchor != null &&
+    selectedNoteId != null &&
+    noteContextMenuAnchor.noteId === selectedNoteId
+  useEffect(() => {
+    if (!isDetailNoteMenuOpen) return
+    const close = (e: MouseEvent | KeyboardEvent) => {
+      if (e instanceof KeyboardEvent) {
+        if (e.key !== 'Escape') return
+      } else {
+        const target = e.target as Node
+        if (
+          document.querySelector('[data-context-menu-trigger]')?.contains(target) ||
+          document.querySelector('.pip-context-menu.show')?.contains(target)
+        )
+          return
+      }
+      setNoteContextMenuAnchor(null)
+    }
+    document.addEventListener('mousedown', close, true)
+    document.addEventListener('keydown', close, true)
+    return () => {
+      document.removeEventListener('mousedown', close, true)
+      document.removeEventListener('keydown', close, true)
+    }
+  }, [isDetailNoteMenuOpen, setNoteContextMenuAnchor])
 
   const pipWindow = getPipWindow()
   const pipIsOpen = pipWindow != null && !pipWindow.closed
@@ -1900,6 +1932,135 @@ export function MainContent() {
           </div>
         )}
       </main>
+
+      {/* Note context menu when opened from detail view "…" – same items as sidebar with PiP blocking */}
+      {isDetailNoteMenuOpen &&
+        (() => {
+          const menuNote = notes[noteContextMenuAnchor!.noteId]
+          if (!menuNote) return null
+          const isNoteActiveInPipDetail =
+            openInPipActiveNoteId === selectedNoteId && pipIsOpen
+          const isBookmarked = menuNote.isBookmarked === true
+          return createPortal(
+            <div
+              className="pip-context-menu show"
+              data-context-menu-trigger
+              style={{
+                left: noteContextMenuAnchor!.x,
+                top: noteContextMenuAnchor!.y,
+              }}
+              onClick={(e) => e.stopPropagation()}
+              ref={(el) => {
+                if (!el) return
+                const rect = el.getBoundingClientRect()
+                if (rect.right > window.innerWidth)
+                  el.style.left = `${window.innerWidth - rect.width - 10}px`
+                if (rect.bottom > window.innerHeight)
+                  el.style.top = `${window.innerHeight - rect.height - 10}px`
+              }}
+            >
+              <button
+                type="button"
+                className={`pip-context-menu-item${isNoteActiveInPipDetail ? ' pip-context-menu-item-disabled' : ''}`}
+                disabled={isNoteActiveInPipDetail}
+                title={isNoteActiveInPipDetail ? 'Note is already open in editor' : undefined}
+                onClick={() => {
+                  if (isNoteActiveInPipDetail) return
+                  setSelectedNoteId(noteContextMenuAnchor!.noteId)
+                  addNoteToPip(noteContextMenuAnchor!.noteId, true)
+                  setNoteContextMenuAnchor(null)
+                }}
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                className={`pip-context-menu-item${isNoteActiveInPipDetail ? ' pip-context-menu-item-disabled' : ''}`}
+                disabled={isNoteActiveInPipDetail}
+                title={isNoteActiveInPipDetail ? 'Note is already open in editor' : undefined}
+                onClick={() => {
+                  if (isNoteActiveInPipDetail) return
+                  openNoteInPip(menuNote)
+                  setNoteContextMenuAnchor(null)
+                }}
+              >
+                Open
+              </button>
+              <button
+                type="button"
+                className="pip-context-menu-item"
+                onClick={() => {
+                  updateNote(noteContextMenuAnchor!.noteId, { isBookmarked: !isBookmarked })
+                  setNoteContextMenuAnchor(null)
+                }}
+              >
+                {isBookmarked ? 'Remove from Bookmarks' : 'Add to Bookmarks'}
+              </button>
+              <button
+                type="button"
+                className="pip-context-menu-item"
+                onClick={() => {
+                  const newId = duplicateNote(noteContextMenuAnchor!.noteId)
+                  if (newId) setSelectedNoteId(newId)
+                  setNoteContextMenuAnchor(null)
+                }}
+              >
+                Copy
+              </button>
+              <button
+                type="button"
+                className={`pip-context-menu-item${isNoteActiveInPipDetail ? ' pip-context-menu-item-disabled' : ''}`}
+                disabled={isNoteActiveInPipDetail}
+                title={isNoteActiveInPipDetail ? 'Cannot move note open in editor' : undefined}
+                onClick={() => {
+                  if (isNoteActiveInPipDetail) return
+                  setMoveToFolderModal({
+                    sessionIdOrNull: noteContextMenuAnchor!.noteId,
+                    noteIds: [noteContextMenuAnchor!.noteId],
+                  })
+                  setNoteContextMenuAnchor(null)
+                }}
+              >
+                Move to folder
+              </button>
+              <button
+                type="button"
+                className={`pip-context-menu-item${isNoteActiveInPipDetail ? ' pip-context-menu-item-disabled' : ''}`}
+                disabled={isNoteActiveInPipDetail}
+                title={isNoteActiveInPipDetail ? 'Cannot rename note open in editor' : undefined}
+                onClick={() => {
+                  if (isNoteActiveInPipDetail) return
+                  const value = window.prompt(
+                    'Rename note',
+                    menuNote.displayName ?? menuNote.title ?? 'Untitled'
+                  )
+                  if (value != null && value.trim())
+                    updateNote(noteContextMenuAnchor!.noteId, { displayName: value.trim() })
+                  setNoteContextMenuAnchor(null)
+                }}
+              >
+                Rename
+              </button>
+              <button
+                type="button"
+                className={`pip-context-menu-item danger${isNoteActiveInPipDetail ? ' pip-context-menu-item-disabled' : ''}`}
+                disabled={isNoteActiveInPipDetail}
+                title={isNoteActiveInPipDetail ? 'Cannot delete note open in editor' : undefined}
+                onClick={() => {
+                  if (isNoteActiveInPipDetail) return
+                  const ok = window.confirm(
+                    `Delete "${menuNote.displayName ?? menuNote.title ?? 'Untitled'}"? This cannot be undone.`
+                  )
+                  if (ok) removeNote(noteContextMenuAnchor!.noteId)
+                  setNoteContextMenuAnchor(null)
+                }}
+              >
+                Delete
+              </button>
+            </div>,
+            document.body
+          )
+        })()}
     </>
   )
 }

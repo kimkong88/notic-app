@@ -878,8 +878,9 @@ function RecentTabList({
                 </div>
             )}
 
-            {/* Note context menu – same design as PiP; from sidebar or detail More; portal so visible when Folders tab active */}
+            {/* Note context menu – same design as PiP; from sidebar or detail More; portal so visible when Folders tab active. Skip when menu is for selected note (opened from detail "…") so MainContent can show its menu with correct PiP blocking. */}
             {noteContextMenuAnchor &&
+                noteContextMenuAnchor.noteId !== selectedNoteId &&
                 createPortal(
                     (() => {
                         const menuNote = notes.find(
@@ -2915,8 +2916,9 @@ function FoldersTabList({
                     );
                 })()}
 
-            {/* Note context menu (Folders tab) – portal so it shows when right-clicking a note in folder view */}
+            {/* Note context menu (Folders tab) – portal so it shows when right-clicking a note in folder view. Skip when menu is for selected note (opened from detail "…") so MainContent can show its menu with correct PiP blocking. */}
             {noteContextMenuAnchor &&
+                noteContextMenuAnchor.noteId !== selectedNoteId &&
                 (() => {
                     const menuNote = notes[noteContextMenuAnchor.noteId];
                     if (!menuNote) return null;
