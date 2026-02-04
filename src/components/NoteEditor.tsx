@@ -137,7 +137,9 @@ function ReadOnlyPlugin() {
 function FlushOnUnmountPlugin({ onFlush }: { onFlush?: (content: string) => void }) {
   const [editor] = useLexicalComposerContext()
   const onFlushRef = useRef(onFlush)
-  onFlushRef.current = onFlush
+  useEffect(() => {
+    onFlushRef.current = onFlush
+  }, [onFlush])
   useEffect(() => {
     const flush = () => {
       const cb = onFlushRef.current
@@ -158,7 +160,9 @@ function FlushOnUnmountPlugin({ onFlush }: { onFlush?: (content: string) => void
 function FlushOnBlurPlugin({ onFlush }: { onFlush?: (content: string) => void }) {
   const [editor] = useLexicalComposerContext()
   const onFlushRef = useRef(onFlush)
-  onFlushRef.current = onFlush
+  useEffect(() => {
+    onFlushRef.current = onFlush
+  }, [onFlush])
   useEffect(() => {
     let blurCleanup: (() => void) | null = null
     const unregister = editor.registerRootListener((rootElement, prevRootElement) => {
@@ -197,7 +201,9 @@ function RegisterFlushRefPlugin({
 }) {
   const [editor] = useLexicalComposerContext()
   const onFlushRef = useRef(onFlush)
-  onFlushRef.current = onFlush
+  useEffect(() => {
+    onFlushRef.current = onFlush
+  }, [onFlush])
   useEffect(() => {
     const ref = registerFlushRef
     if (!ref) return

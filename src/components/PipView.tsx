@@ -49,7 +49,7 @@ function parsePipParams(): { noteIds: string[]; activeId: string | null; dark: b
  * Matches notic: empty state "No notes open" + "Add Note"; with notes shows tab bar + active editor.
  */
 export function PipView() {
-  const initial = useMemo(parsePipParams, [])
+  const initial = useMemo(() => parsePipParams(), [])
   const [noteIds, setNoteIds] = useState<string[]>(initial.noteIds)
   const [activeTabId, setActiveTabId] = useState<string | null>(
     initial.activeId || initial.noteIds[0] || null
