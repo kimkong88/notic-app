@@ -40,8 +40,10 @@ export default defineConfig({
         theme_color: '#0f172a',
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,webmanifest}'],
-        // Ensure manifest and favicon are precached (build output)
+        // Exclude webmanifest from glob to avoid duplicate precache entry: we add manifest
+        // via additionalManifestEntries with revision: null. Glob would add the same URL
+        // with __WB_REVISION__, causing "add-to-cache-list-conflicting-entries".
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         additionalManifestEntries: [
           { url: '/manifest.webmanifest', revision: null },
           { url: '/logo.svg', revision: null },
