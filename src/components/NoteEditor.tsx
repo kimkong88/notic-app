@@ -242,6 +242,7 @@ export function NoteEditor({
   editorKey = 'default',
   showToolbar = false,
   readOnly = false,
+  registerFlushRef,
 }: NoteEditorProps) {
   const initialConfig = useMemo(
     () => ({

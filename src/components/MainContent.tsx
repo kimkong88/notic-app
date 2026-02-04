@@ -63,7 +63,8 @@ function SyncStatusButton({ setCurrentView: _setCurrentView }: { setCurrentView:
   const [syncPaused, setSyncPausedState] = useState(false)
   const [syncLogOpen, setSyncLogOpen] = useState(false)
   const [syncLogEntries, setSyncLogEntries] = useState<SyncLogEntry[]>([])
-  const [syncLimitModalOpen, setSyncLimitModalOpen] = useState(false)
+  const syncLimitModalOpen = useUIStore((s) => s.syncLimitModalOpen)
+  const setSyncLimitModalOpen = useUIStore((s) => s.setSyncLimitModalOpen)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const authUser = useAuthStore((s) => s.user)
   const notes = useNotesStore((s) => s.notes)
@@ -98,6 +99,15 @@ function SyncStatusButton({ setCurrentView: _setCurrentView }: { setCurrentView:
       cancelled = true
     }
   }, [dropdownOpen, syncStatus])
+
+  useEffect(() => {
+    if (!authUser) return
+    let cancelled = false
+    getSyncPaused(db).then((paused) => {
+      if (!cancelled) setSyncPausedState(paused)
+    })
+    return () => { cancelled = true }
+  }, [authUser])
 
   useEffect(() => {
     if (!dropdownOpen) return
@@ -279,7 +289,7 @@ function SyncStatusButton({ setCurrentView: _setCurrentView }: { setCurrentView:
         </div>
       )}
 
-      {/* Sync limit reached (free user over limit trying to resume) */}
+      {/* Sync limit reached (free user over limit – from sidebar quota warning or Resume sync) */}
       {syncLimitModalOpen && (
         <div
           className="modal-overlay"
@@ -298,11 +308,20 @@ function SyncStatusButton({ setCurrentView: _setCurrentView }: { setCurrentView:
             <div className="modal-actions">
               <button
                 type="button"
+                className="modal-btn modal-btn-secondary"
+                onClick={() => setSyncLimitModalOpen(false)}
+              >
+                Close
+              </button>
+              <a
+                href={`${SHARE_PUBLIC_BASE}/billing`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="modal-btn modal-btn-primary"
                 onClick={() => setSyncLimitModalOpen(false)}
               >
-                OK
-              </button>
+                Upgrade
+              </a>
             </div>
           </div>
         </div>

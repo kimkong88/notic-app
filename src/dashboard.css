@@ -1233,6 +1233,59 @@ body.dark-mode .sidebar-content::-webkit-scrollbar-thumb:hover {
   min-height: 0;
 }
 
+.quota-warning-slot:not(.quota-warning-visible) {
+  display: none;
+}
+
+.quota-warning {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--accent-light);
+  border: 1px solid var(--border-primary);
+}
+
+.quota-warning-text {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.quota-warning-text strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.quota-warning-info {
+  flex-shrink: 0;
+  padding: 6px;
+  min-width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+}
+
+.quota-warning-info:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.quota-warning-info svg {
+  width: 16px;
+  height: 16px;
+}
+
 .settings-btn-icon-only {
   flex: none;
   width: 36px;

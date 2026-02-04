@@ -42,6 +42,7 @@ import {
     ChevronDown as ChevronDownIcon,
     FileText,
     Bookmark,
+    Info,
 } from "lucide-react";
 import {
     getFolderDepth,
@@ -1318,6 +1319,7 @@ function FoldersTabList({
         (s) => s.setMoveToWorkspaceModal
     );
     const setShareModalNoteId = useUIStore((s) => s.setShareModalNoteId);
+    const setSyncLimitModalOpen = useUIStore((s) => s.setSyncLimitModalOpen);
     const workspaces = useWorkspaceStore((s) => s.workspaces);
     const [noteDeleteConfirm, setNoteDeleteConfirm] = useState<
         | { kind: "single"; noteId: string; displayName: string }
@@ -3634,6 +3636,7 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
     const setIsTrashView = useUIStore((s) => s.setIsTrashView);
     const currentView = useUIStore((s) => s.currentView);
     const setCurrentView = useUIStore((s) => s.setCurrentView);
+    const setSyncLimitModalOpen = useUIStore((s) => s.setSyncLimitModalOpen);
     const authUser = useAuthStore((s) => s.user);
     const setAuthUser = useAuthStore((s) => s.setUser);
     const authSignOut = useAuthStore((s) => s.signOut);
@@ -3694,6 +3697,7 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                     const partition = await getStoragePartition(db);
                     await loadPartitionIntoStores(db, partition);
                     await useSubscriptionStore.getState().refresh(db);
+                    await setSyncPaused(db, false);
                     startPeriodicPullCheck(db);
                     try {
                         await triggerFullSync(db, { ignorePaused: true });
@@ -3743,11 +3747,11 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
         if (authUser) void useSubscriptionStore.getState().refresh(db);
     }, [authUser]);
 
-    /** Free user over 10 notes: switch to Local mode (pause sync). Match notic extension updateQuotaWarning. */
+    /** Free user over 10 notes: switch to Local mode (pause sync). Only when we know they're free (isSubscribed === false), not when still loading (null). Match notic extension updateQuotaWarning. */
     useEffect(() => {
-        const subscribed = isSubscribed === true;
+        if (isSubscribed !== false) return;
         const totalNoteCount = Object.keys(notes).length;
-        if (!subscribed && totalNoteCount > FREE_NOTE_LIMIT) {
+        if (totalNoteCount > FREE_NOTE_LIMIT) {
             void setSyncPaused(db, true);
         }
     }, [isSubscribed, notes]);
@@ -4933,12 +4937,29 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                         </>
                     )}
 
-                    {/* Quota warning slot (empty for shell) */}
+                    {/* Quota warning: free user over note limit (matches notic extension updateQuotaWarning) */}
                     <div
-                        className="quota-warning-slot"
+                        className={`quota-warning-slot ${isSubscribed === false && Object.keys(notes).length > FREE_NOTE_LIMIT ? "quota-warning-visible" : ""}`}
                         id="quotaWarningSlot"
                         aria-live="polite"
-                    />
+                    >
+                        {isSubscribed === false && Object.keys(notes).length > FREE_NOTE_LIMIT && (
+                            <div className="quota-warning" role="status">
+                                <p className="quota-warning-text">
+                                    Sync limit reached: Notic is in Private Local Mode. Upgrade to Pro to sync all {Object.keys(notes).length} notes.
+                                </p>
+                                <button
+                                    type="button"
+                                    className="quota-warning-info"
+                                    title="More info"
+                                    aria-label="More info about free plan limit"
+                                    onClick={() => setSyncLimitModalOpen(true)}
+                                >
+                                    <Info size={16} aria-hidden />
+                                </button>
+                            </div>
+                        )}
+                    </div>
 
                     {/* Empty area context menu: entire sidebar when right-click not on note/folder (Recent = New Note only; Folders = New Note + New Folder – matches notic extension) */}
                     {emptyContextMenu &&
@@ -4978,20 +4999,15 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                             document.body
                         )}
 
-                    {/* Notes list: empty-area context menu when right-click on empty space only (matches notic: exclude note, folder header, date folder, folder container) */}
+                    {/* Notes list: empty-area context menu when right-click on empty space only; Root header also triggers it (create under root). Exclude: note, non-Root folder header, date folder. */}
                     <div
                         className="sidebar-content"
                         id="sidebarContent"
                         onContextMenu={(e) => {
                             const target = e.target as HTMLElement;
-                            if (
-                                target.closest(".sidebar-note-item") ||
-                                target.closest(".sidebar-folder-header") ||
-                                target.closest(".sidebar-date-folder") ||
-                                target.closest(".sidebar-folder-container") ||
-                                target.closest("[data-context-menu-trigger]")
-                            )
-                                return;
+                            if (target.closest(".sidebar-note-item") || target.closest(".sidebar-date-folder") || target.closest("[data-context-menu-trigger]")) return;
+                            const folderHeader = target.closest(".sidebar-folder-header");
+                            if (folderHeader && folderHeader.getAttribute("data-folder-id") !== ROOT_SENTINEL) return;
                             e.preventDefault();
                             setEmptyContextMenu({ x: e.clientX, y: e.clientY });
                         }}

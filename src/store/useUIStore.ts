@@ -43,6 +43,8 @@ interface UIState {
   toastMessage: string | null;
   /** When true, show "Data updated on another device. Refresh to get the latest." banner (matches extension serverNewerBanner). */
   serverNewerBannerVisible: boolean;
+  /** When true, show "Sync limit reached" modal (free user over note limit). Openable from sidebar quota warning or sync status Resume. */
+  syncLimitModalOpen: boolean;
 }
 
 interface UIActions {
@@ -80,6 +82,7 @@ interface UIActions {
   ) => void;
   setToastMessage: (message: string | null) => void;
   setServerNewerBannerVisible: (value: boolean) => void;
+  setSyncLimitModalOpen: (value: boolean) => void;
 }
 
 const SIDEBAR_WIDTH_DEFAULT = 280;
@@ -146,6 +149,7 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
   setMoveToWorkspaceModal: (value) => set({ moveToWorkspaceModal: value }),
   setToastMessage: (message) => set({ toastMessage: message }),
   setServerNewerBannerVisible: (value) => set({ serverNewerBannerVisible: value }),
+  setSyncLimitModalOpen: (value) => set({ syncLimitModalOpen: value }),
 }));
 
 export { SIDEBAR_WIDTH_MIN, SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_DEFAULT };

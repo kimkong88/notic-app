@@ -44,7 +44,7 @@ export default defineConfig({
         // Ensure manifest and favicon are precached (build output)
         additionalManifestEntries: [
           { url: '/manifest.webmanifest', revision: null },
-          { url: '/vite.svg', revision: null },
+          { url: '/logo.svg', revision: null },
         ],
         // Serve index.html for any navigation when offline (SPA offline-first)
         navigateFallback: '/index.html',

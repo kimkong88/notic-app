@@ -1,0 +1,28 @@
+# llms.txt - Information for AI/LLM crawlers
+# Learn more: https://llmstxt.org/
+
+# Site Information
+Name: Notic
+Description: Notic - The note that floats over every tab. Local-first sticky notes in your browser. Markdown, folders, sync across devices. Minimal scratchpad that stays on top.
+URL: https://app.getnotic.io
+
+# Contact
+Contact: hello@getnotic.io
+
+# Product Information
+Product: Notic - Chrome Extension / Web App
+Category: Browser Extension, Notes, Productivity Tool
+Platform: Chrome Browser, Web
+Features: 
+  - Floating notes over every tab
+  - Markdown, folders, images
+  - Sync across devices (optional)
+  - Export to .md
+  - Notion & Obsidian integrations
+  - Publish & share
+
+# Allowed Crawlers
+Crawlers: GPTBot, ChatGPT-User, ClaudeBot, PerplexityBot, Google-Extended, CCBot
+
+# Sitemap
+Sitemap: https://app.getnotic.io/sitemap.xml
