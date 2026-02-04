@@ -1,0 +1,179 @@
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+/* Notic design tokens – match dashboard.css (notic extension) */
+:root {
+  /* Background - Zinc palette */
+  --bg-primary: #ffffff;
+  --bg-secondary: #fafafa;
+  --bg-tertiary: #e4e4e7;
+  --bg-hover: #e4e4e7;
+  --bg-card: #ffffff;
+
+  /* Text - Zinc palette */
+  --text-primary: #18181b;
+  --text-secondary: #3f3f46;
+  --text-muted: #71717b;
+  --text-disabled: #9f9fa9;
+
+  /* Border - Zinc palette */
+  --border-primary: #e4e4e7;
+  --border-secondary: #d4d4d8;
+
+  /* Accent - Tailwind indigo */
+  --accent-primary: #4f46e5;
+  --accent-primary-hover: #4338ca;
+  --accent-indicator: #4f46e5;
+  --accent-light: rgba(79, 70, 229, 0.12);
+
+  /* Buttons */
+  --btn-primary-bg: #111827;
+  --btn-primary-hover: #1f2937;
+  --text-inverse: #ffffff;
+
+  /* Shadows */
+  --shadow-sm: rgba(0, 0, 0, 0.08);
+  --shadow-md: rgba(0, 0, 0, 0.1);
+  --shadow-lg: rgba(0, 0, 0, 0.15);
+  --shadow-xl: rgba(0, 0, 0, 0.2);
+  --shadow-accent: rgba(79, 70, 229, 0.1);
+  --shadow-inset-light: rgba(0, 0, 0, 0.06);
+  --shadow-inset-dark: rgba(0, 0, 0, 0.2);
+  /* Settings (match notic dashboard) */
+  --settings-preview-light-bg: var(--bg-secondary);
+  --settings-preview-dark-bg: #27272a;
+  --settings-toggle-knob-bg: #ffffff;
+  --settings-toggle-knob-shadow: rgba(0, 0, 0, 0.2);
+
+  /* Overlay */
+  --overlay-bg: rgba(0, 0, 0, 0.5);
+
+  /* Danger (dashboard + PiP modals/context – match notic pip.css) */
+  --danger: #dc2626;
+  --danger-hover: #fee2e2;
+  --danger-btn-hover: #b91c1c;
+  --btn-danger-bg: #dc2626;
+  --btn-danger-hover: #b91c1c;
+  --text-danger: #dc2626;
+  --bg-danger-subtle: rgba(220, 38, 38, 0.1);
+
+  /* Search highlight */
+  --search-highlight-bg: #fef08a;
+  --search-highlight-text: var(--text-primary);
+
+  /* Toast */
+  --toast-shadow: rgba(0, 0, 0, 0.15);
+
+  /* Note theme (for settings preview swatches; full set in body.pip-page) */
+  --note-theme-sepia-bg: #f4ecd8;
+  --note-theme-sepia-text: #1c1917;
+  --note-theme-dark-bg: #27272a;
+  --note-theme-dark-text: #e4e4e7;
+  --note-theme-hc-light-bg: #ffffff;
+  --note-theme-hc-light-text: #0a0a0a;
+  --note-theme-hc-dark-bg: #0a0a0a;
+  --note-theme-hc-dark-text: #ffffff;
+}
+
+body.dark-mode {
+  /* Background - Zinc dark */
+  --bg-primary: #18181b;
+  --bg-secondary: #27272a;
+  --bg-tertiary: #3f3f46;
+  --bg-hover: #3f3f46;
+  --bg-card: #27272a;
+
+  /* Text - Zinc dark */
+  --text-primary: #fafafa;
+  --text-secondary: #e4e4e7;
+  --text-muted: #a1a1aa;
+  --text-disabled: #71717b;
+
+  /* Border - Zinc dark */
+  --border-primary: #3f3f46;
+  --border-secondary: #52525b;
+
+  /* Accent - lighter indigo on dark */
+  --accent-primary: #818cf8;
+  --accent-primary-hover: #a5b4fc;
+  --accent-indicator: #818cf8;
+  --accent-light: rgba(129, 140, 248, 0.2);
+  --shadow-accent: rgba(129, 140, 248, 0.2);
+
+  /* Primary button: white pattern on dark */
+  --btn-primary-bg: #ffffff;
+  --btn-primary-hover: #e4e4e7;
+  --btn-primary-text: #18181b;
+  --text-inverse: #ffffff;
+
+  /* Shadows */
+  --shadow-sm: rgba(0, 0, 0, 0.2);
+  --shadow-md: rgba(0, 0, 0, 0.2);
+  --shadow-lg: rgba(0, 0, 0, 0.2);
+  --shadow-xl: rgba(0, 0, 0, 0.2);
+
+  /* Search highlight dark */
+  --search-highlight-bg: #854d0e;
+  --search-highlight-text: #fef08a;
+
+  /* Danger – slightly softer on dark (match notic pip.css body.dark-mode) */
+  --danger: #ef4444;
+  --danger-hover: rgba(239, 68, 68, 0.2);
+  --settings-preview-dark-bg: #3f3f46;
+}
+
+/* PiP route: use same CSS variable set as notic pip.css (zinc-100 tertiary/hover in light, zinc-800 hover in dark) */
+body.pip-page {
+  --bg-tertiary: #f4f4f5; /* zinc-100 – pip uses lighter bar than dashboard */
+  --bg-hover: #f4f4f5;
+  /* Note theme presets (sepia, dark, high-contrast) – match notic pip.css */
+  --note-theme-sepia-bg: #f4ecd8;
+  --note-theme-sepia-text: #1c1917;
+  --note-theme-sepia-border: #d6c4a0;
+  --note-theme-sepia-th-bg: #e8dcc8;
+  --note-theme-dark-bg: #27272a;
+  --note-theme-dark-text: #e4e4e7;
+  --note-theme-dark-border: #3f3f46;
+  --note-theme-dark-th-bg: #3f3f46;
+  --note-theme-hc-light-bg: #ffffff;
+  --note-theme-hc-light-text: #0a0a0a;
+  --note-theme-hc-light-border: #0a0a0a;
+  --note-theme-hc-light-th-bg: #e5e5e5;
+  --note-theme-hc-dark-bg: #0a0a0a;
+  --note-theme-hc-dark-text: #ffffff;
+  --note-theme-hc-dark-border: #ffffff;
+  --note-theme-hc-dark-th-bg: #262626;
+}
+body.pip-page.dark-mode {
+  --bg-hover: #27272a; /* zinc-800 – match notic pip.css body.dark-mode */
+}
+
+/* Full viewport, no scroll on body (match notic dashboard + pip). */
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Search highlight (list + detail view) */
+.search-highlight {
+  background-color: var(--search-highlight-bg);
+  color: var(--search-highlight-text);
+  border-radius: 2px;
+  padding: 0 1px;
+}
