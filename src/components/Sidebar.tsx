@@ -191,6 +191,7 @@ function RecentTabList({
     pendingNoteRenameId,
     onConsumePendingNoteRename,
     currentTab,
+    pipIsOpen: pipIsOpenRecentProp,
 }: RecentTabListProps) {
     const lastClickedIndexRef = useRef(-1);
     const initialExpandDoneRef = useRef(false);
