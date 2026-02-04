@@ -1,6 +1,6 @@
 import { useMemo, useCallback, useEffect, useRef, useState, Fragment } from 'react'
 import { useUIStore, useWorkspaceStore, useNotesStore } from '../store'
-import { Search, ExternalLink, FileText, Pencil, Check, Share2, MoreHorizontal, Folder as FolderIcon, HardDrive, ChevronDown, WifiOff, Cloud, AlertCircle, Loader2, Copy, Pause } from 'lucide-react'
+import { Search, ExternalLink, FileText, Pencil, Check, Share2, MoreHorizontal, Folder as FolderIcon, HardDrive, ChevronDown, WifiOff, Cloud, AlertCircle, Loader2, Copy, Pause, FilePlus, PanelTop, CloudSync } from 'lucide-react'
 import { SettingsView } from './SettingsView'
 import {
   getContentPreview,
@@ -416,6 +416,7 @@ export function MainContent() {
   const selectedFolderId = currentTab === 'folders' ? selectedSidebarContext : null
   const restoreNote = useNotesStore((s) => s.restoreNote)
   const removeNote = useNotesStore((s) => s.removeNote)
+  const addNote = useNotesStore((s) => s.addNote)
 
   const setPipUnsupportedModalOpen = useUIStore((s) => s.setPipUnsupportedModalOpen)
   const isTrashView = useUIStore((s) => s.isTrashView)
@@ -1018,7 +1019,63 @@ export function MainContent() {
               </span>
             </div>
             <div className="notes-content" id="notesContent">
-              {isTrashView ? (
+              {!isTrashView && allNotesInWorkspace.length === 0 && !searchQuery.trim() ? (
+                <div className="onboarding">
+                  <div className="onboarding-hero">
+                    <div className="onboarding-hero-icon" aria-hidden>
+                      <FilePlus size={40} strokeWidth={1.5} />
+                    </div>
+                    <h2 className="onboarding-hero-title">Your notes, always a click away</h2>
+                    <p className="onboarding-hero-desc">
+                      Quick capture, folders, and a pop-out editor. All in the browser.
+                    </p>
+                  </div>
+                  <div className="onboarding-cards">
+                    <div className="onboarding-card">
+                      <div className="onboarding-card-icon" aria-hidden>
+                        <PanelTop size={24} strokeWidth={1.5} />
+                      </div>
+                      <div className="onboarding-card-text">
+                        <span className="onboarding-card-label">Pop-out editor</span>
+                        <span className="onboarding-card-desc">
+                          Open a note in a floating window to edit over other tabs or apps.
+                        </span>
+                      </div>
+                    </div>
+                    <div className="onboarding-card">
+                      <div className="onboarding-card-icon" aria-hidden>
+                        <FolderIcon size={24} strokeWidth={1.5} />
+                      </div>
+                      <div className="onboarding-card-text">
+                        <span className="onboarding-card-label">Folders &amp; workspaces</span>
+                        <span className="onboarding-card-desc">Organize notes your way.</span>
+                      </div>
+                    </div>
+                    <div className="onboarding-card">
+                      <div className="onboarding-card-icon" aria-hidden>
+                        <CloudSync size={24} strokeWidth={1.5} />
+                      </div>
+                      <div className="onboarding-card-text">
+                        <span className="onboarding-card-label">Sync</span>
+                        <span className="onboarding-card-desc">
+                          {authUser ? 'Synced across your devices.' : 'Sign in to sync across devices.'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="onboarding-cta"
+                    onClick={() => {
+                      const workspaceId = currentWorkspaceId ?? undefined
+                      const newId = addNote({ workspaceId })
+                      setSelectedNoteId(newId)
+                    }}
+                  >
+                    Create your first note
+                  </button>
+                </div>
+              ) : isTrashView ? (
                 <div className="settings-page">
                   <div className="settings-page-content">
                     <div className="trash-header-row">

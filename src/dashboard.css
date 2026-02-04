@@ -2682,6 +2682,128 @@ body.dark-mode .note-detail-action-btn.note-detail-open-active:not(.note-detail-
   font-size: 14px;
 }
 
+/* Onboarding (0 notes in workspace) – hero + feature cards (from extension, copy revised for web app) */
+.onboarding {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px 56px;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.onboarding-hero {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.onboarding-hero-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 20px;
+  padding: 16px;
+  background: var(--accent-light);
+  border-radius: 16px;
+  color: var(--accent-primary);
+}
+
+.onboarding-hero-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.onboarding-hero-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+
+.onboarding-hero-desc {
+  font-size: 15px;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.onboarding-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 28px;
+}
+
+.onboarding-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  text-align: left;
+}
+
+.onboarding-card-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  background: var(--bg-tertiary);
+  border-radius: 10px;
+  color: var(--accent-primary);
+}
+
+.onboarding-card-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.onboarding-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.onboarding-card-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.onboarding-card-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.onboarding-cta {
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-inverse);
+  background: var(--accent-primary);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.onboarding-cta:hover {
+  background: var(--accent-primary-hover);
+}
+
+.onboarding-cta:active {
+  transform: scale(0.98);
+}
+
 /* PiP-style note panel (floating, matches pip window look) */
 .pip-panel {
   position: fixed;
