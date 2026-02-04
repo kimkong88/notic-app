@@ -877,6 +877,15 @@ function RecentTabList({
                                                     <ExternalLink size={12} />
                                                 </span>
                                             )}
+                                            {detailEditNoteIdRecent === note.sessionId && (
+                                                <span
+                                                    className="sidebar-note-open-indicator sidebar-note-editing-indicator"
+                                                    aria-hidden
+                                                    title="Editing in main view"
+                                                >
+                                                    <Pencil size={12} />
+                                                </span>
+                                            )}
                                         </div>
                                     );
                                 })}
@@ -1423,10 +1432,14 @@ function FoldersTabList({
     const openInPipActiveNoteIdFolders = useUIStore(
         (s) => s.openInPipActiveNoteId
     );
+    const detailEditNoteIdFolders = useUIStore((s) => s.detailEditNoteId);
     const isNoteActiveInPipFolders =
         Boolean(noteContextMenuAnchor) &&
         _pipIsOpen &&
         noteContextMenuAnchor!.noteId === openInPipActiveNoteIdFolders;
+    const isNoteEditedInMainFolders =
+        Boolean(noteContextMenuAnchor) &&
+        noteContextMenuAnchor!.noteId === detailEditNoteIdFolders;
     const setMoveToFolderModal = useUIStore((s) => s.setMoveToFolderModal);
     const setMoveToWorkspaceModal = useUIStore(
         (s) => s.setMoveToWorkspaceModal
