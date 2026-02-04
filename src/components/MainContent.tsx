@@ -780,7 +780,7 @@ export function MainContent() {
       saveNoteContentDebounceRef.current = setTimeout(() => {
         saveNoteContentDebounceRef.current = null
         updateNote(selectedNoteId, { content })
-        triggerSyncAfterUserAction(db)
+        // Note: sync is triggered only on flush (when user exits editor), not on every change
       }, SAVE_DEBOUNCE_MS)
     },
     [selectedNoteId, updateNote]
