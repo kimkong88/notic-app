@@ -198,6 +198,13 @@ function RecentTabList({
     const setNoteContextMenuAnchor = useUIStore(
         (s) => s.setNoteContextMenuAnchor
     );
+    const openInPipActiveNoteId = useUIStore((s) => s.openInPipActiveNoteId);
+    const openInPipNoteIdsFromStore = useUIStore((s) => s.openInPipNoteIds);
+    const pipIsOpenRecent = openInPipNoteIdsFromStore.length > 0;
+    const isNoteActiveInPip =
+        Boolean(noteContextMenuAnchor) &&
+        pipIsOpenRecent &&
+        noteContextMenuAnchor!.noteId === openInPipActiveNoteId;
     const setShareModalNoteId = useUIStore((s) => s.setShareModalNoteId);
     const setMoveToFolderModal = useUIStore((s) => s.setMoveToFolderModal);
     const setMoveToWorkspaceModal = useUIStore(
@@ -869,8 +876,15 @@ function RecentTabList({
                             >
                                 <button
                                     type="button"
-                                    className="pip-context-menu-item"
+                                    className={`pip-context-menu-item${isNoteActiveInPip ? " pip-context-menu-item-disabled" : ""}`}
+                                    disabled={isNoteActiveInPip}
+                                    title={
+                                        isNoteActiveInPip
+                                            ? "Note is already open in editor"
+                                            : undefined
+                                    }
                                     onClick={() => {
+                                        if (isNoteActiveInPip) return;
                                         setSelectedNoteId(
                                             noteContextMenuAnchor.noteId
                                         );
@@ -885,8 +899,15 @@ function RecentTabList({
                                 </button>
                                 <button
                                     type="button"
-                                    className="pip-context-menu-item"
+                                    className={`pip-context-menu-item${isNoteActiveInPip ? " pip-context-menu-item-disabled" : ""}`}
+                                    disabled={isNoteActiveInPip}
+                                    title={
+                                        isNoteActiveInPip
+                                            ? "Note is already open in editor"
+                                            : undefined
+                                    }
                                     onClick={() => {
+                                        if (isNoteActiveInPip) return;
                                         openNoteInPip(noteContextMenuAnchor.noteId);
                                         setNoteContextMenuAnchor(null);
                                     }}
@@ -923,8 +944,15 @@ function RecentTabList({
                                 </button>
                                 <button
                                     type="button"
-                                    className="pip-context-menu-item"
+                                    className={`pip-context-menu-item${isNoteActiveInPip ? " pip-context-menu-item-disabled" : ""}`}
+                                    disabled={isNoteActiveInPip}
+                                    title={
+                                        isNoteActiveInPip
+                                            ? "Cannot move note open in editor"
+                                            : undefined
+                                    }
                                     onClick={() => {
+                                        if (isNoteActiveInPip) return;
                                         const isMulti =
                                             selectedNoteIds.length > 1 &&
                                             selectedNoteIds.includes(
@@ -947,11 +975,18 @@ function RecentTabList({
                                 </button>
                                 <button
                                     type="button"
-                                    className="pip-context-menu-item"
+                                    className={`pip-context-menu-item${isNoteActiveInPip || Object.keys(workspaces).length <= 1 ? " pip-context-menu-item-disabled" : ""}`}
                                     disabled={
+                                        isNoteActiveInPip ||
                                         Object.keys(workspaces).length <= 1
                                     }
+                                    title={
+                                        isNoteActiveInPip
+                                            ? "Cannot move note open in editor"
+                                            : undefined
+                                    }
                                     onClick={() => {
+                                        if (isNoteActiveInPip) return;
                                         const isMulti =
                                             selectedNoteIds.length > 1 &&
                                             selectedNoteIds.includes(
@@ -1085,8 +1120,15 @@ function RecentTabList({
                                 </div>
                                 <button
                                     type="button"
-                                    className="pip-context-menu-item"
+                                    className={`pip-context-menu-item${isNoteActiveInPip ? " pip-context-menu-item-disabled" : ""}`}
+                                    disabled={isNoteActiveInPip}
+                                    title={
+                                        isNoteActiveInPip
+                                            ? "Cannot rename note open in editor"
+                                            : undefined
+                                    }
                                     onClick={() => {
+                                        if (isNoteActiveInPip) return;
                                         setRenameState({
                                             noteId: noteContextMenuAnchor.noteId,
                                             value:
@@ -1101,8 +1143,15 @@ function RecentTabList({
                                 </button>
                                 <button
                                     type="button"
-                                    className="pip-context-menu-item danger"
+                                    className={`pip-context-menu-item danger${isNoteActiveInPip ? " pip-context-menu-item-disabled" : ""}`}
+                                    disabled={isNoteActiveInPip}
+                                    title={
+                                        isNoteActiveInPip
+                                            ? "Cannot delete note open in editor"
+                                            : undefined
+                                    }
                                     onClick={() => {
+                                        if (isNoteActiveInPip) return;
                                         const isMulti =
                                             selectedNoteIds.length > 1 &&
                                             selectedNoteIds.includes(
@@ -1315,6 +1364,13 @@ function FoldersTabList({
     const setNoteContextMenuAnchor = useUIStore(
         (s) => s.setNoteContextMenuAnchor
     );
+    const openInPipActiveNoteIdFolders = useUIStore(
+        (s) => s.openInPipActiveNoteId
+    );
+    const isNoteActiveInPipFolders =
+        Boolean(noteContextMenuAnchor) &&
+        _pipIsOpen &&
+        noteContextMenuAnchor!.noteId === openInPipActiveNoteIdFolders;
     const setMoveToFolderModal = useUIStore((s) => s.setMoveToFolderModal);
     const setMoveToWorkspaceModal = useUIStore(
         (s) => s.setMoveToWorkspaceModal
@@ -2813,8 +2869,15 @@ function FoldersTabList({
                         >
                             <button
                                 type="button"
-                                className="pip-context-menu-item"
+                                className={`pip-context-menu-item${isNoteActiveInPipFolders ? " pip-context-menu-item-disabled" : ""}`}
+                                disabled={isNoteActiveInPipFolders}
+                                title={
+                                    isNoteActiveInPipFolders
+                                        ? "Note is already open in editor"
+                                        : undefined
+                                }
                                 onClick={() => {
+                                    if (isNoteActiveInPipFolders) return;
                                     setSelectedNoteId(
                                         noteContextMenuAnchor.noteId
                                     );
@@ -2829,8 +2892,15 @@ function FoldersTabList({
                             </button>
                             <button
                                 type="button"
-                                className="pip-context-menu-item"
+                                className={`pip-context-menu-item${isNoteActiveInPipFolders ? " pip-context-menu-item-disabled" : ""}`}
+                                disabled={isNoteActiveInPipFolders}
+                                title={
+                                    isNoteActiveInPipFolders
+                                        ? "Note is already open in editor"
+                                        : undefined
+                                }
                                 onClick={() => {
+                                    if (isNoteActiveInPipFolders) return;
                                     openNoteInPip(noteContextMenuAnchor.noteId);
                                     setNoteContextMenuAnchor(null);
                                 }}
@@ -2866,8 +2936,15 @@ function FoldersTabList({
                             </button>
                             <button
                                 type="button"
-                                className="pip-context-menu-item"
+                                className={`pip-context-menu-item${isNoteActiveInPipFolders ? " pip-context-menu-item-disabled" : ""}`}
+                                disabled={isNoteActiveInPipFolders}
+                                title={
+                                    isNoteActiveInPipFolders
+                                        ? "Cannot move note open in editor"
+                                        : undefined
+                                }
                                 onClick={() => {
+                                    if (isNoteActiveInPipFolders) return;
                                     const isMulti =
                                         selectedNoteIds.length > 1 &&
                                         selectedNoteIds.includes(
@@ -2890,9 +2967,18 @@ function FoldersTabList({
                             </button>
                             <button
                                 type="button"
-                                className="pip-context-menu-item"
-                                disabled={Object.keys(workspaces).length <= 1}
+                                className={`pip-context-menu-item${isNoteActiveInPipFolders || Object.keys(workspaces).length <= 1 ? " pip-context-menu-item-disabled" : ""}`}
+                                disabled={
+                                    isNoteActiveInPipFolders ||
+                                    Object.keys(workspaces).length <= 1
+                                }
+                                title={
+                                    isNoteActiveInPipFolders
+                                        ? "Cannot move note open in editor"
+                                        : undefined
+                                }
                                 onClick={() => {
+                                    if (isNoteActiveInPipFolders) return;
                                     const isMulti =
                                         selectedNoteIds.length > 1 &&
                                         selectedNoteIds.includes(
@@ -3018,8 +3104,15 @@ function FoldersTabList({
                             </div>
                             <button
                                 type="button"
-                                className="pip-context-menu-item"
+                                className={`pip-context-menu-item${isNoteActiveInPipFolders ? " pip-context-menu-item-disabled" : ""}`}
+                                disabled={isNoteActiveInPipFolders}
+                                title={
+                                    isNoteActiveInPipFolders
+                                        ? "Cannot rename note open in editor"
+                                        : undefined
+                                }
                                 onClick={() => {
+                                    if (isNoteActiveInPipFolders) return;
                                     setNoteRenameState({
                                         noteId: noteContextMenuAnchor.noteId,
                                         value:
@@ -3034,8 +3127,15 @@ function FoldersTabList({
                             </button>
                             <button
                                 type="button"
-                                className="pip-context-menu-item danger"
+                                className={`pip-context-menu-item danger${isNoteActiveInPipFolders ? " pip-context-menu-item-disabled" : ""}`}
+                                disabled={isNoteActiveInPipFolders}
+                                title={
+                                    isNoteActiveInPipFolders
+                                        ? "Cannot delete note open in editor"
+                                        : undefined
+                                }
                                 onClick={() => {
+                                    if (isNoteActiveInPipFolders) return;
                                     const isMulti =
                                         selectedNoteIds.length > 1 &&
                                         selectedNoteIds.includes(
