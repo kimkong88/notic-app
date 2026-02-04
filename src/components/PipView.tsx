@@ -4,6 +4,8 @@ import { NoteEditor } from './NoteEditor'
 import { Plus, X, Pin } from 'lucide-react'
 import { NOTE_CHAR_WARNING, NOTE_CHAR_LIMIT } from '../utils/noteUtils'
 import { FREE_PIP_TAB_LIMIT } from '../constants'
+import { db } from '../db'
+import { openBillingPage } from '../api/backend'
 
 const SAVE_DEBOUNCE_MS = 700
 const PIP_COLOR_OPTIONS: Array<{ label: string; value: string }> = [
@@ -581,9 +583,13 @@ export function PipView() {
               <p className="pip-modal-message">Upgrade to Pro to open more notes at once.</p>
             </div>
             <div className="pip-modal-actions">
-              <a href="https://getnotic.io/billing" target="_blank" rel="noopener noreferrer" className="pip-modal-btn pip-modal-btn-primary">
+              <button
+                type="button"
+                className="pip-modal-btn pip-modal-btn-primary"
+                onClick={() => void openBillingPage(db, setToastMessage)}
+              >
                 Upgrade
-              </a>
+              </button>
               <button type="button" className="pip-modal-btn pip-modal-btn-secondary" onClick={() => setShowTabLimitModal(false)}>
                 OK
               </button>

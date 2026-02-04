@@ -22,7 +22,7 @@ import { getSyncStatus, subscribeSyncStatus, getLastPullAt, getSyncPaused, setSy
 import { getSyncChangeLog } from '../sync-change-log'
 import type { SyncLogEntry } from '../sync-change-log'
 import { useSubscriptionStore } from '../store/useSubscriptionStore'
-import { publishNote, unpublishNote } from '../api/backend'
+import { publishNote, unpublishNote, openBillingPage } from '../api/backend'
 import { FREE_PIP_TAB_LIMIT } from '../constants'
 
 const FREE_NOTE_LIMIT = 10
@@ -67,6 +67,7 @@ function SyncStatusButton({ setCurrentView: _setCurrentView }: { setCurrentView:
   const [syncLogEntries, setSyncLogEntries] = useState<SyncLogEntry[]>([])
   const syncLimitModalOpen = useUIStore((s) => s.syncLimitModalOpen)
   const setSyncLimitModalOpen = useUIStore((s) => s.setSyncLimitModalOpen)
+  const setToastMessage = useUIStore((s) => s.setToastMessage)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const authUser = useAuthStore((s) => s.user)
   const notes = useNotesStore((s) => s.notes)
@@ -317,15 +318,16 @@ function SyncStatusButton({ setCurrentView: _setCurrentView }: { setCurrentView:
               >
                 Close
               </button>
-              <a
-                href={`${SHARE_PUBLIC_BASE}/billing`}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
                 className="modal-btn modal-btn-primary"
-                onClick={() => setSyncLimitModalOpen(false)}
+                onClick={() => {
+                  void openBillingPage(db, setToastMessage)
+                  setSyncLimitModalOpen(false)
+                }}
               >
                 Upgrade
-              </a>
+              </button>
             </div>
           </div>
         </div>
@@ -1923,14 +1925,16 @@ export function MainContent() {
                 <p className="modal-message">{proRequiredModal.message}</p>
               </div>
               <div className="modal-actions">
-                <a
-                  href="https://getnotic.io/billing"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  type="button"
                   className="modal-btn modal-btn-cta-upgrade"
+                  onClick={() => {
+                    void openBillingPage(db, setToastMessage)
+                    setProRequiredModal(null)
+                  }}
                 >
                   Upgrade
-                </a>
+                </button>
                 <button
                   type="button"
                   className="modal-btn modal-btn-secondary"

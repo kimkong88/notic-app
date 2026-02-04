@@ -209,6 +209,47 @@ export async function getBillingStatus(db: NoticDB): Promise<BillingStatus | nul
   return null
 }
 
+const BILLING_BASE = 'https://getnotic.io/billing'
+
+/**
+ * POST /auth/billing-link (requires JWT). Returns short-lived billing token and redirect URL.
+ * Used to open the billing page with ?token=... so getnotic.io/billing can auth without Google login (match extension).
+ */
+export async function getBillingLink(db: NoticDB): Promise<{ redirectUrl: string; billingToken: string; expiresAt: string } | null> {
+  const res = await fetchWithAuth(db, '/auth/billing-link', { method: 'POST' })
+  if (!res.ok) return null
+  const data = (await res.json()) as { redirectUrl?: string; billingToken?: string; expiresAt?: string }
+  if (typeof data?.redirectUrl === 'string' && typeof data?.billingToken === 'string') {
+    return {
+      redirectUrl: data.redirectUrl,
+      billingToken: data.billingToken,
+      expiresAt: typeof data.expiresAt === 'string' ? data.expiresAt : '',
+    }
+  }
+  return null
+}
+
+/**
+ * Open billing page: with token when signed in (so billing page can identify user), plain /billing when not.
+ * Match extension openBillingOrUpgrade. Call from Settings plan link and Upgrade CTAs.
+ */
+export async function openBillingPage(db: NoticDB, onToast?: (message: string) => void): Promise<void> {
+  const tokens = await getStoredTokens(db)
+  if (!tokens) {
+    window.open(BILLING_BASE, '_blank', 'noopener,noreferrer')
+    return
+  }
+  const link = await getBillingLink(db)
+  if (!link?.redirectUrl || !link?.billingToken) {
+    onToast?.('Could not open billing page. Please try again.')
+    return
+  }
+  const url = link.redirectUrl.includes('localhost')
+    ? `${BILLING_BASE}?token=${encodeURIComponent(link.billingToken)}`
+    : link.redirectUrl
+  window.open(url, '_blank', 'noopener,noreferrer')
+}
+
 /**
  * POST /publish (requires JWT). Publish a note to the web; returns shareCode and shareUrl.
  * Returns paymentRequired: true when backend returns 402 (Pro required). Match extension api-client.

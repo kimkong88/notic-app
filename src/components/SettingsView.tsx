@@ -14,6 +14,7 @@ import {
   setNotionSyncRoot,
   syncToNotion,
   getObsidianExport,
+  openBillingPage,
   type NotionStatus,
 } from '../api/backend'
 import {
@@ -558,9 +559,13 @@ export function SettingsView() {
                     : 'Free'}
             </span>
           </div>
-          <a href="https://getnotic.io/billing" target="_blank" rel="noopener noreferrer" className="settings-plan-link">
+          <button
+            type="button"
+            className="settings-plan-link"
+            onClick={() => void openBillingPage(db, setToastMessage)}
+          >
             {!authUser ? 'Sign in to manage plan' : isSubscribed ? 'Manage plan' : 'Upgrade plan'}
-          </a>
+          </button>
         </section>
 
         <section className="settings-section settings-section-integrations-link">
