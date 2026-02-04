@@ -226,11 +226,6 @@ function RecentTabList({
         value: string;
     } | null>(null);
     const [hoveredSubmenu, setHoveredSubmenu] = useState<"color" | null>(null);
-    const [deleteConfirm, setDeleteConfirm] = useState<
-        | { kind: "single"; noteId: string; displayName: string }
-        | { kind: "multi"; noteIds: string[] }
-        | null
-    >(null);
 
     useEffect(() => {
         if (currentTab !== "recent") setRenameState(null);
@@ -418,30 +413,6 @@ function RecentTabList({
         return () => window.removeEventListener("keydown", onKeyDown);
     }, [setNoteContextMenuAnchor]);
 
-    const handleDeleteConfirm = useCallback(() => {
-        if (!deleteConfirm) return;
-        const toDelete =
-            deleteConfirm.kind === "multi"
-                ? deleteConfirm.noteIds
-                : [deleteConfirm.noteId];
-        toDelete.forEach((id) => updateNote(id, { deletedAt: Date.now() }));
-        if (toDelete.length === 1) trackEvent("note_deleted");
-        else trackEvent("note_deleted", { count: toDelete.length });
-        setSelection([], []);
-        const remaining =
-            notes.find((n) => !toDelete.includes(n.sessionId))?.sessionId ??
-            null;
-        setSelectedNoteId(remaining);
-        setDeleteConfirm(null);
-        setNoteContextMenuAnchor(null);
-    }, [
-        deleteConfirm,
-        updateNote,
-        notes,
-        setSelection,
-        setSelectedNoteId,
-        setNoteContextMenuAnchor,
-    ]);
 
     const isNoteSelected = (sessionId: string) =>
         selectedNoteIds.includes(sessionId);
@@ -1226,22 +1197,22 @@ function RecentTabList({
                                             selectedNoteIds.includes(
                                                 noteContextMenuAnchor.noteId
                                             );
-                                        if (isMulti) {
-                                            setDeleteConfirm({
-                                                kind: "multi",
-                                                noteIds: [...selectedNoteIds],
-                                            });
-                                        } else {
-                                            setDeleteConfirm({
-                                                kind: "single",
-                                                noteId: noteContextMenuAnchor.noteId,
-                                                displayName:
-                                                    menuNote?.displayName ||
-                                                    menuNote?.title ||
-                                                    "Untitled",
-                                            });
-                                        }
+                                        // Immediate soft delete (matches extension - no confirmation modal)
+                                        const toDelete = isMulti
+                                            ? selectedNoteIds
+                                            : [noteContextMenuAnchor.noteId];
+                                        toDelete.forEach((id) => updateNote(id, { deletedAt: Date.now() }));
+                                        if (toDelete.length === 1) trackEvent("note_deleted");
+                                        else trackEvent("note_deleted", { count: toDelete.length });
+                                        setSelection([], []);
+                                        const remaining =
+                                            notes.find((n) => !toDelete.includes(n.sessionId))?.sessionId ??
+                                            null;
+                                        setSelectedNoteId(remaining);
                                         setNoteContextMenuAnchor(null);
+                                        useUIStore.getState().setToastMessage(
+                                            toDelete.length === 1 ? "Moved to trash" : `${toDelete.length} items moved to trash`
+                                        );
                                     }}
                                 >
                                     Delete
@@ -1253,42 +1224,6 @@ function RecentTabList({
                 )}
 
             {/* Empty area context menu */}
-            {/* Delete (move to trash) confirm modal */}
-            {deleteConfirm && (
-                <div
-                    className="modal-overlay"
-                    role="dialog"
-                    aria-modal="true"
-                    onClick={() => setDeleteConfirm(null)}
-                >
-                    <div className="modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h3 className="modal-title">Move to Trash</h3>
-                            <p className="modal-message">
-                                {deleteConfirm.kind === "multi"
-                                    ? `Move ${deleteConfirm.noteIds.length} selected items to Trash? You can restore them from the Trash later.`
-                                    : `Move "${deleteConfirm.displayName}" to Trash? You can restore it from the Trash later.`}
-                            </p>
-                        </div>
-                        <div className="modal-actions">
-                            <button
-                                type="button"
-                                className="modal-btn modal-btn-secondary"
-                                onClick={() => setDeleteConfirm(null)}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                className="modal-btn modal-btn-primary"
-                                onClick={handleDeleteConfirm}
-                            >
-                                Move to Trash
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
@@ -1452,11 +1387,6 @@ function FoldersTabList({
     );
     const setShareModalNoteId = useUIStore((s) => s.setShareModalNoteId);
     const workspaces = useWorkspaceStore((s) => s.workspaces);
-    const [noteDeleteConfirm, setNoteDeleteConfirm] = useState<
-        | { kind: "single"; noteId: string; displayName: string }
-        | { kind: "multi"; noteIds: string[] }
-        | null
-    >(null);
     const [noteMenuHoveredSubmenu, setNoteMenuHoveredSubmenu] = useState<
         "color" | null
     >(null);
@@ -1791,32 +1721,6 @@ function FoldersTabList({
         };
     }, [noteContextMenuAnchor, setNoteContextMenuAnchor]);
 
-    const handleNoteDeleteConfirm = useCallback(() => {
-        if (!noteDeleteConfirm) return;
-        const ids =
-            noteDeleteConfirm.kind === "multi"
-                ? noteDeleteConfirm.noteIds
-                : [noteDeleteConfirm.noteId];
-        ids.forEach((id) => updateNote(id, { deletedAt: Date.now() }));
-        if (ids.length === 1) trackEvent("note_deleted");
-        else trackEvent("note_deleted", { count: ids.length });
-        if (ids.includes(selectedNoteId ?? "")) setSelectedNoteId(null);
-        setSelection(
-            selectedNoteIds.filter((id) => !ids.includes(id)),
-            selectedFolderIds
-        );
-        setNoteDeleteConfirm(null);
-        setNoteContextMenuAnchor(null);
-    }, [
-        noteDeleteConfirm,
-        updateNote,
-        selectedNoteId,
-        setSelectedNoteId,
-        selectedNoteIds,
-        selectedFolderIds,
-        setSelection,
-        setNoteContextMenuAnchor,
-    ]);
 
     const bookmarkedNotes = sortNotes(
         notesInWorkspace.filter((n) => n.isBookmarked),
@@ -3287,22 +3191,22 @@ function FoldersTabList({
                                         selectedNoteIds.includes(
                                             noteContextMenuAnchor.noteId
                                         );
-                                    if (isMulti) {
-                                        setNoteDeleteConfirm({
-                                            kind: "multi",
-                                            noteIds: [...selectedNoteIds],
-                                        });
-                                    } else {
-                                        setNoteDeleteConfirm({
-                                            kind: "single",
-                                            noteId: noteContextMenuAnchor.noteId,
-                                            displayName:
-                                                menuNote.displayName ??
-                                                menuNote.title ??
-                                                "Untitled",
-                                        });
-                                    }
+                                    // Immediate soft delete (matches extension - no confirmation)
+                                    const ids = isMulti
+                                        ? selectedNoteIds
+                                        : [noteContextMenuAnchor.noteId];
+                                    ids.forEach((id) => updateNote(id, { deletedAt: Date.now() }));
+                                    if (ids.length === 1) trackEvent("note_deleted");
+                                    else trackEvent("note_deleted", { count: ids.length });
+                                    if (ids.includes(selectedNoteId ?? "")) setSelectedNoteId(null);
+                                    setSelection(
+                                        selectedNoteIds.filter((id) => !ids.includes(id)),
+                                        selectedFolderIds
+                                    );
                                     setNoteContextMenuAnchor(null);
+                                    useUIStore.getState().setToastMessage(
+                                        ids.length === 1 ? "Moved to trash" : `${ids.length} items moved to trash`
+                                    );
                                 }}
                             >
                                 Delete
@@ -3311,42 +3215,6 @@ function FoldersTabList({
                         document.body
                     );
                 })()}
-
-            {noteDeleteConfirm && (
-                <div
-                    className="modal-overlay"
-                    role="dialog"
-                    aria-modal="true"
-                    onClick={() => setNoteDeleteConfirm(null)}
-                >
-                    <div className="modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h3 className="modal-title">Move to Trash</h3>
-                            <p className="modal-message">
-                                {noteDeleteConfirm.kind === "multi"
-                                    ? `Move ${noteDeleteConfirm.noteIds.length} selected items to Trash? You can restore them from the Trash later.`
-                                    : `Move "${noteDeleteConfirm.displayName}" to Trash? You can restore it from the Trash later.`}
-                            </p>
-                        </div>
-                        <div className="modal-actions">
-                            <button
-                                type="button"
-                                className="modal-btn modal-btn-secondary"
-                                onClick={() => setNoteDeleteConfirm(null)}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                className="modal-btn modal-btn-primary"
-                                onClick={handleNoteDeleteConfirm}
-                            >
-                                Move to Trash
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {folderDeleteConfirm && (
                 <div
