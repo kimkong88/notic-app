@@ -2957,7 +2957,7 @@ body.dark-mode .settings-note-preview-highcontrast {
   color: var(--text-primary);
 }
 
-/* Tab bar: only visible when 2+ notes; light mode slightly darker so active tab stands out (match notic) */
+/* Tab bar: only visible when 2+ notes. Use same palette as notic pip.css (zinc-50 bar, zinc-100 hover in light; zinc-800 bar, zinc-700 hover in dark). */
 .pip-tabs {
   flex-shrink: 0;
   display: flex;
@@ -2967,17 +2967,18 @@ body.dark-mode .settings-note-preview-highcontrast {
   border-bottom: 1px solid var(--border-primary);
   min-width: 0;
   overflow: hidden;
+  /* Local vars so tab hover matches extension even when not body.pip-page (e.g. PipPanel in sidebar) */
+  --pip-tab-hover: var(--bg-tertiary);
 }
 
-/* Light mode: bar lighter than tab hover so hover is visible; active tab (white) still stands out */
-body:not(.dark-mode) .pip-tabs {
-  background-color: var(--bg-secondary);
+/* Main app (no pip-page): use extension pip palette so PipPanel tabs match notic */
+body:not(.pip-page):not(.dark-mode) .pip-tabs {
+  --pip-tab-hover: #f4f4f5; /* zinc-100 – same as notic pip.css :root */
 }
-body:not(.dark-mode) .pip-tab-item:hover {
-  background-color: var(--bg-tertiary);
+body:not(.pip-page).dark-mode .pip-tabs {
+  --pip-tab-hover: #3f3f46; /* zinc-700 */
 }
 
-/* Extension has no body.dark-mode .pip-tabs override – tab bar uses base var(--bg-secondary) in dark mode */
 .pip-tab-item {
   display: flex;
   align-items: center;
@@ -2986,7 +2987,7 @@ body:not(.dark-mode) .pip-tab-item:hover {
   font-size: 13px;
   font-weight: 500;
   color: var(--text-muted);
-  background: transparent;
+  background-color: transparent;
   border-radius: 8px 8px 0 0;
   cursor: pointer;
   transition: background-color 0.2s, color 0.2s, box-shadow 0.2s;
@@ -2999,12 +3000,12 @@ body:not(.dark-mode) .pip-tab-item:hover {
 
 .pip-tab-item:hover {
   color: var(--text-secondary);
-  background: var(--bg-tertiary);
+  background-color: var(--pip-tab-hover);
 }
 
 .pip-tab-item.active {
   color: var(--text-primary);
-  background: var(--bg-primary);
+  background-color: var(--bg-primary);
   border-bottom-color: var(--accent-primary);
   box-shadow: 0 1px 0 0 var(--bg-primary);
 }
@@ -3072,7 +3073,7 @@ body:not(.dark-mode) .pip-tab-item:hover {
 
 .pip-tab-close:hover {
   color: var(--text-primary);
-  background: var(--bg-hover);
+  background-color: var(--pip-tab-hover, var(--bg-hover));
 }
 
 .pip-tab-close i,
@@ -3100,7 +3101,7 @@ body:not(.dark-mode) .pip-tab-item:hover {
 
 .pip-tab-new-btn:hover {
   color: var(--text-primary);
-  background: var(--bg-tertiary);
+  background-color: var(--pip-tab-hover, var(--bg-tertiary));
 }
 
 .pip-tab-new-btn i,
@@ -3469,7 +3470,7 @@ body.pip-page.dark-mode[data-note-theme="high-contrast"] .pip-content .note-cont
 
 .pip-modal-message {
   font-size: 14px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   margin: 0;
 }
 
@@ -3496,20 +3497,24 @@ body.pip-page.dark-mode[data-note-theme="high-contrast"] .pip-content .note-cont
 
 .pip-modal-btn-secondary {
   background-color: var(--bg-tertiary);
-  color: var(--text-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--text-muted);
 }
 
 .pip-modal-btn-secondary:hover {
   background-color: var(--border-primary);
+  color: var(--text-primary);
+  border-color: var(--text-muted);
 }
 
 .pip-modal-btn-primary {
   background-color: var(--btn-primary-bg);
-  color: var(--text-inverse);
+  color: var(--btn-primary-text, var(--text-inverse));
 }
 
 .pip-modal-btn-primary:hover {
   background-color: var(--btn-primary-hover);
+  color: var(--btn-primary-text, var(--text-inverse));
 }
 
 .pip-modal-btn-danger {

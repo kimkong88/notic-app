@@ -107,6 +107,7 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
   moveToWorkspaceModal: null,
   toastMessage: null,
   serverNewerBannerVisible: false,
+  syncLimitModalOpen: false,
 
   setIsDarkMode: (value) => set({ isDarkMode: value }),
   setSidebarCollapsed: (value) => set({ sidebarCollapsed: value }),

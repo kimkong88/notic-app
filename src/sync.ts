@@ -684,7 +684,13 @@ export async function triggerFullSync(db: NoticDB, options?: TriggerFullSyncOpti
 
     const skipPush = options?.ignorePaused && (await getSyncPaused(db))
     if (!skipPush) {
-      await withRetry(() => pushPayload(db, merged))
+      const pushBody: PushBody = {
+        ...merged,
+        deletedNoteIds: merged.deletedNoteIds ?? [],
+        deletedFolderIds: merged.deletedFolderIds ?? [],
+        deletedWorkspaceIds: merged.deletedWorkspaceIds ?? [],
+      }
+      await withRetry(() => pushPayload(db, pushBody))
     }
 
     const successLog: SyncLogEntry[] = [

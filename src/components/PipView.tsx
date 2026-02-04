@@ -377,7 +377,7 @@ export function PipView() {
               onChange={handleContentChange(effectiveActiveId)}
               onFlush={handleFlush(effectiveActiveId)}
               onContentLengthChange={setContentLength}
-              placeholder="Start writing..."
+              placeholder="Type / for commands…"
               registerFlushRef={pipEditorFlushRef}
             />
             {contentLength >= NOTE_CHAR_WARNING && (

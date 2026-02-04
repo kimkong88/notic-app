@@ -1319,7 +1319,6 @@ function FoldersTabList({
         (s) => s.setMoveToWorkspaceModal
     );
     const setShareModalNoteId = useUIStore((s) => s.setShareModalNoteId);
-    const setSyncLimitModalOpen = useUIStore((s) => s.setSyncLimitModalOpen);
     const workspaces = useWorkspaceStore((s) => s.workspaces);
     const [noteDeleteConfirm, setNoteDeleteConfirm] = useState<
         | { kind: "single"; noteId: string; displayName: string }

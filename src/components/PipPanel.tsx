@@ -120,7 +120,7 @@ export function PipPanel() {
             editorKey={activeId}
             initialContent={content}
             onChange={handleContentChange}
-            placeholder="Start writing..."
+            placeholder="Type / for commands…"
             className="pip-panel-editor"
           />
         ) : (
