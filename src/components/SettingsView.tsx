@@ -22,6 +22,7 @@ import {
   obsidianFilesToZipBlob,
 } from '../utils/exportZip'
 import { importFromZip } from '../utils/importZip'
+import { trackEvent } from '../analytics'
 
 const NOTE_THEME_KEY = 'notic_noteTheme'
 const NOTE_THEME_VALUES = ['default', 'sepia', 'dark', 'high-contrast'] as const
@@ -93,6 +94,7 @@ export function SettingsView() {
       const blob = exportWorkspaceAsZip(state.notes, state.folders, wsId)
       const name = `notic-export-${new Date().toISOString().slice(0, 10)}.zip`
       downloadExportBlob(blob, name)
+      trackEvent('export_completed', { format: 'zip' })
     } catch (e) {
       console.error('Export failed', e)
       setImportModal({ title: 'Export failed', message: 'Please try again.' })
@@ -225,6 +227,7 @@ export function SettingsView() {
         setToastMessage('Sync page set.')
         const status = await getNotionStatus(db)
         setNotionStatus(status)
+        if (status?.connected) trackEvent('notion_connected')
       } else {
         setToastMessage('Failed to set sync page. Check the URL or page ID.')
       }
@@ -243,6 +246,7 @@ export function SettingsView() {
       }
       if (result.ok) {
         setToastMessage('Synced to Notion.')
+        trackEvent('notion_sync_run')
         const status = await getNotionStatus(db)
         setNotionStatus(status)
       } else {
@@ -272,6 +276,7 @@ export function SettingsView() {
       const blob = obsidianFilesToZipBlob(data.files)
       const name = `notic-obsidian-export-${new Date().toISOString().slice(0, 10)}.zip`
       downloadExportBlob(blob, name)
+      trackEvent('export_completed', { format: 'obsidian' })
       setToastMessage(`Exported ${data.files.length} file(s). Extract the ZIP into your Obsidian vault.`)
     } catch (e) {
       console.error('Obsidian export failed', e)

@@ -341,6 +341,7 @@ import {
   sendNotesUpdateToPip,
   requestPipFlushSave,
 } from '../pip/documentPip'
+import { trackEvent } from '../analytics'
 import { NoteEditor } from './NoteEditor'
 
 type BreadcrumbClick = 'workspace' | 'recent' | 'folders' | 'trash' | 'bookmarks' | 'date' | 'folder' | 'note' | 'settings' | 'integrations'
@@ -1156,6 +1157,7 @@ export function MainContent() {
                     onClick={() => {
                       const workspaceId = currentWorkspaceId ?? undefined
                       const newId = addNote({ workspaceId })
+                      trackEvent('note_created')
                       setSelectedNoteId(newId)
                       const newNote = useNotesStore.getState().notes[newId]
                       if (newNote) openNoteInPip(newNote)
@@ -1178,7 +1180,10 @@ export function MainContent() {
                               `Permanently delete all ${trashNotesInWorkspace.length} note${trashNotesInWorkspace.length === 1 ? '' : 's'}? This cannot be undone.`
                             )
                             if (ok) {
+                              const count = trashNotesInWorkspace.length
                               trashNotesInWorkspace.forEach((n) => removeNote(n.sessionId))
+                              if (count === 1) trackEvent('note_deleted')
+                              else trackEvent('note_deleted', { count })
                             }
                           }}
                         >
@@ -1227,7 +1232,10 @@ export function MainContent() {
                                       const ok = window.confirm(
                                         `Permanently delete "${displayName}"? This cannot be undone.`
                                       )
-                                      if (ok) removeNote(note.sessionId)
+                                      if (ok) {
+                                        removeNote(note.sessionId)
+                                        trackEvent('note_deleted')
+                                      }
                                     }}
                                   >
                                     Delete

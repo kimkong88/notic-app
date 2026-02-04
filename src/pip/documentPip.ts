@@ -83,6 +83,13 @@ export async function openPipWithNote(
 
     pipWindowRef = requestedWindow
 
+    try {
+      const { trackEvent } = await import('../analytics')
+      trackEvent('pip_opened')
+    } catch {
+      // ignore
+    }
+
     const isAlreadySetUp = requestedWindow.document.querySelector('#notic-pip-iframe') !== null
 
     if (!isAlreadySetUp) {

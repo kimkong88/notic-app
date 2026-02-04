@@ -83,6 +83,7 @@ import {
 } from "../utils/exportZip";
 import type { Folder as FolderType } from "../store/types";
 import type { GoogleUserProfile } from "../store/useAuthStore";
+import { trackEvent } from "../analytics";
 
 const TOOLBAR_POSITION_KEY = "notic_toolbarPosition";
 const TOOLBAR_DEFAULT = { top: 60, right: -40 };
@@ -424,6 +425,8 @@ function RecentTabList({
                 ? deleteConfirm.noteIds
                 : [deleteConfirm.noteId];
         toDelete.forEach((id) => updateNote(id, { deletedAt: Date.now() }));
+        if (toDelete.length === 1) trackEvent("note_deleted");
+        else trackEvent("note_deleted", { count: toDelete.length });
         setSelection([], []);
         const remaining =
             notes.find((n) => !toDelete.includes(n.sessionId))?.sessionId ??
@@ -1083,6 +1086,9 @@ function RecentTabList({
                                                         menuNote.title
                                                 )}.md`
                                             );
+                                            trackEvent("export_completed", {
+                                                format: "markdown",
+                                            });
                                         }
                                         setNoteContextMenuAnchor(null);
                                     }}
@@ -1792,6 +1798,8 @@ function FoldersTabList({
                 ? noteDeleteConfirm.noteIds
                 : [noteDeleteConfirm.noteId];
         ids.forEach((id) => updateNote(id, { deletedAt: Date.now() }));
+        if (ids.length === 1) trackEvent("note_deleted");
+        else trackEvent("note_deleted", { count: ids.length });
         if (ids.includes(selectedNoteId ?? "")) setSelectedNoteId(null);
         setSelection(
             selectedNoteIds.filter((id) => !ids.includes(id)),
@@ -2806,6 +2814,7 @@ function FoldersTabList({
                                     });
                                     setSelectedFolderId(folder.id);
                                     setSelectedNoteId(newId);
+                                    trackEvent("note_created");
                                     setFolderContextMenuAnchor(null);
                                 }}
                             >
@@ -2831,6 +2840,7 @@ function FoldersTabList({
                                             parentId: folder.id,
                                             workspaceId: wsId,
                                         });
+                                        trackEvent("folder_created");
                                         setExpandedSidebarFolderIds([
                                             ...expandedSidebarFolderIds,
                                             folder.id,
@@ -2941,6 +2951,9 @@ function FoldersTabList({
                                         blob,
                                         `${sanitizeName(displayName)}.zip`
                                     );
+                                    trackEvent("export_completed", {
+                                        format: "zip",
+                                    });
                                     setFolderContextMenuAnchor(null);
                                 }}
                             >
@@ -3139,6 +3152,9 @@ function FoldersTabList({
                                                 menuNote.title
                                         )}.md`
                                     );
+                                    trackEvent("export_completed", {
+                                        format: "markdown",
+                                    });
                                     setNoteContextMenuAnchor(null);
                                 }}
                             >
@@ -3917,6 +3933,7 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                     db
                 );
                 if (linked) {
+                    trackEvent("sign_in_completed");
                     if (profile) {
                         setAuthUser(profile);
                         await persistLastUser(db, profile);
