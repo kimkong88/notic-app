@@ -335,7 +335,6 @@ function RecentTabList({
             setSelection([noteId], []);
             setSelectedNoteId(noteId);
             setSelectedFolderDate(dateKey);
-            addNoteToPip(noteId, true);
         },
         [
             recentOrderedList,
@@ -343,7 +342,6 @@ function RecentTabList({
             setSelection,
             setSelectedNoteId,
             setSelectedFolderDate,
-            addNoteToPip,
         ]
     );
 
@@ -1884,7 +1882,6 @@ function FoldersTabList({
                     setSelection([item.id], []);
                     setSelectedNoteId(item.id);
                     setSelectedFolderId(ROOT_SENTINEL);
-                    addNoteToPip(item.id, true);
                 } else {
                     setSelection([], [item.id]);
                     setSelectedNoteId(null);
@@ -1958,7 +1955,6 @@ function FoldersTabList({
         setSelection([noteId], []);
         setSelectedNoteId(noteId);
         setSelectedFolderId(folderId ?? ROOT_SENTINEL);
-        addNoteToPip(noteId, true);
         if (index !== undefined) lastClickedSelectableIndexRef.current = index;
     };
 
