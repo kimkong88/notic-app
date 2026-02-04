@@ -2806,7 +2806,6 @@ function FoldersTabList({
                                     });
                                     setSelectedFolderId(folder.id);
                                     setSelectedNoteId(newId);
-                                    addNoteToPip(newId, true);
                                     setFolderContextMenuAnchor(null);
                                 }}
                             >
@@ -4190,29 +4189,7 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                 ]);
             }
         }
-        addNoteToPip(newId, true);
         setPendingNoteRenameId(newId);
-        const pipWin = getPipWindow();
-        if (pipWin && !pipWin.closed) {
-            const ui = useUIStore.getState();
-            const notes = useNotesStore.getState().notes;
-            const noteTitles: Record<string, string> = {};
-            const noteColors: Record<string, string> = {};
-            const notePayloads: Record<string, { content?: string; title?: string; displayName?: string; color?: string; workspaceId?: string }> = {};
-            ui.openInPipNoteIds.forEach((id) => {
-                const n = notes[id];
-                noteTitles[id] = n?.displayName ?? n?.title ?? "Untitled";
-                if (n?.color) noteColors[id] = n.color;
-                notePayloads[id] = {
-                    content: n?.content ?? "",
-                    title: n?.title ?? "Untitled",
-                    displayName: n?.displayName,
-                    color: n?.color,
-                    workspaceId: n?.workspaceId,
-                };
-            });
-            sendNotesUpdateToPip(ui.openInPipNoteIds, ui.openInPipActiveNoteId, { noteTitles, noteColors, notePayloads });
-        }
     };
 
     const [pendingFolderRenameId, setPendingFolderRenameId] = useState<
