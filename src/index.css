@@ -79,22 +79,22 @@
 }
 
 body.dark-mode {
-  /* Background - Zinc dark */
-  --bg-primary: #18181b;
-  --bg-secondary: #27272a;
-  --bg-tertiary: #3f3f46;
-  --bg-hover: #3f3f46;
+  /* Background - Zinc dark (match notic pip.css body.dark-mode exactly) */
+  --bg-primary: #18181b; /* zinc-900 */
+  --bg-secondary: #27272a; /* zinc-800 */
+  --bg-tertiary: #3f3f46; /* zinc-700 */
+  --bg-hover: #27272a; /* zinc-800 */
   --bg-card: #27272a;
 
   /* Text - Zinc dark */
-  --text-primary: #fafafa;
-  --text-secondary: #e4e4e7;
-  --text-muted: #a1a1aa;
-  --text-disabled: #71717b;
+  --text-primary: #fafafa; /* zinc-50 */
+  --text-secondary: #e4e4e7; /* zinc-200 */
+  --text-muted: #a1a1aa; /* zinc-400 */
+  --text-disabled: #71717b; /* zinc-500 */
 
   /* Border - Zinc dark */
-  --border-primary: #3f3f46;
-  --border-secondary: #52525b;
+  --border-primary: #3f3f46; /* zinc-700 */
+  --border-secondary: #52525b; /* zinc-600 */
 
   /* Accent - lighter indigo on dark */
   --accent-primary: #818cf8;
@@ -103,11 +103,11 @@ body.dark-mode {
   --accent-light: rgba(129, 140, 248, 0.2);
   --shadow-accent: rgba(129, 140, 248, 0.2);
 
-  /* Primary button: white pattern on dark */
-  --btn-primary-bg: #ffffff;
-  --btn-primary-hover: #e4e4e7;
+  /* Primary button (match extension: zinc-50 bg, zinc-200 hover, dark text) */
+  --btn-primary-bg: #fafafa; /* zinc-50 */
+  --btn-primary-hover: #e4e4e7; /* zinc-200 */
   --btn-primary-text: #18181b;
-  --text-inverse: #ffffff;
+  --text-inverse: #18181b; /* zinc-900 – text on light buttons in dark mode */
 
   /* Shadows */
   --shadow-sm: rgba(0, 0, 0, 0.2);
@@ -119,7 +119,7 @@ body.dark-mode {
   --search-highlight-bg: #854d0e;
   --search-highlight-text: #fef08a;
 
-  /* Danger – slightly softer on dark (match notic pip.css body.dark-mode) */
+  /* Danger – match notic pip.css body.dark-mode */
   --danger: #ef4444;
   --danger-hover: rgba(239, 68, 68, 0.2);
   --settings-preview-dark-bg: #3f3f46;
@@ -148,6 +148,7 @@ body.pip-page {
   --note-theme-hc-dark-th-bg: #262626;
 }
 body.pip-page.dark-mode {
+  --bg-tertiary: #3f3f46; /* zinc-700 – override body.pip-page light value */
   --bg-hover: #27272a; /* zinc-800 – match notic pip.css body.dark-mode */
 }
 

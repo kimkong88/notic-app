@@ -2957,7 +2957,7 @@ body.dark-mode .settings-note-preview-highcontrast {
   color: var(--text-primary);
 }
 
-/* Tab bar: only visible when 2+ notes. Use same palette as notic pip.css (zinc-50 bar, zinc-100 hover in light; zinc-800 bar, zinc-700 hover in dark). */
+/* Tab bar: only visible when 2+ notes. Match notic pip.css – all from theme variables. */
 .pip-tabs {
   flex-shrink: 0;
   display: flex;
@@ -2967,16 +2967,7 @@ body.dark-mode .settings-note-preview-highcontrast {
   border-bottom: 1px solid var(--border-primary);
   min-width: 0;
   overflow: hidden;
-  /* Local vars so tab hover matches extension even when not body.pip-page (e.g. PipPanel in sidebar) */
   --pip-tab-hover: var(--bg-tertiary);
-}
-
-/* Main app (no pip-page): use extension pip palette so PipPanel tabs match notic */
-body:not(.pip-page):not(.dark-mode) .pip-tabs {
-  --pip-tab-hover: #f4f4f5; /* zinc-100 – same as notic pip.css :root */
-}
-body:not(.pip-page).dark-mode .pip-tabs {
-  --pip-tab-hover: #3f3f46; /* zinc-700 */
 }
 
 .pip-tab-item {
@@ -3073,7 +3064,7 @@ body:not(.pip-page).dark-mode .pip-tabs {
 
 .pip-tab-close:hover {
   color: var(--text-primary);
-  background-color: var(--pip-tab-hover, var(--bg-hover));
+  background-color: var(--bg-hover); /* match notic pip.css: zinc-800 in dark */
 }
 
 .pip-tab-close i,
@@ -3495,16 +3486,16 @@ body.pip-page.dark-mode[data-note-theme="high-contrast"] .pip-content .note-cont
   justify-content: center;
 }
 
+/* PiP modal secondary (OK) – match notic pip.css exactly: no border, var(--bg-tertiary) + var(--text-secondary), hover var(--border-primary) */
 .pip-modal-btn-secondary {
   background-color: var(--bg-tertiary);
-  color: var(--text-primary);
-  border: 1px solid var(--text-muted);
+  color: var(--text-secondary);
+  border: none;
 }
 
 .pip-modal-btn-secondary:hover {
   background-color: var(--border-primary);
-  color: var(--text-primary);
-  border-color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
 .pip-modal-btn-primary {
