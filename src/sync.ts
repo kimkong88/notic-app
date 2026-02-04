@@ -7,6 +7,7 @@ import type { NoticDB } from './db/schema'
 import { fetchWithAuth, getStoredTokens } from './api/backend'
 import { getStoragePartition, lastPullAtKey } from './db/partition'
 import { loadPartitionIntoStores } from './db/hydrate'
+import { setHydrating } from './db/persist'
 import { PREFS_KEYS } from './db/prefs-keys'
 import { appendSyncChangeLog } from './sync-change-log'
 import type { SyncLogEntry } from './sync-change-log'
@@ -679,6 +680,8 @@ export async function triggerFullSync(db: NoticDB, options?: TriggerFullSyncOpti
     return
   }
 
+  // Mark as hydrating at START of full sync to prevent persist from triggering delta sync during sync operation
+  setHydrating(true)
   setSyncState('syncing')
   const now = () => Date.now()
 
@@ -687,7 +690,10 @@ export async function triggerFullSync(db: NoticDB, options?: TriggerFullSyncOpti
     const lastPullAt = await getLastPullAt(db)
     const server = await withRetry(() => pullFromServer(db, lastPullAt > 0 ? lastPullAt : undefined))
     const local = buildLocalPayload()
+    console.log('[triggerFullSync] server:', { notes: server.notes.length, folders: server.folders.length, workspaces: server.workspaces.length, deletedNoteIds: server.deletedNoteIds?.length ?? 0 })
+    console.log('[triggerFullSync] local:', { notes: local.notes.length, folders: local.folders.length, workspaces: local.workspaces.length })
     const merged = computeMergedState(local, server)
+    console.log('[triggerFullSync] merged:', { notes: merged.notes.length, folders: merged.folders.length, workspaces: merged.workspaces.length })
     const overwriteEntries = computeServerOverwriteLogEntries(local, server)
 
     const skipPush = options?.ignorePaused && (await getSyncPaused(db))
@@ -717,12 +723,17 @@ export async function triggerFullSync(db: NoticDB, options?: TriggerFullSyncOpti
     await setLastPullAt(db, partition, now())
     lastServerSnapshot = merged
     setSyncState('synced')
+    
+    // Clear hydrating flag AFTER full sync completes (allows persist to trigger delta sync for user changes)
+    setHydrating(false)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     await appendSyncChangeLog(db, [
       { at: now(), kind: 'error', message: `Full sync failed: ${message}` },
     ])
     setSyncState('failed')
+    // Clear hydrating flag on error too
+    setHydrating(false)
     throw err
   }
 }

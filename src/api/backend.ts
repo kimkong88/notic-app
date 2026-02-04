@@ -96,11 +96,18 @@ export async function authenticateWithGoogleToken(
   }
 }
 
-/** Clear tokens, sign out, and show session-expired modal. Call when 401 persists after refresh (or refresh returns 401). */
-function handleSessionExpired(db: NoticDB): void {
-  clearStoredTokens(db).catch(() => {})
+/** Clear tokens, sign out, switch to local partition, and show session-expired modal. Call when 401 persists after refresh (or refresh returns 401). */
+async function handleSessionExpired(db: NoticDB): Promise<void> {
+  const { loadPartitionIntoStores, LOCAL_PARTITION } = await import('./db')
+  const { clearLastServerSnapshot, stopPeriodicPullCheck } = await import('./sync')
+  
   useAuthStore.getState().signOut()
   useSubscriptionStore.getState().setSubscribed(null)
+  stopPeriodicPullCheck()
+  useUIStore.getState().setServerNewerBannerVisible(false)
+  clearLastServerSnapshot()
+  await clearStoredTokens(db)
+  await loadPartitionIntoStores(db, LOCAL_PARTITION)
   useUIStore.getState().setSessionExpiredModalOpen(true)
 }
 
@@ -116,7 +123,7 @@ export async function refreshTokens(db: NoticDB): Promise<boolean> {
       body: JSON.stringify({ refreshToken: tokens.refreshToken }),
     })
     if (res.status === 401) {
-      handleSessionExpired(db)
+      void handleSessionExpired(db)
       return false
     }
     if (!res.ok) return false
@@ -177,7 +184,7 @@ export async function fetchWithAuth(
       })
     }
     if (res.status === 401) {
-      handleSessionExpired(db)
+      void handleSessionExpired(db)
     }
   }
 

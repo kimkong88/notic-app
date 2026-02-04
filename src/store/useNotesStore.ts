@@ -98,6 +98,7 @@ export const useNotesStore = create<NotesState & NotesActions>((set, get) => ({
         return { notes: { ...state.notes, [sessionId]: newNote } }
       }
       const updated = { ...existing, ...patch }
+      let shouldBumpLastModified = false
       if (patch.content !== undefined) {
         let content = patch.content
         if (content.length > NOTE_CHAR_LIMIT) content = content.slice(0, NOTE_CHAR_LIMIT)
@@ -109,9 +110,17 @@ export const useNotesStore = create<NotesState & NotesActions>((set, get) => ({
         updated.title = trimmed ? extractTitle(content, existing.title) : 'Untitled'
         if (trimmed) updated.hasEverHadContent = true
         // Only bump lastModified when content actually changed (prevents "open in PiP" from moving note to top when user didn't type).
-        if (trimmed !== existingTrimmed) updated.lastModified = Date.now()
+        if (trimmed !== existingTrimmed) shouldBumpLastModified = true
       }
-      if (patch.title !== undefined) updated.lastModified = Date.now()
+      // Bump lastModified for any metadata change (title, deletedAt, folderId, workspaceId, color, etc.) to ensure sync propagates changes correctly
+      if (patch.title !== undefined) shouldBumpLastModified = true
+      if (patch.deletedAt !== undefined) shouldBumpLastModified = true
+      if (patch.folderId !== undefined && patch.folderId !== existing.folderId) shouldBumpLastModified = true
+      if (patch.workspaceId !== undefined && patch.workspaceId !== existing.workspaceId) shouldBumpLastModified = true
+      if (patch.color !== undefined && patch.color !== existing.color) shouldBumpLastModified = true
+      if (patch.displayName !== undefined && patch.displayName !== existing.displayName) shouldBumpLastModified = true
+      if (patch.isBookmarked !== undefined && patch.isBookmarked !== existing.isBookmarked) shouldBumpLastModified = true
+      if (shouldBumpLastModified) updated.lastModified = Date.now()
       return { notes: { ...state.notes, [sessionId]: updated } }
     }),
   addNote: (options) => {

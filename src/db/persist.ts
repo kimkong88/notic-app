@@ -123,8 +123,13 @@ export function stopPersist(): void {
 
 /**
  * Mark that hydration is in progress. Persist won't trigger sync until hydration completes.
- * Call before loading partition data into stores.
+ * Call before loading partition data into stores, and clear after sync completes.
  */
 export function setHydrating(value: boolean): void {
   isHydrating = value
+}
+
+/** For debugging: check if currently hydrating */
+export function getHydrating(): boolean {
+  return isHydrating
 }

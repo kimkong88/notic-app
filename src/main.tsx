@@ -21,6 +21,7 @@ async function init() {
     for (const reg of regs) reg.unregister()
   }
 
+  // Initial hydration from DB - no need to block persist since full sync will handle it
   await hydrateStores(db)
   startPersist(db)
 
