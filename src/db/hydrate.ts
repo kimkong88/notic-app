@@ -1,6 +1,7 @@
 import type { NoticDB } from './schema'
 import { PREFS_KEYS } from './prefs-keys'
 import { getStoragePartition, currentWorkspaceIdKey, LOCAL_PARTITION } from './partition'
+import { setHydrating } from './persist'
 import { useNotesStore } from '../store/useNotesStore'
 import { useWorkspaceStore } from '../store/useWorkspaceStore'
 import { DEFAULT_WORKSPACE_ID } from '../store/useWorkspaceStore'
@@ -66,6 +67,9 @@ async function ensureDefaultWorkspace(
  * Used at init (hydrate), on sign-in (switch to user partition), and on sign-out (switch to local).
  */
 export async function loadPartitionIntoStores(db: NoticDB, partition: string): Promise<void> {
+  // Mark hydrating to prevent persist from triggering sync during store updates.
+  setHydrating(true)
+
   const [notesP, foldersP, workspacesP, cwPref, legacyCwPref] = await Promise.all([
     db.notesP.where('partition').equals(partition).toArray(),
     db.foldersP.where('partition').equals(partition).toArray(),

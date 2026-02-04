@@ -23,6 +23,7 @@ function debounce<T extends (...args: unknown[]) => void>(fn: T, ms: number): T 
 let unsubscribeNotes: (() => void) | undefined
 let unsubscribeWorkspace: (() => void) | undefined
 let unsubscribeUI: (() => void) | undefined
+let isHydrating = false
 
 /**
  * Persist notes and folders to IndexedDB for the current partition (debounced).
@@ -43,7 +44,8 @@ async function persistNotesAndFolders(db: NoticDB): Promise<void> {
       await db.foldersP.bulkAdd(foldersList.map((f) => ({ ...f, partition })))
     }
   })
-  if (partition !== LOCAL_PARTITION) void triggerSync(db)
+  // Don't trigger sync during initial hydration (avoids double-sync on page load).
+  if (!isHydrating && partition !== LOCAL_PARTITION) void triggerSync(db)
 }
 
 /**
@@ -60,7 +62,8 @@ async function persistWorkspaces(db: NoticDB): Promise<void> {
       await db.workspacesP.bulkAdd(list.map((w) => ({ ...w, partition })))
     }
   })
-  if (partition !== LOCAL_PARTITION) void triggerSync(db)
+  // Don't trigger sync during initial hydration (avoids double-sync on page load).
+  if (!isHydrating && partition !== LOCAL_PARTITION) void triggerSync(db)
 }
 
 /**
@@ -100,6 +103,10 @@ export function startPersist(db: NoticDB): void {
   unsubscribeUI = useUIStore.subscribe(() => {
     persistPrefsDebounced()
   })
+
+  // Clear hydrating flag immediately after subscriptions are set up.
+  // Subscriptions fire on next change, not retroactively for hydrated data.
+  isHydrating = false
 }
 
 /**
@@ -112,4 +119,12 @@ export function stopPersist(): void {
   unsubscribeNotes = undefined
   unsubscribeWorkspace = undefined
   unsubscribeUI = undefined
+}
+
+/**
+ * Mark that hydration is in progress. Persist won't trigger sync until hydration completes.
+ * Call before loading partition data into stores.
+ */
+export function setHydrating(value: boolean): void {
+  isHydrating = value
 }
