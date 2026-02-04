@@ -246,13 +246,21 @@ function buildLocalPayload(): {
   return { notes, folders, workspaces }
 }
 
-/** Merge local + server. Workspaces: newer wins; when server wins preserve local color/icon if server lacks them; append local-only. Folders: local overwrites server. Notes: newer wins; tie → local. Matches extension. */
+/** Merge local + server. Respects server deleted*Ids (filters out before merge). Workspaces: newer wins; when server wins preserve local color/icon if server lacks them; append local-only. Folders: local overwrites server. Notes: newer wins; tie → local. Matches extension. */
 function computeMergedState(
   local: { notes: PullResponse['notes']; folders: PullResponse['folders']; workspaces: PullResponse['workspaces'] },
   server: PullResponse
 ): PullResponse {
+  // Filter out local items that the server explicitly deleted (respect server.deleted*Ids).
+  const deletedNoteIds = new Set(server.deletedNoteIds ?? [])
+  const deletedFolderIds = new Set(server.deletedFolderIds ?? [])
+  const deletedWorkspaceIds = new Set(server.deletedWorkspaceIds ?? [])
+  const filteredLocalNotes = local.notes.filter((n) => !deletedNoteIds.has(n.id))
+  const filteredLocalFolders = local.folders.filter((f) => !deletedFolderIds.has(f.id))
+  const filteredLocalWorkspaces = local.workspaces.filter((w) => !deletedWorkspaceIds.has(w.id))
+
   const serverWs = server.workspaces.length > 0 ? server.workspaces : [{ id: DEFAULT_WORKSPACE_ID, name: 'Workspace 1', isDefault: true, updatedAt: Date.now() }]
-  const localWs = local.workspaces
+  const localWs = filteredLocalWorkspaces
   const workspaceById = new Map(serverWs.map((w) => [w.id, w]))
   for (const w of localWs) {
     const existing = workspaceById.get(w.id)
@@ -283,11 +291,11 @@ function computeMergedState(
   })
 
   const folderById = new Map(server.folders.map((f) => [f.id, f]))
-  for (const f of local.folders) folderById.set(f.id, f)
+  for (const f of filteredLocalFolders) folderById.set(f.id, f)
   const folders = Array.from(folderById.values())
 
   const noteById = new Map(server.notes.map((n) => [n.id, n]))
-  for (const n of local.notes) {
+  for (const n of filteredLocalNotes) {
     const existing = noteById.get(n.id)
     if (!existing || n.lastModified >= (existing.lastModified ?? 0)) {
       noteById.set(n.id, n as (typeof server.notes)[0])
