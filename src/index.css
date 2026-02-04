@@ -33,6 +33,8 @@
   --btn-primary-bg: #111827;
   --btn-primary-hover: #1f2937;
   --text-inverse: #ffffff;
+  /** Icon/text on accent background (e.g. Done button) – always light, match extension */
+  --on-accent: #ffffff;
 
   /* Shadows */
   --shadow-sm: rgba(0, 0, 0, 0.08);
@@ -108,6 +110,8 @@ body.dark-mode {
   --btn-primary-hover: #e4e4e7; /* zinc-200 */
   --btn-primary-text: #18181b;
   --text-inverse: #18181b; /* zinc-900 – text on light buttons in dark mode */
+  /** Icon/text on accent background – white (match extension .note-detail-done-btn) */
+  --on-accent: #ffffff;
 
   /* Shadows */
   --shadow-sm: rgba(0, 0, 0, 0.2);

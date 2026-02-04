@@ -2561,16 +2561,17 @@ body.dark-mode .settings-note-preview-highcontrast {
   opacity: 1;
 }
 
+/* Done button: icon white on accent (match extension – extension uses color: #fff) */
 .note-detail-action-btn.note-detail-done-btn {
   background-color: var(--accent-primary);
   border-color: var(--accent-primary);
-  color: var(--bg-primary);
+  color: var(--on-accent);
 }
 
 .note-detail-action-btn.note-detail-done-btn:hover:not(:disabled) {
   background-color: var(--accent-primary-hover);
   border-color: var(--accent-primary-hover);
-  color: var(--bg-primary);
+  color: var(--on-accent);
 }
 
 .note-detail-action-btn svg {
