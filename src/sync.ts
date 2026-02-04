@@ -690,10 +690,26 @@ export async function triggerFullSync(db: NoticDB, options?: TriggerFullSyncOpti
     const lastPullAt = await getLastPullAt(db)
     const server = await withRetry(() => pullFromServer(db, lastPullAt > 0 ? lastPullAt : undefined))
     const local = buildLocalPayload()
-    console.log('[triggerFullSync] server:', { notes: server.notes.length, folders: server.folders.length, workspaces: server.workspaces.length, deletedNoteIds: server.deletedNoteIds?.length ?? 0 })
-    console.log('[triggerFullSync] local:', { notes: local.notes.length, folders: local.folders.length, workspaces: local.workspaces.length })
+    console.log('[triggerFullSync] server:', { 
+      notes: server.notes.length, 
+      notesWithDeletedAt: server.notes.filter(n => n.deletedAt).length,
+      folders: server.folders.length, 
+      workspaces: server.workspaces.length, 
+      deletedNoteIds: server.deletedNoteIds?.length ?? 0 
+    })
+    console.log('[triggerFullSync] local:', { 
+      notes: local.notes.length, 
+      notesWithDeletedAt: local.notes.filter(n => n.deletedAt).length,
+      folders: local.folders.length, 
+      workspaces: local.workspaces.length 
+    })
     const merged = computeMergedState(local, server)
-    console.log('[triggerFullSync] merged:', { notes: merged.notes.length, folders: merged.folders.length, workspaces: merged.workspaces.length })
+    console.log('[triggerFullSync] merged:', { 
+      notes: merged.notes.length, 
+      notesWithDeletedAt: merged.notes.filter(n => n.deletedAt).length,
+      folders: merged.folders.length, 
+      workspaces: merged.workspaces.length 
+    })
     const overwriteEntries = computeServerOverwriteLogEntries(local, server)
 
     const skipPush = options?.ignorePaused && (await getSyncPaused(db))

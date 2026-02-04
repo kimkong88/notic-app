@@ -7,7 +7,7 @@ import App from './App.tsx'
 import { db } from './db'
 import { getStoragePartition, LOCAL_PARTITION } from './db'
 import { hydrateStores } from './db/hydrate'
-import { startPersist } from './db/persist'
+import { startPersist, setHydrating } from './db/persist'
 import { triggerFullSync, startPeriodicPullCheck } from './sync'
 import { useUIStore } from './store'
 import { getGoogleClientId } from './auth'
@@ -20,13 +20,20 @@ async function init() {
     for (const reg of regs) reg.unregister()
   }
 
-  // Initial hydration from DB - no need to block persist since full sync will handle it
+  // Initial hydration from DB
   await hydrateStores(db)
+  
+  const partition = await getStoragePartition(db)
+  
+  // Set hydrating flag before startPersist to prevent persist from triggering sync during initial full sync
+  if (partition !== LOCAL_PARTITION) {
+    setHydrating(true)
+  }
+  
   startPersist(db)
 
   // Full sync on load when already signed in (matches extension: storedUserId => enableSyncAndTrigger on init).
   // Defer so app is ready. If access token expired, fetchWithAuth auto-retries with refresh.
-  const partition = await getStoragePartition(db)
   if (partition !== LOCAL_PARTITION) {
     startPeriodicPullCheck(db)
     setTimeout(async () => {

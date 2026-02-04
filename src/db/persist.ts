@@ -103,10 +103,6 @@ export function startPersist(db: NoticDB): void {
   unsubscribeUI = useUIStore.subscribe(() => {
     persistPrefsDebounced()
   })
-
-  // Clear hydrating flag immediately after subscriptions are set up.
-  // Subscriptions fire on next change, not retroactively for hydrated data.
-  isHydrating = false
 }
 
 /**
