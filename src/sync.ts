@@ -246,56 +246,102 @@ function buildLocalPayload(): {
   return { notes, folders, workspaces }
 }
 
-/** Merge local + server. Only entities present in local are kept (so local deletes are not resurrected). Server overwrites when newer. */
+/**
+ * Merge local + server.
+ * - initialSync (e.g. lastPullAt === 0): server as base, local overwrites when newer. Use when pulling into fresh/empty local so server data is not dropped.
+ * - !initialSync: only entities present in local are kept (local deletes are not resurrected); server overwrites when newer.
+ */
 function computeMergedState(
   local: { notes: PullResponse['notes']; folders: PullResponse['folders']; workspaces: PullResponse['workspaces'] },
-  server: PullResponse
+  server: PullResponse,
+  initialSync: boolean
 ): PullResponse {
   const serverWs = server.workspaces.length > 0 ? server.workspaces : [{ id: DEFAULT_WORKSPACE_ID, name: 'Workspace 1', isDefault: true, updatedAt: Date.now() }]
   const localWs = local.workspaces
-  // Workspaces: only include workspaces present in local (server overwrites when newer). Don't resurrect server-only workspaces after delete.
-  const workspaceById = new Map<string, (typeof serverWs)[0]>()
-  for (const w of localWs) workspaceById.set(w.id, { ...w, updatedAt: w.updatedAt ?? Date.now() })
-  for (const sw of serverWs) {
-    const localW = workspaceById.get(sw.id)
-    if (!localW) continue
-    const localTs = localW.updatedAt ?? 0
-    if (sw.updatedAt > localTs) {
-      workspaceById.set(sw.id, sw)
-    } else {
-      // Preserve local color/icon if server doesn't have them (matches extension)
-      workspaceById.set(sw.id, {
-        ...localW,
-        ...(localW.color != null && (sw.color == null || sw.color === '') && { color: localW.color }),
-        ...(localW.icon != null && (sw.icon == null || sw.icon === '') && { icon: localW.icon }),
-      })
-    }
-  }
-  const workspaces = Array.from(workspaceById.values()).sort((a, b) => {
-    if (a.isDefault && !b.isDefault) return -1
-    if (!a.isDefault && b.isDefault) return 1
-    return (b.updatedAt ?? 0) - (a.updatedAt ?? 0)
-  })
 
-  // Folders: only include folders present in local (server overwrites when same id). Don't resurrect server-only folders (e.g. after workspace/folder delete).
-  const folderById = new Map<string, (typeof server.folders)[0]>()
-  for (const f of local.folders) folderById.set(f.id, f)
-  for (const f of server.folders) {
-    if (folderById.has(f.id)) {
-      const localF = folderById.get(f.id)!
-      folderById.set(f.id, localF) // local overwrites server (matches extension)
-    }
-  }
-  const folders = Array.from(folderById.values())
+  let workspaces: PullResponse['workspaces']
+  let folders: PullResponse['folders']
+  let notes: PullResponse['notes']
 
-  // Notes: only include notes present in local (server overwrites when newer). Don't resurrect server-only notes (e.g. after workspace/note delete).
-  const noteById = new Map<string, (typeof server.notes)[0]>()
-  for (const n of local.notes) noteById.set(n.id, n as (typeof server.notes)[0])
-  for (const n of server.notes) {
-    const existing = noteById.get(n.id)
-    if (existing && n.lastModified > existing.lastModified) noteById.set(n.id, n)
+  if (initialSync) {
+    // Server as base; local overwrites when newer (fresh pull must get all server data).
+    const workspaceById = new Map(serverWs.map((w) => [w.id, w]))
+    for (const w of localWs) {
+      const existing = workspaceById.get(w.id)
+      const localTs = w.updatedAt ?? 0
+      if (!existing || localTs > (existing.updatedAt ?? 0)) {
+        workspaceById.set(w.id, { ...w, updatedAt: w.updatedAt ?? Date.now() })
+      } else {
+        const sw = existing
+        workspaceById.set(w.id, {
+          ...sw,
+          ...(w.color != null && (sw.color == null || sw.color === '') && { color: w.color }),
+          ...(w.icon != null && (sw.icon == null || sw.icon === '') && { icon: w.icon }),
+        })
+      }
+    }
+    for (const w of localWs) {
+      if (!workspaceById.has(w.id)) workspaceById.set(w.id, { ...w, updatedAt: w.updatedAt ?? Date.now() })
+    }
+    workspaces = Array.from(workspaceById.values()).sort((a, b) => {
+      if (a.isDefault && !b.isDefault) return -1
+      if (!a.isDefault && b.isDefault) return 1
+      return (b.updatedAt ?? 0) - (a.updatedAt ?? 0)
+    })
+
+    const folderById = new Map(server.folders.map((f) => [f.id, f]))
+    for (const f of local.folders) folderById.set(f.id, f)
+    folders = Array.from(folderById.values())
+
+    const noteById = new Map(server.notes.map((n) => [n.id, n]))
+    for (const n of local.notes) {
+      const existing = noteById.get(n.id)
+      if (!existing || n.lastModified >= (existing.lastModified ?? 0)) {
+        noteById.set(n.id, n as (typeof server.notes)[0])
+      }
+    }
+    notes = Array.from(noteById.values())
+  } else {
+    // Local deletes respected: only entities present in local; server overwrites when newer.
+    const workspaceById = new Map<string, (typeof serverWs)[0]>()
+    for (const w of localWs) workspaceById.set(w.id, { ...w, updatedAt: w.updatedAt ?? Date.now() })
+    for (const sw of serverWs) {
+      const localW = workspaceById.get(sw.id)
+      if (!localW) continue
+      if ((sw.updatedAt ?? 0) > (localW.updatedAt ?? 0)) {
+        workspaceById.set(sw.id, sw)
+      } else {
+        workspaceById.set(sw.id, {
+          ...localW,
+          ...(localW.color != null && (sw.color == null || sw.color === '') && { color: localW.color }),
+          ...(localW.icon != null && (sw.icon == null || sw.icon === '') && { icon: localW.icon }),
+        })
+      }
+    }
+    workspaces = Array.from(workspaceById.values()).sort((a, b) => {
+      if (a.isDefault && !b.isDefault) return -1
+      if (!a.isDefault && b.isDefault) return 1
+      return (b.updatedAt ?? 0) - (a.updatedAt ?? 0)
+    })
+
+    const folderById = new Map<string, (typeof server.folders)[0]>()
+    for (const f of local.folders) folderById.set(f.id, f)
+    for (const f of server.folders) {
+      if (folderById.has(f.id)) {
+        const localF = folderById.get(f.id)!
+        folderById.set(f.id, localF)
+      }
+    }
+    folders = Array.from(folderById.values())
+
+    const noteById = new Map<string, (typeof server.notes)[0]>()
+    for (const n of local.notes) noteById.set(n.id, n as (typeof server.notes)[0])
+    for (const n of server.notes) {
+      const existing = noteById.get(n.id)
+      if (existing && (n.lastModified ?? 0) > (existing.lastModified ?? 0)) noteById.set(n.id, n)
+    }
+    notes = Array.from(noteById.values())
   }
-  const notes = Array.from(noteById.values())
 
   return { notes, folders, workspaces }
 }
@@ -679,14 +725,18 @@ export async function triggerFullSync(db: NoticDB, options?: TriggerFullSyncOpti
   try {
     const partition = await getStoragePartition(db)
     const lastPullAt = await getLastPullAt(db)
+    const initialSync = lastPullAt <= 0
     const server = await withRetry(() => pullFromServer(db, lastPullAt > 0 ? lastPullAt : undefined))
     const local = buildLocalPayload()
-    const merged = computeMergedState(local, server)
+    const merged = computeMergedState(local, server, initialSync)
     const overwriteEntries = computeServerOverwriteLogEntries(local, server)
 
     const skipPush = options?.ignorePaused && (await getSyncPaused(db))
     if (!skipPush) {
-      const deleted = computeDeletedIds(server, local)
+      // On initial sync don't send deletes (local is empty; we'd otherwise tell server to delete everything).
+      const deleted = initialSync
+        ? { deletedNoteIds: [] as string[], deletedFolderIds: [] as string[], deletedWorkspaceIds: [] as string[] }
+        : computeDeletedIds(server, local)
       const pushBody: PushBody = {
         ...merged,
         deletedNoteIds: deleted.deletedNoteIds,
