@@ -7,7 +7,6 @@ import type { NoticDB } from './db/schema'
 import { fetchWithAuth, getStoredTokens } from './api/backend'
 import { getStoragePartition, lastPullAtKey } from './db/partition'
 import { loadPartitionIntoStores } from './db/hydrate'
-import { setHydrating } from './db/persist'
 import { PREFS_KEYS } from './db/prefs-keys'
 import { appendSyncChangeLog } from './sync-change-log'
 import type { SyncLogEntry } from './sync-change-log'
@@ -95,6 +94,7 @@ let syncState: SyncStatus = 'idle'
 const listeners: Array<(s: SyncStatus) => void> = []
 const serverNewerListeners: Array<() => void> = []
 let periodicPullIntervalId: ReturnType<typeof setInterval> | null = null
+let fullSyncInProgress: Promise<void> | null = null
 
 /** Cached server snapshot for delta push. Set after full sync; updated after each successful triggerSync. Cleared on sign-out. */
 let lastServerSnapshot: PullResponse | null = null
@@ -670,6 +670,12 @@ export interface TriggerFullSyncOptions {
  * Order matches extension: guard getSyncPaused → syncing → tokens → pull → local → merged → push (unless skipPush) → mergeIntoLocal(merged) → removeLocalKeysForDeletedIds(server) → setLastPullAt → synced.
  */
 export async function triggerFullSync(db: NoticDB, options?: TriggerFullSyncOptions): Promise<void> {
+  // Prevent concurrent full syncs (return existing promise if one is in progress)
+  if (fullSyncInProgress) {
+    console.log('[triggerFullSync] Already in progress, waiting for it to complete')
+    return fullSyncInProgress
+  }
+
   if (!options?.ignorePaused && (await getSyncPaused(db))) return
 
   const tokens = await getStoredTokens(db)
@@ -681,12 +687,11 @@ export async function triggerFullSync(db: NoticDB, options?: TriggerFullSyncOpti
     return
   }
 
-  // Mark as hydrating at START of full sync to prevent persist from triggering delta sync during sync operation
-  setHydrating(true)
-  setSyncState('syncing')
-  const now = () => Date.now()
+  fullSyncInProgress = (async () => {
+    setSyncState('syncing')
+    const now = () => Date.now()
 
-  try {
+    try {
     const partition = await getStoragePartition(db)
     const lastPullAt = await getLastPullAt(db)
     const server = await withRetry(() => pullFromServer(db, lastPullAt > 0 ? lastPullAt : undefined))
@@ -740,19 +745,19 @@ export async function triggerFullSync(db: NoticDB, options?: TriggerFullSyncOpti
     await setLastPullAt(db, partition, now())
     lastServerSnapshot = merged
     setSyncState('synced')
-    
-    // Clear hydrating flag AFTER full sync completes (allows persist to trigger delta sync for user changes)
-    setHydrating(false)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     await appendSyncChangeLog(db, [
       { at: now(), kind: 'error', message: `Full sync failed: ${message}` },
     ])
     setSyncState('failed')
-    // Clear hydrating flag on error too
-    setHydrating(false)
     throw err
+  } finally {
+    fullSyncInProgress = null
   }
+  })()
+
+  return fullSyncInProgress
 }
 
 /**
@@ -760,7 +765,28 @@ export async function triggerFullSync(db: NoticDB, options?: TriggerFullSyncOpti
  * notes and deleted*Ids; when no snapshot, sends full payload. Call after local changes (e.g. persist).
  * Matches extension triggerSync.
  */
+let debouncedDeltaSync: ReturnType<typeof setTimeout> | null = null
+const DELTA_SYNC_DEBOUNCE_MS = 400
+
+/**
+ * Trigger delta sync after user action (debounced to batch rapid changes).
+ * Call this explicitly after user modifies notes/folders/workspaces.
+ */
+export function triggerSyncAfterUserAction(db: NoticDB): void {
+  const partition = getStoragePartition(db)
+  partition.then(p => {
+    if (p === 'local') return
+    if (debouncedDeltaSync) clearTimeout(debouncedDeltaSync)
+    debouncedDeltaSync = setTimeout(() => {
+      console.log('[sync] User action sync triggered')
+      void triggerSync(db)
+      debouncedDeltaSync = null
+    }, DELTA_SYNC_DEBOUNCE_MS)
+  })
+}
+
 export async function triggerSync(db: NoticDB): Promise<void> {
+  console.log('[triggerSync] Delta sync starting')
   if (await getSyncPaused(db)) return
 
   const tokens = await getStoredTokens(db)

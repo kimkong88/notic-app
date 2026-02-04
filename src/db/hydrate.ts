@@ -64,7 +64,6 @@ async function ensureDefaultWorkspace(
 /**
  * Load one partition's notes, folders, workspaces and currentWorkspaceId into stores.
  * Used at init (hydrate), on sign-in (switch to user partition), and on sign-out (switch to local).
- * Note: Caller is responsible for managing isHydrating flag to prevent persist from triggering syncs.
  */
 export async function loadPartitionIntoStores(db: NoticDB, partition: string): Promise<void> {
   const [notesP, foldersP, workspacesP, cwPref, legacyCwPref] = await Promise.all([

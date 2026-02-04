@@ -64,7 +64,7 @@ import {
     setStoredUserId,
     currentWorkspaceIdKey,
 } from "../db";
-import { triggerFullSync, setSyncPaused, clearLastServerSnapshot, startPeriodicPullCheck, stopPeriodicPullCheck } from "../sync";
+import { triggerFullSync, triggerSyncAfterUserAction, setSyncPaused, clearLastServerSnapshot, startPeriodicPullCheck, stopPeriodicPullCheck } from "../sync";
 import { PREFS_KEYS } from "../db/prefs-keys";
 import {
     persistLastUser,
@@ -1213,6 +1213,7 @@ function RecentTabList({
                                         useUIStore.getState().setToastMessage(
                                             toDelete.length === 1 ? "Moved to trash" : `${toDelete.length} items moved to trash`
                                         );
+                                        triggerSyncAfterUserAction(db);
                                     }}
                                 >
                                     Delete
@@ -3207,6 +3208,7 @@ function FoldersTabList({
                                     useUIStore.getState().setToastMessage(
                                         ids.length === 1 ? "Moved to trash" : `${ids.length} items moved to trash`
                                     );
+                                    triggerSyncAfterUserAction(db);
                                 }}
                             >
                                 Delete

@@ -7,7 +7,7 @@ import App from './App.tsx'
 import { db } from './db'
 import { getStoragePartition, LOCAL_PARTITION } from './db'
 import { hydrateStores } from './db/hydrate'
-import { startPersist, setHydrating } from './db/persist'
+import { startPersist } from './db/persist'
 import { triggerFullSync, startPeriodicPullCheck } from './sync'
 import { useUIStore } from './store'
 import { getGoogleClientId } from './auth'
@@ -20,29 +20,17 @@ async function init() {
     for (const reg of regs) reg.unregister()
   }
 
-  // Initial hydration from DB
+  // Initial hydration from DB and start persist (writes store changes to IndexedDB)
   await hydrateStores(db)
-  
-  const partition = await getStoragePartition(db)
-  
-  // Set hydrating flag before startPersist to prevent persist from triggering sync during initial full sync
-  if (partition !== LOCAL_PARTITION) {
-    setHydrating(true)
-  }
-  
   startPersist(db)
 
   // Full sync on load when already signed in (matches extension: storedUserId => enableSyncAndTrigger on init).
-  // Defer so app is ready. If access token expired, fetchWithAuth auto-retries with refresh.
+  const partition = await getStoragePartition(db)
   if (partition !== LOCAL_PARTITION) {
     startPeriodicPullCheck(db)
-    setTimeout(async () => {
-      try {
-        await triggerFullSync(db, { ignorePaused: true })
-      } catch {
-        // Sync may fail (e.g. offline); status shows "Sync failed", will retry on next reload/sign-in
-      }
-    }, 0)
+    void triggerFullSync(db, { ignorePaused: true }).catch(() => {
+      // Sync may fail (e.g. offline); status shows "Sync failed", will retry on next reload/sign-in
+    })
   }
 
   // If a PiP-related promise rejects and our catch doesn't run, show the unsupported modal

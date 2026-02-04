@@ -23,11 +23,11 @@ function debounce<T extends (...args: unknown[]) => void>(fn: T, ms: number): T 
 let unsubscribeNotes: (() => void) | undefined
 let unsubscribeWorkspace: (() => void) | undefined
 let unsubscribeUI: (() => void) | undefined
-let isHydrating = false
 
 /**
  * Persist notes and folders to IndexedDB for the current partition (debounced).
  * Uses a single transaction so delete + bulkAdd are atomic and concurrent runs don't cause "Key already exists".
+ * Does NOT trigger sync - sync is triggered by user actions (updateNote, addNote, etc.) via explicit calls.
  */
 async function persistNotesAndFolders(db: NoticDB): Promise<void> {
   const partition = await getStoragePartition(db)
@@ -44,13 +44,12 @@ async function persistNotesAndFolders(db: NoticDB): Promise<void> {
       await db.foldersP.bulkAdd(foldersList.map((f) => ({ ...f, partition })))
     }
   })
-  // Don't trigger sync during initial hydration (avoids double-sync on page load).
-  if (!isHydrating && partition !== LOCAL_PARTITION) void triggerSync(db)
 }
 
 /**
  * Persist workspaces to IndexedDB for the current partition (debounced).
  * Uses a single transaction so delete + bulkAdd are atomic (avoids "Key already exists" on concurrent runs).
+ * Does NOT trigger sync - sync is triggered by user actions via explicit calls.
  */
 async function persistWorkspaces(db: NoticDB): Promise<void> {
   const partition = await getStoragePartition(db)
@@ -62,8 +61,6 @@ async function persistWorkspaces(db: NoticDB): Promise<void> {
       await db.workspacesP.bulkAdd(list.map((w) => ({ ...w, partition })))
     }
   })
-  // Don't trigger sync during initial hydration (avoids double-sync on page load).
-  if (!isHydrating && partition !== LOCAL_PARTITION) void triggerSync(db)
 }
 
 /**
@@ -83,8 +80,8 @@ async function persistPrefs(db: NoticDB): Promise<void> {
 }
 
 /**
- * Subscribe to Zustand stores and persist changes to Dexie.
- * Call once after hydrate so store updates are written to IndexedDB (offline-first).
+ * Subscribe to Zustand stores and persist changes to IndexedDB (offline-first).
+ * Call once after hydrate. Does NOT trigger sync - sync is explicit from user actions or page load.
  */
 export function startPersist(db: NoticDB): void {
   const persistData = debounce(() => void persistNotesAndFolders(db), DEBOUNCE_MS_DATA)
@@ -117,15 +114,3 @@ export function stopPersist(): void {
   unsubscribeUI = undefined
 }
 
-/**
- * Mark that hydration is in progress. Persist won't trigger sync until hydration completes.
- * Call before loading partition data into stores, and clear after sync completes.
- */
-export function setHydrating(value: boolean): void {
-  isHydrating = value
-}
-
-/** For debugging: check if currently hydrating */
-export function getHydrating(): boolean {
-  return isHydrating
-}
