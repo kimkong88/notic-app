@@ -158,6 +158,8 @@ interface RecentTabListProps {
     pendingNoteRenameId: string | null;
     onConsumePendingNoteRename: () => void;
     currentTab: "recent" | "folders";
+    /** PiP window is open (used to block Edit/Open/Move/Rename when note is active in PiP). */
+    pipIsOpen: boolean;
 }
 
 /** Same color options as PipView for Change color submenu (exact same design). */
@@ -201,10 +203,9 @@ function RecentTabList({
     );
     const openInPipActiveNoteId = useUIStore((s) => s.openInPipActiveNoteId);
     const openInPipNoteIdsFromStore = useUIStore((s) => s.openInPipNoteIds);
-    const pipIsOpenRecent = openInPipNoteIdsFromStore.length > 0;
     const isNoteActiveInPip =
         Boolean(noteContextMenuAnchor) &&
-        pipIsOpenRecent &&
+        pipIsOpenRecentProp &&
         noteContextMenuAnchor!.noteId === openInPipActiveNoteId;
     const setShareModalNoteId = useUIStore((s) => s.setShareModalNoteId);
     const setMoveToFolderModal = useUIStore((s) => s.setMoveToFolderModal);
@@ -5310,6 +5311,7 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                                         onConsumePendingNoteRename
                                     }
                                     currentTab={currentTab}
+                                    pipIsOpen={pipIsOpen}
                                 />
                             </div>
                         ) : (

@@ -1213,6 +1213,7 @@ export function MainContent() {
                   const isEditMode = detailEditNoteId === selectedNoteId
                   const shouldDisableOpen =
                     openInPipActiveNoteId === selectedNoteId && pipIsOpen
+                  const isNoteActiveInPipDetail = shouldDisableOpen
                   return (
                     <div className="note-detail-view">
                       <div className="note-detail-header">
@@ -1247,11 +1248,12 @@ export function MainContent() {
                           ) : (
                             <button
                               type="button"
-                              className="note-detail-action-btn"
+                              className={`note-detail-action-btn${isNoteActiveInPipDetail ? ' disabled' : ''}`}
                               id="noteDetailEditBtn"
-                              title="Edit"
-                              aria-label="Edit"
-                              onClick={() => setDetailEditNoteId(selectedNoteId!)}
+                              title={isNoteActiveInPipDetail ? 'Note is already open in editor' : 'Edit'}
+                              aria-label={isNoteActiveInPipDetail ? 'Note is already open in editor' : 'Edit'}
+                              disabled={isNoteActiveInPipDetail}
+                              onClick={() => !isNoteActiveInPipDetail && setDetailEditNoteId(selectedNoteId!)}
                             >
                               <Pencil size={16} />
                             </button>
@@ -1307,12 +1309,12 @@ export function MainContent() {
                       </div>
                       <div
                         ref={detailContentRef}
-                        className={`note-detail-content ${isEditMode ? 'note-detail-content-editing' : ''} ${!isEditMode ? 'note-detail-content-click-to-edit' : ''}`}
-                        role={!isEditMode ? 'button' : undefined}
-                        tabIndex={!isEditMode ? 0 : undefined}
-                        onClick={!isEditMode ? () => setDetailEditNoteId(selectedNoteId!) : undefined}
-                        onKeyDown={!isEditMode ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDetailEditNoteId(selectedNoteId!) } } : undefined}
-                        aria-label={!isEditMode ? 'Click to edit note' : undefined}
+                        className={`note-detail-content ${isEditMode ? 'note-detail-content-editing' : ''} ${!isEditMode && !isNoteActiveInPipDetail ? 'note-detail-content-click-to-edit' : ''}`}
+                        role={!isEditMode && !isNoteActiveInPipDetail ? 'button' : undefined}
+                        tabIndex={!isEditMode && !isNoteActiveInPipDetail ? 0 : undefined}
+                        onClick={!isEditMode && !isNoteActiveInPipDetail ? () => setDetailEditNoteId(selectedNoteId!) : undefined}
+                        onKeyDown={!isEditMode && !isNoteActiveInPipDetail ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setDetailEditNoteId(selectedNoteId!) } } : undefined}
+                        aria-label={!isEditMode && !isNoteActiveInPipDetail ? 'Click to edit note' : undefined}
                       >
                         {isEditMode ? (
                           <NoteEditor
