@@ -1,7 +1,6 @@
 import type { NoticDB } from './schema'
 import { PREFS_KEYS } from './prefs-keys'
-import { getStoragePartition, currentWorkspaceIdKey, LOCAL_PARTITION } from './partition'
-import { triggerSync } from '../sync'
+import { getStoragePartition, currentWorkspaceIdKey } from './partition'
 import { useNotesStore } from '../store/useNotesStore'
 import { useWorkspaceStore } from '../store/useWorkspaceStore'
 import { useUIStore } from '../store/useUIStore'
