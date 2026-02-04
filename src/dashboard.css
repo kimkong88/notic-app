@@ -886,6 +886,11 @@ body.dark-mode .sidebar-content::-webkit-scrollbar-thumb:hover {
   height: 12px;
 }
 
+/* Editing in main view indicator (same area as PiP icon; muted so it doesn’t read as “open”) */
+.sidebar-note-editing-indicator {
+  color: var(--text-tertiary, var(--text-secondary));
+}
+
 /* Match extension: flex 1 + min-width 0 so title can shrink; overflow + ellipsis for truncation */
 .sidebar-note-title {
   flex: 1;

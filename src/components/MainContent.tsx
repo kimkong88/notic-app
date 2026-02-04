@@ -528,6 +528,10 @@ export function MainContent() {
     }
     const noteId = note.sessionId
     const ui = useUIStore.getState()
+    if (ui.detailEditNoteId === noteId) {
+      ui.setToastMessage('Finish editing in main view first.')
+      return
+    }
     const ids = ui.openInPipNoteIds
     const isSubscribed = useSubscriptionStore.getState().isSubscribed
     const atLimit =
@@ -1243,8 +1247,9 @@ export function MainContent() {
               ) : !searchQuery.trim() && selectedNote ? (
                 (() => {
                   const isEditMode = detailEditNoteId === selectedNoteId
-                  const shouldDisableOpen =
-                    openInPipActiveNoteId === selectedNoteId && pipIsOpen
+                  const isEditedInMain = detailEditNoteId === selectedNoteId
+                  const isActiveInPip = openInPipActiveNoteId === selectedNoteId && pipIsOpen
+                  const shouldDisableOpen = isActiveInPip || isEditedInMain
                   const isNoteActiveInPipDetail = shouldDisableOpen
                   return (
                     <div className="note-detail-view">
@@ -1294,17 +1299,21 @@ export function MainContent() {
                             type="button"
                             className={`note-detail-action-btn ${shouldDisableOpen ? 'disabled note-detail-open-active' : ''}`}
                             title={
-                              shouldDisableOpen
-                                ? 'Note is already open in editor'
-                                : 'Open editor'
+                              isEditedInMain
+                                ? 'Finish editing in main view first'
+                                : isActiveInPip
+                                  ? 'Note is already open in editor'
+                                  : 'Open editor'
                             }
                             aria-label={
-                              shouldDisableOpen
-                                ? 'Note is already open in editor'
-                                : 'Open editor'
+                              isEditedInMain
+                                ? 'Finish editing in main view first'
+                                : isActiveInPip
+                                  ? 'Note is already open in editor'
+                                  : 'Open editor'
                             }
                             disabled={shouldDisableOpen}
-                            onClick={() => openNoteInPip(selectedNote)}
+                            onClick={() => !shouldDisableOpen && openNoteInPip(selectedNote)}
                           >
                             <ExternalLink size={16} />
                           </button>
@@ -1383,7 +1392,8 @@ export function MainContent() {
                   <div className="main-notes-list">
                     {filteredAndSortedNotes.map((note) => {
                       const isOpenInPip = openInPipNoteIds.includes(note.sessionId)
-                      const shouldDisable = isOpenInPip && pipIsOpen
+                      const isEditedInMain = detailEditNoteId === note.sessionId
+                      const shouldDisable = (isOpenInPip && pipIsOpen) || isEditedInMain
                       const displayName = note.displayName || note.title || 'Untitled'
                       return (
                         <div
@@ -1567,20 +1577,25 @@ export function MainContent() {
                             </div>
                             <button
                               type="button"
-                              className={`note-pip-icon ${openInPipActiveNoteId === item.data.sessionId && pipIsOpen ? 'disabled' : ''}`}
+                              className={`note-pip-icon ${(openInPipActiveNoteId === item.data.sessionId && pipIsOpen) || detailEditNoteId === item.data.sessionId ? 'disabled' : ''}`}
                               onClick={(e) => handlePipIconClick(e, item.data)}
                               title={
-                                openInPipActiveNoteId === item.data.sessionId && pipIsOpen
-                                  ? 'Note is already open in editor'
-                                  : 'Open editor'
+                                detailEditNoteId === item.data.sessionId
+                                  ? 'Finish editing in main view first'
+                                  : openInPipActiveNoteId === item.data.sessionId && pipIsOpen
+                                    ? 'Note is already open in editor'
+                                    : 'Open editor'
                               }
                               aria-label={
-                                openInPipActiveNoteId === item.data.sessionId && pipIsOpen
-                                  ? 'Note is already open in editor'
-                                  : 'Open editor'
+                                detailEditNoteId === item.data.sessionId
+                                  ? 'Finish editing in main view first'
+                                  : openInPipActiveNoteId === item.data.sessionId && pipIsOpen
+                                    ? 'Note is already open in editor'
+                                    : 'Open editor'
                               }
                               disabled={
-                                openInPipActiveNoteId === item.data.sessionId && pipIsOpen
+                                (openInPipActiveNoteId === item.data.sessionId && pipIsOpen) ||
+                                detailEditNoteId === item.data.sessionId
                               }
                             >
                               <ExternalLink size={14} />
@@ -1939,7 +1954,8 @@ export function MainContent() {
           const menuNote = notes[noteContextMenuAnchor!.noteId]
           if (!menuNote) return null
           const isNoteActiveInPipDetail =
-            openInPipActiveNoteId === selectedNoteId && pipIsOpen
+            (openInPipActiveNoteId === selectedNoteId && pipIsOpen) ||
+            detailEditNoteId === noteContextMenuAnchor!.noteId
           const isBookmarked = menuNote.isBookmarked === true
           return createPortal(
             <div
