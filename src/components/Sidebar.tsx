@@ -146,6 +146,8 @@ interface RecentTabListProps {
     toggleFolderExpanded: (folderId: string, inSidebar: boolean) => void;
     openInPipNoteIds: string[];
     addNoteToPip: (noteId: string, setActive?: boolean) => void;
+    /** Open PiP with this note (add to tabs, set active, open or refresh window). Used by context menu "Open". */
+    openNoteInPip: (noteId: string) => void;
     selectedNoteIds: string[];
     setSelection: (noteIds: string[], folderIds: string[]) => void;
     updateNote: (sessionId: string, patch: Partial<NoteData>) => void;
@@ -177,6 +179,7 @@ function RecentTabList({
     toggleFolderExpanded,
     openInPipNoteIds: _openInPipNoteIds,
     addNoteToPip,
+    openNoteInPip,
     selectedNoteIds,
     setSelection,
     updateNote,
@@ -884,10 +887,7 @@ function RecentTabList({
                                     type="button"
                                     className="pip-context-menu-item"
                                     onClick={() => {
-                                        addNoteToPip(
-                                            noteContextMenuAnchor.noteId,
-                                            true
-                                        );
+                                        openNoteInPip(noteContextMenuAnchor.noteId);
                                         setNoteContextMenuAnchor(null);
                                     }}
                                 >
@@ -1289,6 +1289,7 @@ function FoldersTabList({
     toggleFolderExpanded,
     openInPipNoteIds: _openInPipNoteIds,
     addNoteToPip,
+    openNoteInPip,
     pipIsOpen: _pipIsOpen,
     setIsTrashView,
     currentWorkspaceId,
@@ -2830,10 +2831,7 @@ function FoldersTabList({
                                 type="button"
                                 className="pip-context-menu-item"
                                 onClick={() => {
-                                    addNoteToPip(
-                                        noteContextMenuAnchor.noteId,
-                                        true
-                                    );
+                                    openNoteInPip(noteContextMenuAnchor.noteId);
                                     setNoteContextMenuAnchor(null);
                                 }}
                             >
@@ -3841,6 +3839,14 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
         void openPipWithNote(null, {
             isDarkMode,
             onClose: () => {
+                const ids = useUIStore.getState().openInPipNoteIds;
+                const notes = useNotesStore.getState().notes;
+                const removeNote = useNotesStore.getState().removeNote;
+                ids.forEach((id) => {
+                    const n = notes[id];
+                    if (n?.createdFromPip === true && n.hasEverHadContent !== true)
+                        removeNote(id);
+                });
                 useUIStore.getState().setOpenInPipNoteIds([]);
                 useUIStore.getState().setOpenInPipActiveNoteId(null);
             },
@@ -3849,6 +3855,48 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
             onError: () => setPipUnsupportedModalOpen(true),
         });
     };
+
+    const openNoteInPip = useCallback(
+        (noteId: string) => {
+            if (!isDocumentPipSupported()) {
+                setPipUnsupportedModalOpen(true);
+                return;
+            }
+            addNoteToPip(noteId, true);
+            setOpenInPipActiveNoteId(noteId);
+            const pipWin = getPipWindow();
+            if (pipWin && !pipWin.closed) {
+                const ui = useUIStore.getState();
+                refreshPipWindowUrl(ui.openInPipNoteIds, ui.openInPipActiveNoteId);
+                return;
+            }
+            const ui = useUIStore.getState();
+            void openPipWithNote(null, {
+                isDarkMode,
+                onClose: () => {
+                    const ids = useUIStore.getState().openInPipNoteIds;
+                    const notes = useNotesStore.getState().notes;
+                    const removeNote = useNotesStore.getState().removeNote;
+                    ids.forEach((id) => {
+                        const n = notes[id];
+                        if (n?.createdFromPip === true && n.hasEverHadContent !== true)
+                            removeNote(id);
+                    });
+                    useUIStore.getState().setOpenInPipNoteIds([]);
+                    useUIStore.getState().setOpenInPipActiveNoteId(null);
+                },
+                noteIds: ui.openInPipNoteIds,
+                activeId: ui.openInPipActiveNoteId,
+                onError: () => setPipUnsupportedModalOpen(true),
+            });
+        },
+        [
+            addNoteToPip,
+            setOpenInPipActiveNoteId,
+            isDarkMode,
+            setPipUnsupportedModalOpen,
+        ]
+    );
 
     const [pendingNoteRenameId, setPendingNoteRenameId] = useState<
         string | null
@@ -5028,6 +5076,7 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                                     toggleFolderExpanded={toggleFolderExpanded}
                                     openInPipNoteIds={openInPipNoteIds}
                                     addNoteToPip={addNoteToPip}
+                                    openNoteInPip={openNoteInPip}
                                     selectedNoteIds={selectedNoteIds}
                                     setSelection={setSelection}
                                     updateNote={updateNote}
@@ -5066,6 +5115,7 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                                     toggleFolderExpanded={toggleFolderExpanded}
                                     openInPipNoteIds={openInPipNoteIds}
                                     addNoteToPip={addNoteToPip}
+                                    openNoteInPip={openNoteInPip}
                                     pipIsOpen={pipIsOpen}
                                     setIsTrashView={setIsTrashView}
                                     currentWorkspaceId={currentWorkspaceId}

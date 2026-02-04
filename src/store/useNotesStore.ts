@@ -28,7 +28,7 @@ interface NotesActions {
   setNotes: (notes: Record<string, NoteData>) => void;
   updateNote: (sessionId: string, patch: Partial<NoteData>) => void;
   /** Create a new note and return its sessionId. */
-  addNote: (options?: { workspaceId?: string | null; folderId?: string | null }) => string;
+  addNote: (options?: { workspaceId?: string | null; folderId?: string | null; createdFromPip?: boolean }) => string;
   /** Duplicate a note (clone with new sessionId). Returns new sessionId or null if note not found. */
   duplicateNote: (sessionId: string) => string | null;
   setFolders: (folders: Record<string, Folder>) => void;
@@ -101,12 +101,15 @@ export const useNotesStore = create<NotesState & NotesActions>((set, get) => ({
       if (patch.content !== undefined) {
         let content = patch.content
         if (content.length > NOTE_CHAR_LIMIT) content = content.slice(0, NOTE_CHAR_LIMIT)
-        updated.content = content
         const trimmed = content.trim()
+        const existingTrimmed = existing.content?.trim() ?? ''
+        updated.content = content
         updated.wordCount = trimmed ? trimmed.split(/\s+/).length : 0
-        updated.lastModified = Date.now()
-        updated.title = extractTitle(content, existing.title)
+        // When content is cleared, show "Untitled" in sidebar and PiP tab (match extension).
+        updated.title = trimmed ? extractTitle(content, existing.title) : 'Untitled'
         if (trimmed) updated.hasEverHadContent = true
+        // Only bump lastModified when content actually changed (prevents "open in PiP" from moving note to top when user didn't type).
+        if (trimmed !== existingTrimmed) updated.lastModified = Date.now()
       }
       if (patch.title !== undefined) updated.lastModified = Date.now()
       return { notes: { ...state.notes, [sessionId]: updated } }
@@ -125,6 +128,7 @@ export const useNotesStore = create<NotesState & NotesActions>((set, get) => ({
       wordCount: 0,
       folderId: options?.folderId ?? undefined,
       workspaceId: wsId,
+      createdFromPip: options?.createdFromPip,
     }
     set((state) => ({ notes: { ...state.notes, [sessionId]: newNote } }))
     return sessionId

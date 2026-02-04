@@ -14,6 +14,8 @@ export interface NoteData {
   displayName?: string;
   workspaceId?: string;
   hasEverHadContent?: boolean;
+  /** True when note was created via PiP "Add note" (new tab). Used to delete it on PiP close if never had content. */
+  createdFromPip?: boolean;
   deletedAt?: number;
   color?: string;
   isBookmarked?: boolean;

@@ -123,16 +123,38 @@ export function Layout() {
     }
   }, [handleMouseMove, handleMouseUp])
 
+  /** When note titles or colors change in the main app, push to PiP so tab bar stays in sync (e.g. rename/color from sidebar). */
+  useEffect(() => {
+    const unsubNotes = useNotesStore.subscribe(() => {
+      const pipWin = getPipWindow()
+      if (!pipWin || pipWin.closed) return
+      const ui = useUIStore.getState()
+      if (ui.openInPipNoteIds.length === 0) return
+      const notes = useNotesStore.getState().notes
+      const noteTitles: Record<string, string> = {}
+      const noteColors: Record<string, string> = {}
+      ui.openInPipNoteIds.forEach((id) => {
+        const n = notes[id]
+        noteTitles[id] = n?.displayName ?? n?.title ?? 'Untitled'
+        if (n?.color) noteColors[id] = n.color
+      })
+      sendNotesUpdateToPip(ui.openInPipNoteIds, ui.openInPipActiveNoteId, { noteTitles, noteColors })
+    })
+    return unsubNotes
+  }, [])
+
   useEffect(() => {
     const handler = (event: MessageEvent) => {
       const t = event.data?.type
       if (!t) return
-      // PiP note update: same as extension saveContent – accept so sidebar and PiP tabs stay in sync
+      // PiP note update: same as extension saveContent – accept so sidebar and PiP tabs stay in sync.
+      // Ignore updates for notes that no longer exist (e.g. we just deleted an empty PiP-created note) so PiP cannot resurrect them (fixes QA1 flicker and QA3 Untitled left behind).
       if (t === 'notic-pip-note-update') {
         const fromPip =
           event.origin === window.location.origin ||
           (getPipWindow() != null && event.source === getPipWindow())
         if (fromPip && event.data?.noteId != null && event.data?.patch != null) {
+          if (useNotesStore.getState().notes[event.data.noteId] == null) return
           useNotesStore.getState().updateNote(event.data.noteId, event.data.patch)
         }
         return
@@ -142,7 +164,15 @@ export function Layout() {
       if (t === 'notic-pip-ready') {
         if (pipWin && event.source === pipWin) {
           const state = useUIStore.getState()
-          sendNotesUpdateToPip(state.openInPipNoteIds, state.openInPipActiveNoteId)
+          const notes = useNotesStore.getState().notes
+          const noteTitles: Record<string, string> = {}
+          const noteColors: Record<string, string> = {}
+          state.openInPipNoteIds.forEach((id) => {
+            const n = notes[id]
+            noteTitles[id] = n?.displayName ?? n?.title ?? 'Untitled'
+            if (n?.color) noteColors[id] = n.color
+          })
+          sendNotesUpdateToPip(state.openInPipNoteIds, state.openInPipActiveNoteId, { noteTitles, noteColors })
         }
         return
       }
@@ -151,26 +181,50 @@ export function Layout() {
       if (t === 'notic-pip-add-note') {
         const addNote = useNotesStore.getState().addNote
         const currentWorkspaceId = useWorkspaceStore.getState().currentWorkspaceId
-        const newId = addNote({ workspaceId: currentWorkspaceId })
+        const newId = addNote({ workspaceId: currentWorkspaceId, createdFromPip: true })
         ui.addNoteToPip(newId, true)
         const after = useUIStore.getState()
-        sendNotesUpdateToPip(after.openInPipNoteIds, after.openInPipActiveNoteId)
+        const notes = useNotesStore.getState().notes
+        const noteTitles: Record<string, string> = {}
+        const noteColors: Record<string, string> = {}
+        after.openInPipNoteIds.forEach((id) => {
+          const n = notes[id]
+          noteTitles[id] = n?.displayName ?? n?.title ?? 'Untitled'
+          if (n?.color) noteColors[id] = n.color
+        })
+        sendNotesUpdateToPip(after.openInPipNoteIds, after.openInPipActiveNoteId, { noteTitles, noteColors })
       } else if (t === 'notic-pip-close-tab' && event.data.noteId) {
         const noteId = event.data.noteId as string
         const isEmpty = event.data.isEmpty === true
         ui.removeNoteFromPip(noteId)
         if (isEmpty) {
           const note = useNotesStore.getState().notes[noteId]
-          if (note && note.hasEverHadContent !== true) {
+          if (note && note.createdFromPip === true && note.hasEverHadContent !== true) {
             useNotesStore.getState().removeNote(noteId)
           }
         }
         const after = useUIStore.getState()
-        sendNotesUpdateToPip(after.openInPipNoteIds, after.openInPipActiveNoteId)
+        const notesAfterClose = useNotesStore.getState().notes
+        const noteTitlesClose: Record<string, string> = {}
+        const noteColorsClose: Record<string, string> = {}
+        after.openInPipNoteIds.forEach((id) => {
+          const n = notesAfterClose[id]
+          noteTitlesClose[id] = n?.displayName ?? n?.title ?? 'Untitled'
+          if (n?.color) noteColorsClose[id] = n.color
+        })
+        sendNotesUpdateToPip(after.openInPipNoteIds, after.openInPipActiveNoteId, { noteTitles: noteTitlesClose, noteColors: noteColorsClose })
       } else if (t === 'notic-pip-switch-tab' && event.data.noteId) {
         ui.setPipActiveNote(event.data.noteId)
         const after = useUIStore.getState()
-        sendNotesUpdateToPip(after.openInPipNoteIds, after.openInPipActiveNoteId)
+        const notesAfterSwitch = useNotesStore.getState().notes
+        const noteTitlesSwitch: Record<string, string> = {}
+        const noteColorsSwitch: Record<string, string> = {}
+        after.openInPipNoteIds.forEach((id) => {
+          const n = notesAfterSwitch[id]
+          noteTitlesSwitch[id] = n?.displayName ?? n?.title ?? 'Untitled'
+          if (n?.color) noteColorsSwitch[id] = n.color
+        })
+        sendNotesUpdateToPip(after.openInPipNoteIds, after.openInPipActiveNoteId, { noteTitles: noteTitlesSwitch, noteColors: noteColorsSwitch })
       }
     }
     window.addEventListener('message', handler)

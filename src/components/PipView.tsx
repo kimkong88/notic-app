@@ -84,6 +84,9 @@ export function PipView() {
   const [hoveredSubmenu, setHoveredSubmenu] = useState<'color' | null>(null)
   const submenuCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pipEditorFlushRef = useRef<(() => void) | null>(null)
+  /** Step 1: titles (and colors) from main app notesUpdate – main is source of truth for tab bar */
+  const [noteTitlesFromMain, setNoteTitlesFromMain] = useState<Record<string, string>>({})
+  const [noteColorsFromMain, setNoteColorsFromMain] = useState<Record<string, string>>({})
 
   const effectiveActiveId = noteIds.includes(activeTabId ?? '') ? activeTabId : noteIds[0] ?? null
   const activeNote = effectiveActiveId ? notes[effectiveActiveId] : null
@@ -125,6 +128,8 @@ export function PipView() {
       if (d && d.type === 'notesUpdate' && Array.isArray(d.noteIds)) {
         setNoteIds(d.noteIds)
         setActiveTabId(d.activeId ?? d.noteIds[0] ?? null)
+        if (d.noteTitles != null && typeof d.noteTitles === 'object') setNoteTitlesFromMain(d.noteTitles)
+        if (d.noteColors != null && typeof d.noteColors === 'object') setNoteColorsFromMain(d.noteColors)
       }
       if (d && d.type === 'flushSave') {
         pipEditorFlushRef.current?.()
@@ -352,7 +357,8 @@ export function PipView() {
       <div className="pip-tabs">
         {sortedNoteIds.map((id, index) => {
           const n = notes[id]
-          const title = n?.displayName || n?.title || 'Untitled'
+          const title = noteTitlesFromMain[id] ?? n?.displayName ?? n?.title ?? 'Untitled'
+          const tabColor = noteColorsFromMain[id] ?? n?.color
           const isActive = id === effectiveActiveId
           const isPinned = pinnedTabIds.has(id)
           const nextId = sortedNoteIds[index + 1]
@@ -371,8 +377,8 @@ export function PipView() {
               aria-selected={isActive}
               title={title}
             >
-              {n?.color && (
-                <span className="pip-tab-color" style={{ backgroundColor: n.color }} aria-hidden />
+              {tabColor && (
+                <span className="pip-tab-color" style={{ backgroundColor: tabColor }} aria-hidden />
               )}
               {isPinned && (
                 <span className="pip-tab-pin" title="Pinned">

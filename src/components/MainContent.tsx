@@ -394,6 +394,7 @@ export function MainContent() {
   const currentView = useUIStore((s) => s.currentView)
   const isDarkMode = useUIStore((s) => s.isDarkMode)
   const openInPipNoteIds = useUIStore((s) => s.openInPipNoteIds)
+  const openInPipActiveNoteId = useUIStore((s) => s.openInPipActiveNoteId)
   const addNoteToPip = useUIStore((s) => s.addNoteToPip)
   const setOpenInPipActiveNoteId = useUIStore((s) => s.setOpenInPipActiveNoteId)
   const searchQuery = useNotesStore((s) => s.searchQuery)
@@ -505,6 +506,13 @@ export function MainContent() {
     void openPipWithNote(null, {
       isDarkMode,
       onClose: () => {
+        const ids = useUIStore.getState().openInPipNoteIds
+        const notes = useNotesStore.getState().notes
+        const removeNote = useNotesStore.getState().removeNote
+        ids.forEach((id) => {
+          const n = notes[id]
+          if (n?.createdFromPip === true && n.hasEverHadContent !== true) removeNote(id)
+        })
         useUIStore.getState().setOpenInPipNoteIds([])
         useUIStore.getState().setOpenInPipActiveNoteId(null)
       },
@@ -1161,7 +1169,7 @@ export function MainContent() {
                 (() => {
                   const isEditMode = detailEditNoteId === selectedNoteId
                   const shouldDisableOpen =
-                    openInPipNoteIds.includes(selectedNoteId!) && pipIsOpen
+                    openInPipActiveNoteId === selectedNoteId && pipIsOpen
                   return (
                     <div className="note-detail-view">
                       <div className="note-detail-header">
@@ -1482,20 +1490,20 @@ export function MainContent() {
                             </div>
                             <button
                               type="button"
-                              className={`note-pip-icon ${openInPipNoteIds.includes(item.data.sessionId) && pipIsOpen ? 'disabled' : ''}`}
+                              className={`note-pip-icon ${openInPipActiveNoteId === item.data.sessionId && pipIsOpen ? 'disabled' : ''}`}
                               onClick={(e) => handlePipIconClick(e, item.data)}
                               title={
-                                openInPipNoteIds.includes(item.data.sessionId) && pipIsOpen
+                                openInPipActiveNoteId === item.data.sessionId && pipIsOpen
                                   ? 'Note is already open in editor'
                                   : 'Open editor'
                               }
                               aria-label={
-                                openInPipNoteIds.includes(item.data.sessionId) && pipIsOpen
+                                openInPipActiveNoteId === item.data.sessionId && pipIsOpen
                                   ? 'Note is already open in editor'
                                   : 'Open editor'
                               }
                               disabled={
-                                openInPipNoteIds.includes(item.data.sessionId) && pipIsOpen
+                                openInPipActiveNoteId === item.data.sessionId && pipIsOpen
                               }
                             >
                               <ExternalLink size={14} />
@@ -1537,7 +1545,7 @@ export function MainContent() {
                 <div className="main-notes-list">
                   {filteredAndSortedNotes.map((note) => {
                     const isOpenInPip = openInPipNoteIds.includes(note.sessionId)
-                    const shouldDisable = isOpenInPip && pipIsOpen
+                    const shouldDisable = openInPipActiveNoteId === note.sessionId && pipIsOpen
                     const displayName = stripMarkdownForDisplay(note.displayName || note.title || 'Untitled')
                     return (
                       <div

@@ -170,11 +170,23 @@ export function refreshPipWindowUrl(noteIds: string[], activeId: string | null):
 
 /**
  * Send notesUpdate to PiP window so the iframe updates in place (no reload, no flicker).
+ * Step 1 single-source-of-truth: include noteTitles (and noteColors) from main store so PiP tab bar uses main as source of truth.
  */
-export function sendNotesUpdateToPip(noteIds: string[], activeId: string | null): void {
+export function sendNotesUpdateToPip(
+  noteIds: string[],
+  activeId: string | null,
+  options?: { noteTitles?: Record<string, string>; noteColors?: Record<string, string> }
+): void {
   const win = getPipWindow()
   if (!win || win.closed) return
-  win.postMessage({ type: 'notesUpdate', noteIds, activeId }, '*')
+  const payload: { type: 'notesUpdate'; noteIds: string[]; activeId: string | null; noteTitles?: Record<string, string>; noteColors?: Record<string, string> } = {
+    type: 'notesUpdate',
+    noteIds,
+    activeId,
+  }
+  if (options?.noteTitles != null) payload.noteTitles = options.noteTitles
+  if (options?.noteColors != null) payload.noteColors = options.noteColors
+  win.postMessage(payload, '*')
 }
 
 /** Ask PiP to flush current note save so content is persisted before main app changes selection (match notic). */
