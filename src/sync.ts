@@ -451,7 +451,8 @@ function computeServerOverwriteLogEntries(local: LocalPayload, server: PullRespo
 }
 
 /**
- * Filter to selective push: local-only + local-newer notes; folders/workspaces sent in full.
+ * Filter to selective push: local-only + local-newer-or-equal notes; folders/workspaces sent in full.
+ * Uses >= (not >) to include metadata-only changes where lastModified matches (e.g. deletedAt set with same timestamp).
  * Matches extension filterPayloadToLocalNewer.
  */
 function filterPayloadToLocalNewer(local: LocalPayload, server: PullResponse): LocalPayload {
@@ -459,7 +460,7 @@ function filterPayloadToLocalNewer(local: LocalPayload, server: PullResponse): L
   const filteredNotes = local.notes.filter((n) => {
     const serverNote = serverNoteById.get(n.id)
     if (!serverNote) return true
-    return n.lastModified > serverNote.lastModified
+    return n.lastModified >= serverNote.lastModified
   })
   return { notes: filteredNotes, folders: local.folders, workspaces: local.workspaces }
 }
