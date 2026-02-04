@@ -438,6 +438,7 @@ export function MainContent() {
   const setMoveToFolderModal = useUIStore((s) => s.setMoveToFolderModal)
   const shareModalNoteId = useUIStore((s) => s.shareModalNoteId)
   const setShareModalNoteId = useUIStore((s) => s.setShareModalNoteId)
+  const setToastMessage = useUIStore((s) => s.setToastMessage)
   const authUser = useAuthStore((s) => s.user)
 
   const [proRequiredModal, setProRequiredModal] = useState<{
