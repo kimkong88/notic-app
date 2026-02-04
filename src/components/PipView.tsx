@@ -74,6 +74,7 @@ export function PipView() {
   )
   const setOpenInPipNoteIds = useUIStore((s) => s.setOpenInPipNoteIds)
   const setOpenInPipActiveNoteId = useUIStore((s) => s.setOpenInPipActiveNoteId)
+  const setToastMessage = useUIStore((s) => s.setToastMessage)
   const currentWorkspaceId = useWorkspaceStore((s) => s.currentWorkspaceId)
   const isSubscribed = useSubscriptionStore((s) => s.isSubscribed)
   const contentTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
