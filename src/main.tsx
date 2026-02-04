@@ -8,7 +8,6 @@ import { db } from './db'
 import { getStoragePartition, LOCAL_PARTITION } from './db'
 import { hydrateStores } from './db/hydrate'
 import { startPersist } from './db/persist'
-import { refreshTokens } from './api/backend'
 import { triggerFullSync, startPeriodicPullCheck } from './sync'
 import { useUIStore } from './store'
 import { getGoogleClientId } from './auth'
@@ -26,13 +25,12 @@ async function init() {
   startPersist(db)
 
   // Full sync on load when already signed in (matches extension: storedUserId => enableSyncAndTrigger on init).
-  // Defer so app is ready; refresh tokens first so expired access token doesn't cause sync to fail.
+  // Defer so app is ready. If access token expired, fetchWithAuth auto-retries with refresh.
   const partition = await getStoragePartition(db)
   if (partition !== LOCAL_PARTITION) {
     startPeriodicPullCheck(db)
     setTimeout(async () => {
       try {
-        await refreshTokens(db)
         await triggerFullSync(db, { ignorePaused: true })
       } catch {
         // Sync may fail (e.g. offline); status shows "Sync failed", will retry on next reload/sign-in

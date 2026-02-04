@@ -98,8 +98,8 @@ export async function authenticateWithGoogleToken(
 
 /** Clear tokens, sign out, switch to local partition, and show session-expired modal. Call when 401 persists after refresh (or refresh returns 401). */
 async function handleSessionExpired(db: NoticDB): Promise<void> {
-  const { loadPartitionIntoStores, LOCAL_PARTITION } = await import('./db')
-  const { clearLastServerSnapshot, stopPeriodicPullCheck } = await import('./sync')
+  const { loadPartitionIntoStores, LOCAL_PARTITION } = await import('../db')
+  const { clearLastServerSnapshot, stopPeriodicPullCheck } = await import('../sync')
   
   useAuthStore.getState().signOut()
   useSubscriptionStore.getState().setSubscribed(null)
@@ -111,31 +111,46 @@ async function handleSessionExpired(db: NoticDB): Promise<void> {
   useUIStore.getState().setSessionExpiredModalOpen(true)
 }
 
-/** POST /auth/refresh; on success updates stored tokens. On 401, signs out and shows session-expired modal. */
+/** In-flight refresh promise to prevent concurrent refresh requests (race condition). */
+let refreshPromise: Promise<boolean> | null = null
+
+/** POST /auth/refresh; on success updates stored tokens. On 401, signs out and shows session-expired modal. Prevents concurrent refresh attempts. */
 export async function refreshTokens(db: NoticDB): Promise<boolean> {
-  const tokens = await getStoredTokens(db)
-  if (!tokens?.refreshToken) return false
-  const base = getApiBaseUrl()
-  try {
-    const res = await fetch(`${base}/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken: tokens.refreshToken }),
-    })
-    if (res.status === 401) {
-      void handleSessionExpired(db)
-      return false
-    }
-    if (!res.ok) return false
-    const data = (await res.json()) as { tokens?: { access?: { token?: string }; refresh?: { token?: string } } }
-    const access = data?.tokens?.access?.token
-    const refresh = data?.tokens?.refresh?.token
-    if (typeof access !== 'string' || typeof refresh !== 'string') return false
-    await setStoredTokens(db, { accessToken: access, refreshToken: refresh })
-    return true
-  } catch {
-    return false
+  // If refresh is already in progress, wait for it instead of starting a new one
+  if (refreshPromise) {
+    return refreshPromise
   }
+
+  refreshPromise = (async () => {
+    const tokens = await getStoredTokens(db)
+    if (!tokens?.refreshToken) return false
+    const base = getApiBaseUrl()
+    try {
+      const res = await fetch(`${base}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: tokens.refreshToken }),
+      })
+      if (res.status === 401) {
+        void handleSessionExpired(db)
+        return false
+      }
+      if (!res.ok) return false
+      const data = (await res.json()) as { tokens?: { access?: { token?: string }; refresh?: { token?: string } } }
+      const access = data?.tokens?.access?.token
+      const refresh = data?.tokens?.refresh?.token
+      if (typeof access !== 'string' || typeof refresh !== 'string') return false
+      await setStoredTokens(db, { accessToken: access, refreshToken: refresh })
+      return true
+    } catch {
+      return false
+    } finally {
+      // Clear the promise so future calls can refresh again
+      refreshPromise = null
+    }
+  })()
+
+  return refreshPromise
 }
 
 type FetchWithAuthInit = RequestInit & { headers?: HeadersInit }
