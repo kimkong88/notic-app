@@ -142,7 +142,7 @@
 }
 
 .workspace-btn:hover {
-  background-color: var(--bg-hover);
+  background-color: var(--bg-tertiary);
 }
 
 .workspace-icon {
@@ -150,7 +150,7 @@
   height: 24px;
   border-radius: 8px;
   background-color: var(--accent-primary);
-  color: var(--text-inverse);
+  color: var(--on-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -211,7 +211,7 @@
   min-width: 24px;
   border-radius: 8px;
   background-color: var(--accent-primary);
-  color: var(--text-inverse);
+  color: var(--on-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -227,7 +227,7 @@
 }
 
 .workspace-dropdown-item:hover {
-  background: var(--bg-hover);
+  background: var(--bg-tertiary);
 }
 
 .workspace-dropdown-item-active {
@@ -350,7 +350,7 @@
   height: 44px;
   padding: 0;
   background-color: var(--accent-primary);
-  color: var(--text-inverse);
+  color: var(--on-accent);
   border: none;
   border-radius: 10px;
   cursor: pointer;
@@ -361,10 +361,25 @@
   box-shadow: 0 2px 4px var(--shadow-sm);
 }
 
+.open-notes-btn svg,
+.open-notes-btn svg path {
+  color: inherit;
+  stroke: currentColor;
+}
+
 .open-notes-btn:hover:not(:disabled) {
   background-color: var(--accent-primary-hover);
+  color: var(--on-accent);
   box-shadow: 0 4px 8px var(--shadow-md);
   transform: translateY(-1px);
+}
+
+body.dark-mode .open-notes-btn,
+body.dark-mode .open-notes-btn:hover:not(:disabled),
+body.dark-mode .open-notes-btn svg,
+body.dark-mode .open-notes-btn svg path {
+  color: var(--on-accent);
+  stroke: var(--on-accent);
 }
 
 .open-notes-btn:disabled {
@@ -1128,7 +1143,7 @@ body.dark-mode .sidebar-content::-webkit-scrollbar-thumb:hover {
   flex-shrink: 0;
   font-size: 13px;
   font-weight: 600;
-  color: #fff;
+  color: var(--on-accent);
   line-height: 1;
 }
 
@@ -2561,7 +2576,7 @@ body.dark-mode .settings-note-preview-highcontrast {
   opacity: 1;
 }
 
-/* Done button: icon white on accent (match extension – extension uses color: #fff) */
+/* Done button: icon on accent uses --on-accent (match extension) */
 .note-detail-action-btn.note-detail-done-btn {
   background-color: var(--accent-primary);
   border-color: var(--accent-primary);
@@ -2574,9 +2589,47 @@ body.dark-mode .settings-note-preview-highcontrast {
   color: var(--on-accent);
 }
 
+/* Force Done button SVG to use button color (match extension – Lucide uses stroke, so currentColor must come from here) */
+.note-detail-action-btn.note-detail-done-btn svg,
+.note-detail-action-btn.note-detail-done-btn:hover:not(:disabled) svg {
+  color: inherit;
+  stroke: currentColor;
+}
+
+/* Dark mode: ensure Done icon uses on-accent (explicit stroke so Lucide SVG inherits) */
+body.dark-mode .note-detail-action-btn.note-detail-done-btn,
+body.dark-mode .note-detail-action-btn.note-detail-done-btn:hover:not(:disabled),
+body.dark-mode .note-detail-action-btn.note-detail-done-btn svg,
+body.dark-mode .note-detail-action-btn.note-detail-done-btn:hover:not(:disabled) svg {
+  color: var(--on-accent);
+}
+body.dark-mode .note-detail-action-btn.note-detail-done-btn svg,
+body.dark-mode .note-detail-action-btn.note-detail-done-btn:hover:not(:disabled) svg {
+  stroke: var(--on-accent);
+}
+body.dark-mode .note-detail-action-btn.note-detail-done-btn svg path,
+body.dark-mode .note-detail-action-btn.note-detail-done-btn:hover:not(:disabled) svg path {
+  stroke: var(--on-accent);
+}
+
 .note-detail-action-btn svg {
   width: 14px;
   height: 14px;
+}
+
+/* Dark mode: Open editor / PiP and other action buttons – force icon light (match extension) */
+body.dark-mode .note-detail-action-btn:not(.note-detail-done-btn) {
+  color: var(--text-secondary);
+}
+body.dark-mode .note-detail-action-btn:not(.note-detail-done-btn) svg,
+body.dark-mode .note-detail-action-btn:not(.note-detail-done-btn) svg path {
+  color: var(--text-secondary);
+  stroke: var(--text-secondary);
+}
+body.dark-mode .note-detail-action-btn.note-detail-open-active:not(.note-detail-done-btn) svg,
+body.dark-mode .note-detail-action-btn.note-detail-open-active:not(.note-detail-done-btn) svg path {
+  color: var(--accent-primary);
+  stroke: var(--accent-primary);
 }
 
 .note-detail-content {
@@ -3179,24 +3232,24 @@ body.pip-page.dark-mode[data-note-theme="high-contrast"] .pip-content .note-cont
 }
 /* Links visible in note-theme presets */
 body.pip-page[data-note-theme="sepia"] .pip-content .note-editor-link {
-  color: #4338ca !important;
+  color: var(--note-theme-sepia-link) !important;
 }
 body.pip-page[data-note-theme="sepia"] .pip-content .note-editor-link:hover {
-  color: #3730a3 !important;
+  color: var(--note-theme-sepia-link-hover) !important;
 }
 body.pip-page[data-note-theme="dark"] .pip-content .note-editor-link {
-  color: #818cf8 !important;
+  color: var(--note-theme-dark-link) !important;
 }
 body.pip-page[data-note-theme="dark"] .pip-content .note-editor-link:hover {
-  color: #a5b4fc !important;
+  color: var(--note-theme-dark-link-hover) !important;
 }
 body.pip-page[data-note-theme="high-contrast"] .pip-content .note-editor-link,
 body.pip-page.dark-mode[data-note-theme="high-contrast"] .pip-content .note-editor-link {
-  color: #4f46e5 !important;
+  color: var(--note-theme-hc-link) !important;
 }
 body.pip-page[data-note-theme="high-contrast"] .pip-content .note-editor-link:hover,
 body.pip-page.dark-mode[data-note-theme="high-contrast"] .pip-content .note-editor-link:hover {
-  color: #4338ca !important;
+  color: var(--note-theme-hc-link-hover) !important;
 }
 /* Quote and hr borders in note themes */
 body.pip-page[data-note-theme="sepia"] .pip-content .note-editor-quote {
@@ -3843,7 +3896,7 @@ body.dark-mode .modal-btn-primary:hover {
   justify-content: center;
 }
 .note-detail-action-shared {
-  color: var(--accent-primary, #3b82f6);
+  color: var(--accent-primary);
 }
 
 /* Pro required / Upgrade CTA (match notic extension paygate) */

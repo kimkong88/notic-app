@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { NoteData, Folder, SortOption } from './types';
 import { BOOKMARKS_SENTINEL, ROOT_SENTINEL } from './types';
 import { extractTitle, NOTE_CHAR_LIMIT } from '../utils/noteUtils';
+import { getFolderAndDescendantIds } from '../utils/folderUtils';
 
 type TabKind = 'recent' | 'folders';
 
@@ -35,7 +36,7 @@ interface NotesActions {
   addFolder: (options: { name?: string; parentId?: string | null; workspaceId?: string | null }) => string;
   /** Update folder name, displayName, color, or parentId (move). */
   updateFolder: (folderId: string, patch: Partial<Pick<Folder, 'name' | 'displayName' | 'color' | 'parentId'>>) => void;
-  /** Delete folder; notes inside become folderless. */
+  /** Delete folder and all nested subfolders; notes in this folder tree are moved to trash. */
   removeFolder: (folderId: string) => void;
   setCurrentTab: (tab: TabKind) => void;
   setSelectedNoteId: (id: string | null) => void;
@@ -151,22 +152,33 @@ export const useNotesStore = create<NotesState & NotesActions>((set, get) => ({
     set((state) => {
       const folder = state.folders[folderId]
       if (!folder) return state
-      const folders = { ...state.folders }
-      delete folders[folderId]
+      const folderIdsToRemove = getFolderAndDescendantIds(folderId, state.folders)
+      const now = Date.now()
       const notes = { ...state.notes }
+      const trashedNoteIds = new Set<string>()
       for (const id of Object.keys(notes)) {
-        if ((notes[id] as NoteData).folderId === folderId) {
-          notes[id] = { ...notes[id], folderId: undefined }
+        const n = notes[id] as NoteData
+        if (n.folderId != null && folderIdsToRemove.has(n.folderId) && n.deletedAt == null) {
+          notes[id] = { ...n, deletedAt: now }
+          trashedNoteIds.add(id)
         }
       }
-      const selectedSidebarContext =
-        state.selectedSidebarContext === folderId ? ROOT_SENTINEL : state.selectedSidebarContext
-      const selectedFolderIds = state.selectedFolderIds.filter((id) => id !== folderId)
+      const folders = { ...state.folders }
+      folderIdsToRemove.forEach((id) => delete folders[id])
+      const selectedSidebarContext = folderIdsToRemove.has(state.selectedSidebarContext ?? '')
+        ? ROOT_SENTINEL
+        : state.selectedSidebarContext
+      const selectedFolderIds = state.selectedFolderIds.filter((id) => !folderIdsToRemove.has(id))
+      const selectedNoteId =
+        state.selectedNoteId != null && trashedNoteIds.has(state.selectedNoteId)
+          ? null
+          : state.selectedNoteId
       return {
         folders,
         notes,
         selectedSidebarContext,
         selectedFolderIds,
+        selectedNoteId,
       }
     }),
   setCurrentTab: (tab) => set({ currentTab: tab }),

@@ -1,6 +1,6 @@
 import { useMemo, useCallback, useEffect, useRef, useState, Fragment } from 'react'
 import { useUIStore, useWorkspaceStore, useNotesStore } from '../store'
-import { Search, ExternalLink, FileText, Pencil, Check, Share2, MoreHorizontal, Folder as FolderIcon, HardDrive, ChevronDown, WifiOff, Cloud, AlertCircle, Loader2, Copy } from 'lucide-react'
+import { Search, ExternalLink, FileText, Pencil, Check, Share2, MoreHorizontal, Folder as FolderIcon, HardDrive, ChevronDown, WifiOff, Cloud, AlertCircle, Loader2, Copy, Pause } from 'lucide-react'
 import { SettingsView } from './SettingsView'
 import {
   getContentPreview,
@@ -176,11 +176,13 @@ function SyncStatusButton({ setCurrentView: _setCurrentView }: { setCurrentView:
       ? Loader2
       : syncStatus === 'failed'
         ? AlertCircle
-        : !isSignedIn
-          ? HardDrive
-          : !isOnline
-            ? WifiOff
-            : Cloud
+        : syncPaused
+          ? Pause
+          : !isSignedIn
+            ? HardDrive
+            : !isOnline
+              ? WifiOff
+              : Cloud
   const syncStatusClass = syncStatus === 'syncing' ? 'syncing' : syncStatus === 'failed' ? 'failed' : syncStatus === 'synced' ? 'synced' : ''
 
   const lastSyncText = lastSyncAt ? formatDate(lastSyncAt) : 'Never'
@@ -339,7 +341,7 @@ import {
 } from '../pip/documentPip'
 import { NoteEditor } from './NoteEditor'
 
-type BreadcrumbClick = 'workspace' | 'recent' | 'folders' | 'trash' | 'bookmarks' | 'date' | 'folder' | 'note' | 'settings'
+type BreadcrumbClick = 'workspace' | 'recent' | 'folders' | 'trash' | 'bookmarks' | 'date' | 'folder' | 'note' | 'settings' | 'integrations'
 interface BreadcrumbItem {
   text: string
   active: boolean
@@ -786,7 +788,10 @@ export function MainContent() {
     items.push({ text: workspaceName, active: false, click: 'workspace' })
 
     if (currentView === 'settings') {
-      items.push({ text: 'Settings', active: true })
+      items.push({ text: 'Settings', active: settingsSubView === 'main', click: 'settings' })
+      if (settingsSubView === 'integrations') {
+        items.push({ text: 'Integrations', active: true })
+      }
       return items
     }
 
@@ -942,6 +947,12 @@ export function MainContent() {
         setSelectedNoteId(null)
       } else if (crumb === 'note' && id) {
         setSelectedNoteId(id)
+      } else if (crumb === 'settings') {
+        setCurrentView('settings')
+        setSettingsSubView('main')
+      } else if (crumb === 'integrations') {
+        setCurrentView('settings')
+        setSettingsSubView('integrations')
       }
     },
     [
@@ -1200,7 +1211,7 @@ export function MainContent() {
                             initialContent={selectedNote.content ?? ''}
                             onChange={handleNoteDetailContentChange}
                             onFlush={handleNoteDetailFlush}
-                            placeholder="Start writing..."
+                            placeholder=""
                             className="note-detail-lexical-root"
                             showToolbar
                           />

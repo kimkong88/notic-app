@@ -247,3 +247,79 @@ export async function unpublishNote(
   if (res.status === 402) return { ok: false, paymentRequired: true }
   return { ok: res.ok }
 }
+
+/** Notion connection status from GET /notion/status (match extension api-client). */
+export interface NotionStatus {
+  connected: boolean
+  notionWorkspaceId?: string
+  notionWorkspaceName?: string | null
+  syncRootPageId?: string | null
+  lastSyncAt?: string | null
+}
+
+/** GET /notion/oauth/authorize-url (requires JWT). Returns URL to open for Notion OAuth. */
+export async function getNotionAuthorizeUrl(db: NoticDB): Promise<{ url: string } | null> {
+  const res = await fetchWithAuth(db, '/notion/oauth/authorize-url')
+  if (!res.ok) return null
+  const data = (await res.json()) as { url?: string }
+  return typeof data?.url === 'string' ? { url: data.url } : null
+}
+
+/** GET /notion/status (requires JWT). */
+export async function getNotionStatus(db: NoticDB): Promise<NotionStatus | null> {
+  const res = await fetchWithAuth(db, '/notion/status')
+  if (!res.ok) return null
+  const data = (await res.json()) as NotionStatus
+  return data?.connected === true || data?.connected === false ? data : null
+}
+
+/** POST /notion/sync-root (requires JWT). syncRootPageIdOrUrl: Notion page ID or full page URL. */
+export async function setNotionSyncRoot(
+  db: NoticDB,
+  syncRootPageIdOrUrl: string
+): Promise<boolean> {
+  const res = await fetchWithAuth(db, '/notion/sync-root', {
+    method: 'POST',
+    body: JSON.stringify({ syncRootPageIdOrUrl: syncRootPageIdOrUrl.trim() }),
+  })
+  return res.ok
+}
+
+/** POST /notion/sync (requires JWT). Returns paymentRequired when backend returns 402 (Pro required). */
+export async function syncToNotion(
+  db: NoticDB
+): Promise<{ ok: boolean; message?: string; paymentRequired?: boolean }> {
+  const res = await fetchWithAuth(db, '/notion/sync', { method: 'POST' })
+  if (res.status === 402) return { ok: false, paymentRequired: true }
+  if (!res.ok) {
+    const text = await res.text()
+    let message: string | undefined
+    try {
+      const json = JSON.parse(text) as { message?: string }
+      message = json?.message
+    } catch {
+      message = text || `Sync failed: ${res.status}`
+    }
+    return { ok: false, message }
+  }
+  return { ok: true }
+}
+
+/** GET /export/obsidian (requires JWT). Returns { files: [{ path, content }] } for Obsidian export. */
+export interface ObsidianExportFile {
+  path: string
+  content: string
+}
+
+export type GetObsidianExportResult =
+  | { files: ObsidianExportFile[]; paymentRequired?: false }
+  | { paymentRequired: true }
+
+/** GET /export/obsidian. paymentRequired: true when backend returns 402 (Pro required). */
+export async function getObsidianExport(db: NoticDB): Promise<GetObsidianExportResult | null> {
+  const res = await fetchWithAuth(db, '/export/obsidian')
+  if (res.status === 402) return { paymentRequired: true }
+  if (!res.ok) return null
+  const data = (await res.json()) as { files?: ObsidianExportFile[] }
+  return Array.isArray(data?.files) ? { files: data.files } : null
+}

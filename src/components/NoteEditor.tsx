@@ -133,6 +133,15 @@ function ReadOnlyPlugin() {
   return null
 }
 
+/** Ensure editor is editable when not read-only (detail edit mode). */
+function EditablePlugin() {
+  const [editor] = useLexicalComposerContext()
+  useEffect(() => {
+    editor.setEditable(true)
+  }, [editor])
+  return null
+}
+
 /** Flush current content on unmount and beforeunload so we don't lose data (match notic PiP). */
 function FlushOnUnmountPlugin({ onFlush }: { onFlush?: (content: string) => void }) {
   const [editor] = useLexicalComposerContext()
@@ -269,6 +278,7 @@ export function NoteEditor({
     <div className={`note-editor ${className}`.trim()} data-editor-key={editorKey} data-read-only={readOnly || undefined}>
       <LexicalComposer initialConfig={initialConfig}>
         {readOnly && <ReadOnlyPlugin />}
+        {!readOnly && <EditablePlugin />}
         {showToolbar && !readOnly && <EditorToolbarPlugin />}
         <div className="note-editor-body">
           <RichTextPlugin

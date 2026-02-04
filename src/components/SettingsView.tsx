@@ -1,11 +1,26 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useUIStore, useWorkspaceStore, useNotesStore } from '../store'
+import { useAuthStore } from '../store/useAuthStore'
 import { useSubscriptionStore } from '../store/useSubscriptionStore'
+import { db } from '../db'
 import { getPipWindow } from '../pip/documentPip'
-import notionIconUrl from '../assets/notion.svg'
-import obsidianIconUrl from '../assets/obsidian.svg'
+/** Icon paths: files in public (copy of extension assets), not inline SVG. */
+const NOTION_ICON_URL = '/notion.svg'
+const OBSIDIAN_ICON_URL = '/obsidian.svg'
 import { ArrowLeft } from 'lucide-react'
-import { exportWorkspaceAsZip, downloadExportBlob } from '../utils/exportZip'
+import {
+  getNotionAuthorizeUrl,
+  getNotionStatus,
+  setNotionSyncRoot,
+  syncToNotion,
+  getObsidianExport,
+  type NotionStatus,
+} from '../api/backend'
+import {
+  exportWorkspaceAsZip,
+  downloadExportBlob,
+  obsidianFilesToZipBlob,
+} from '../utils/exportZip'
 import { importFromZip } from '../utils/importZip'
 
 const NOTE_THEME_KEY = 'notic_noteTheme'
@@ -48,6 +63,7 @@ export function SettingsView() {
   const currentWorkspaceId = useWorkspaceStore((s) => s.currentWorkspaceId)
   const workspaces = useWorkspaceStore((s) => s.workspaces)
   const notes = useNotesStore((s) => s.notes)
+  const authUser = useAuthStore((s) => s.user)
   const isSubscribed = useSubscriptionStore((s) => s.isSubscribed)
   const addFolder = useNotesStore((s) => s.addFolder)
   const addNote = useNotesStore((s) => s.addNote)
@@ -55,11 +71,19 @@ export function SettingsView() {
 
   const settingsSubView = useUIStore((s) => s.settingsSubView)
   const setSettingsSubView = useUIStore((s) => s.setSettingsSubView)
+  const setToastMessage = useUIStore((s) => s.setToastMessage)
   const [noteTheme, setNoteThemeState] = useState<NoteThemeId>(getStoredNoteTheme)
   const [isExporting, setIsExporting] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
   const [importModal, setImportModal] = useState<{ title: string; message: string } | null>(null)
   const importInputRef = useRef<HTMLInputElement>(null)
+
+  const [notionStatus, setNotionStatus] = useState<NotionStatus | null>(null)
+  const [notionStatusLoading, setNotionStatusLoading] = useState(false)
+  const [notionSyncRootInput, setNotionSyncRootInput] = useState('')
+  const [notionSetRootLoading, setNotionSetRootLoading] = useState(false)
+  const [notionSyncLoading, setNotionSyncLoading] = useState(false)
+  const [obsidianExportLoading, setObsidianExportLoading] = useState(false)
 
   const handleExportZip = useCallback(async () => {
     setIsExporting(true)
@@ -138,6 +162,31 @@ export function SettingsView() {
     return () => window.removeEventListener('storage', handler)
   }, [])
 
+  // Refresh subscription when opening Settings (signed in) so plan shows Pro/Free instead of — (match extension)
+  useEffect(() => {
+    if (authUser) void useSubscriptionStore.getState().refresh(db)
+  }, [authUser])
+
+  // Load Notion status when Integrations subview is shown and user is signed in
+  useEffect(() => {
+    if (settingsSubView !== 'integrations' || !authUser) {
+      setNotionStatus(null)
+      return
+    }
+    let cancelled = false
+    setNotionStatusLoading(true)
+    getNotionStatus(db)
+      .then((status) => {
+        if (!cancelled) setNotionStatus(status)
+      })
+      .finally(() => {
+        if (!cancelled) setNotionStatusLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [settingsSubView, authUser])
+
   const setNoteTheme = useCallback((theme: NoteThemeId) => {
     setNoteThemeState(theme)
     setStoredNoteTheme(theme)
@@ -149,7 +198,118 @@ export function SettingsView() {
   const workspaceIcon = (currentWorkspace as { icon?: string } | undefined)?.icon ?? ''
   const workspaceColor = (currentWorkspace as { color?: string } | undefined)?.color ?? ''
 
+  const handleNotionConnect = useCallback(async () => {
+    if (!authUser) {
+      setToastMessage('Sign in to connect Notion.')
+      return
+    }
+    const result = await getNotionAuthorizeUrl(db)
+    if (!result?.url) {
+      setToastMessage('Could not get Notion connect link. Try again.')
+      return
+    }
+    window.open(result.url, '_blank', 'noopener,noreferrer')
+    setToastMessage('Complete the connection in the opened tab, then return here.')
+  }, [authUser])
+
+  const handleNotionSetSyncRoot = useCallback(async () => {
+    const value = notionSyncRootInput.trim()
+    if (!value) {
+      setToastMessage('Enter a Notion page URL or page ID.')
+      return
+    }
+    setNotionSetRootLoading(true)
+    try {
+      const ok = await setNotionSyncRoot(db, value)
+      if (ok) {
+        setToastMessage('Sync page set.')
+        const status = await getNotionStatus(db)
+        setNotionStatus(status)
+      } else {
+        setToastMessage('Failed to set sync page. Check the URL or page ID.')
+      }
+    } finally {
+      setNotionSetRootLoading(false)
+    }
+  }, [notionSyncRootInput])
+
+  const handleSyncToNotion = useCallback(async () => {
+    setNotionSyncLoading(true)
+    try {
+      const result = await syncToNotion(db)
+      if (result.paymentRequired) {
+        setToastMessage('Notion sync is a Pro feature. Upgrade at getnotic.io/billing.')
+        return
+      }
+      if (result.ok) {
+        setToastMessage('Synced to Notion.')
+        const status = await getNotionStatus(db)
+        setNotionStatus(status)
+      } else {
+        setToastMessage(result.message ?? 'Sync failed.')
+      }
+    } finally {
+      setNotionSyncLoading(false)
+    }
+  }, [])
+
+  const handleObsidianExport = useCallback(async () => {
+    if (!authUser) {
+      setToastMessage('Sign in to export to Obsidian.')
+      return
+    }
+    setObsidianExportLoading(true)
+    try {
+      const data = await getObsidianExport(db)
+      if (data && 'paymentRequired' in data && data.paymentRequired) {
+        setToastMessage('Obsidian export is a Pro feature. Upgrade at getnotic.io/billing.')
+        return
+      }
+      if (!data?.files?.length) {
+        setToastMessage('No notes to export.')
+        return
+      }
+      const blob = obsidianFilesToZipBlob(data.files)
+      const name = `notic-obsidian-export-${new Date().toISOString().slice(0, 10)}.zip`
+      downloadExportBlob(blob, name)
+      setToastMessage(`Exported ${data.files.length} file(s). Extract the ZIP into your Obsidian vault.`)
+    } catch (e) {
+      console.error('Obsidian export failed', e)
+      setToastMessage('Export failed. Please try again.')
+    } finally {
+      setObsidianExportLoading(false)
+    }
+  }, [authUser])
+
   if (settingsSubView === 'integrations') {
+    const notionStatusText =
+      notionStatusLoading
+        ? 'Loading…'
+        : !authUser
+          ? 'Sign in to connect Notion.'
+          : !notionStatus
+            ? 'Unable to load status. Try again.'
+            : !notionStatus.connected
+              ? 'Not connected.'
+              : (() => {
+                  const parts: string[] = [`Connected to ${notionStatus.notionWorkspaceName ?? 'Notion'}.`]
+                  if (notionStatus.lastSyncAt) {
+                    try {
+                      parts.push(`Last synced: ${new Date(notionStatus.lastSyncAt).toLocaleString()}.`)
+                    } catch {
+                      parts.push('Last synced: —')
+                    }
+                  } else {
+                    parts.push('Not synced yet.')
+                  }
+                  return parts.join(' ')
+                })()
+    const notionSyncRootPlaceholder =
+      notionStatus?.syncRootPageId
+        ? `Sync root set (ID: …${notionStatus.syncRootPageId?.slice(-8) ?? ''})`
+        : 'Paste page URL or page ID'
+    const showNotionSteps2And3 = notionStatus?.connected === true
+
     return (
       <div className="settings-page settings-integrations-page">
         <div className="settings-page-content">
@@ -168,7 +328,7 @@ export function SettingsView() {
           </div>
           <section className="settings-section settings-section-notion">
             <div className="settings-notion-header">
-              <img src={notionIconUrl} alt="" className="settings-notion-section-icon" aria-hidden />
+              <img src={NOTION_ICON_URL} alt="" className="settings-notion-section-icon" aria-hidden />
               <h4 className="settings-section-title">Notion</h4>
             </div>
             <ol className="settings-notion-steps">
@@ -177,51 +337,86 @@ export function SettingsView() {
                 <div className="settings-notion-step-body">
                   <strong className="settings-notion-step-title">Connect your account</strong>
                   <p className="settings-notion-step-desc">Opens Notion in a new tab so you can authorize. You only need to do this once.</p>
-                  <div className="settings-notion-status">—</div>
+                  <div className="settings-notion-status">{notionStatusText}</div>
                   <div className="settings-notion-actions">
-                    <button type="button" className="modal-btn modal-btn-primary settings-notion-connect-btn" disabled>
-                      <img src={notionIconUrl} alt="" className="settings-notion-btn-icon" aria-hidden />
-                      <span className="settings-notion-connect-label">Connect to Notion</span>
+                    <button
+                      type="button"
+                      className={`modal-btn ${notionStatus?.connected ? 'modal-btn-secondary' : 'modal-btn-primary'} settings-notion-connect-btn`}
+                      disabled={notionStatusLoading}
+                      onClick={handleNotionConnect}
+                    >
+                      <img src={NOTION_ICON_URL} alt="" className="settings-notion-btn-icon" aria-hidden />
+                      <span className="settings-notion-connect-label">
+                        {notionStatus?.connected ? 'Reconnect' : 'Connect to Notion'}
+                      </span>
                     </button>
                   </div>
                 </div>
               </li>
-              <li className="settings-notion-step content-view-hidden">
+              <li className={`settings-notion-step ${showNotionSteps2And3 ? '' : 'content-view-hidden'}`}>
                 <span className="settings-notion-step-num" aria-hidden>2</span>
                 <div className="settings-notion-step-body">
                   <strong className="settings-notion-step-title">Choose where to sync</strong>
                   <p className="settings-notion-step-desc">Paste the full Notion page URL (e.g. <code>https://notion.so/My-Page-abc123...</code>) or just the page ID. Notes will be pushed under this page.</p>
                   <div className="settings-notion-sync-row">
-                    <input type="text" className="settings-input" placeholder="Paste page URL or page ID" aria-label="Notion sync page URL or ID" readOnly />
-                    <button type="button" className="modal-btn modal-btn-secondary" disabled>Set page</button>
+                    <input
+                      type="text"
+                      className="settings-input"
+                      placeholder={notionSyncRootPlaceholder}
+                      aria-label="Notion sync page URL or ID"
+                      value={notionSyncRootInput}
+                      onChange={(e) => setNotionSyncRootInput(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="modal-btn modal-btn-secondary"
+                      disabled={!showNotionSteps2And3 || notionSetRootLoading}
+                      onClick={handleNotionSetSyncRoot}
+                    >
+                      {notionSetRootLoading ? 'Setting…' : 'Set page'}
+                    </button>
                   </div>
                 </div>
               </li>
-              <li className="settings-notion-step settings-notion-step-sync content-view-hidden">
+              <li className={`settings-notion-step settings-notion-step-sync ${showNotionSteps2And3 ? '' : 'content-view-hidden'}`}>
                 <span className="settings-notion-step-num" aria-hidden>3</span>
                 <div className="settings-notion-step-body">
                   <strong className="settings-notion-step-title">Push your notes</strong>
                   <p className="settings-notion-step-desc">Sends your current workspace notes to the page you set above. Run this whenever you want to update Notion.</p>
-                  <button type="button" className="modal-btn modal-btn-primary" disabled>Sync to Notion</button>
+                  <button
+                    type="button"
+                    className="modal-btn modal-btn-primary"
+                    disabled={!showNotionSteps2And3 || notionSyncLoading}
+                    onClick={handleSyncToNotion}
+                  >
+                    {notionSyncLoading ? 'Syncing…' : 'Sync to Notion'}
+                  </button>
                 </div>
               </li>
             </ol>
           </section>
           <section className="settings-section settings-section-obsidian">
             <div className="settings-obsidian-header">
-              <img src={obsidianIconUrl} alt="" className="settings-obsidian-section-icon" aria-hidden />
+              <img src={OBSIDIAN_ICON_URL} alt="" className="settings-obsidian-section-icon" aria-hidden />
               <h4 className="settings-section-title">Obsidian</h4>
             </div>
-            <p className="settings-section-desc">Export all your notes as Markdown files into your Obsidian vault.</p>
+            <p className="settings-section-desc">Export all your notes as Markdown files. Download a ZIP and extract it into your Obsidian vault.</p>
             <div className="settings-obsidian-how">
-              <strong className="settings-obsidian-how-title">How to sync with Obsidian</strong>
+              <strong className="settings-obsidian-how-title">How to use with Obsidian</strong>
               <ol className="settings-obsidian-steps">
-                <li>Click <strong>Export to Obsidian</strong> and choose your Obsidian vault folder (or a folder inside it).</li>
-                <li>Notes are written as <code>.md</code> files with the same workspace and folder structure.</li>
-                <li>Open the folder in Obsidian as a vault if it isn't already. Re-export anytime to update files (same paths are overwritten).</li>
+                <li>Click <strong>Export to Obsidian</strong> to download a ZIP of your notes.</li>
+                <li>Extract the ZIP into your Obsidian vault folder (or a folder inside it).</li>
+                <li>Notes are <code>.md</code> files with the same workspace and folder structure. Re-export anytime to update.</li>
               </ol>
             </div>
-            <button type="button" className="modal-btn modal-btn-primary" disabled>Export to Obsidian</button>
+            <button
+              type="button"
+              className="modal-btn modal-btn-primary"
+              disabled={obsidianExportLoading}
+              onClick={handleObsidianExport}
+            >
+              {obsidianExportLoading ? 'Exporting…' : 'Export to Obsidian'}
+            </button>
           </section>
         </div>
       </div>
@@ -343,15 +538,23 @@ export function SettingsView() {
 
         <section className="settings-section settings-section-plan">
           <h4 className="settings-section-title">Plan</h4>
-          <p className="settings-section-desc">Manage your Notic plan and billing.</p>
+          <p className="settings-section-desc">
+            {authUser ? 'Manage your Notic plan and billing.' : 'Sign in to view and manage your Notic plan and billing.'}
+          </p>
           <div className="settings-plan-row">
             <span className="settings-plan-label">Your plan</span>
             <span className="settings-plan-value">
-              {isSubscribed === null ? '—' : isSubscribed ? 'Pro' : 'Free'}
+              {!authUser
+                ? 'Sign in to see your plan'
+                : isSubscribed === null
+                  ? '—'
+                  : isSubscribed
+                    ? 'Pro'
+                    : 'Free'}
             </span>
           </div>
           <a href="https://getnotic.io/billing" target="_blank" rel="noopener noreferrer" className="settings-plan-link">
-            {isSubscribed ? 'Manage plan' : 'Upgrade plan'}
+            {!authUser ? 'Sign in to manage plan' : isSubscribed ? 'Manage plan' : 'Upgrade plan'}
           </a>
         </section>
 

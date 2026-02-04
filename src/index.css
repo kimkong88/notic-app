@@ -150,6 +150,13 @@ body.pip-page {
   --note-theme-hc-dark-text: #ffffff;
   --note-theme-hc-dark-border: #ffffff;
   --note-theme-hc-dark-th-bg: #262626;
+  /* Link colors per note theme (no hex in dashboard.css) */
+  --note-theme-sepia-link: #4338ca;
+  --note-theme-sepia-link-hover: #3730a3;
+  --note-theme-dark-link: #818cf8;
+  --note-theme-dark-link-hover: #a5b4fc;
+  --note-theme-hc-link: #4f46e5;
+  --note-theme-hc-link-hover: #4338ca;
 }
 body.pip-page.dark-mode {
   --bg-tertiary: #3f3f46; /* zinc-700 – override body.pip-page light value */

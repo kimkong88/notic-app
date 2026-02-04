@@ -74,6 +74,26 @@ export function getFolderAncestorIds(
 }
 
 /**
+ * Collect folder id and all descendant folder ids (recursive).
+ * Used for delete folder (move notes to trash + remove folder tree) and export.
+ */
+export function getFolderAndDescendantIds(
+  folderId: string,
+  folders: Record<string, Folder>
+): Set<string> {
+  const out = new Set<string>()
+  function add(id: string): void {
+    if (out.has(id)) return
+    out.add(id)
+    Object.values(folders)
+      .filter((f) => f.parentId === id)
+      .forEach((f) => add(f.id))
+  }
+  add(folderId)
+  return out
+}
+
+/**
  * Count notes in a folder and all descendant folders (recursive).
  * Excludes soft-deleted notes. Matches extension getFolderNoteCountRecursive.
  */

@@ -3115,9 +3115,9 @@ function FoldersTabList({
                         <div className="modal-header">
                             <h3 className="modal-title">Delete Folder</h3>
                             <p className="modal-message">
-                                Are you sure you want to delete &quot;
-                                {folderDeleteConfirm.displayName}&quot;? Notes
-                                in this folder will become folderless.
+                                Delete &quot;{folderDeleteConfirm.displayName}&quot; and any
+                                subfolders? All notes inside will be moved to Trash. You can
+                                restore them from Trash before emptying.
                             </p>
                         </div>
                         <div className="modal-actions">
@@ -4427,7 +4427,7 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                                         ? {
                                               backgroundColor:
                                                   workspaceIconColor,
-                                              color: "#fff",
+                                              color: "var(--on-accent)",
                                           }
                                         : undefined
                                 }
@@ -4552,7 +4552,7 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                                                         ? {
                                                               backgroundColor:
                                                                   color,
-                                                              color: "#fff",
+                                                              color: "var(--on-accent)",
                                                           }
                                                         : undefined
                                                 }
@@ -4713,16 +4713,16 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                                         className="modal-btn pip-modal-btn-danger"
                                         onClick={async () => {
                                             setSignOutConfirmOpen(false);
+                                            authSignOut();
+                                            useSubscriptionStore
+                                                .getState()
+                                                .setSubscribed(null);
+                                            setSelectedNoteId(null);
+                                            setSelection([], []);
                                             stopPeriodicPullCheck();
                                             useUIStore.getState().setServerNewerBannerVisible(false);
                                             clearLastServerSnapshot();
                                             await clearStoredTokens(db);
-                                            useSubscriptionStore
-                                                .getState()
-                                                .setSubscribed(null);
-                                            authSignOut();
-                                            setSelectedNoteId(null);
-                                            setSelection([], []);
                                             await loadPartitionIntoStores(
                                                 db,
                                                 LOCAL_PARTITION

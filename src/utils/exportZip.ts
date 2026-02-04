@@ -105,6 +105,21 @@ export function exportWorkspaceAsZip(
   return new Blob([zipBytes as BlobPart], { type: 'application/zip' })
 }
 
+/**
+ * Build a ZIP blob from Obsidian export files (path -> content). Used for "Export to Obsidian" download in web app.
+ */
+export function obsidianFilesToZipBlob(
+  files: Array<{ path: string; content: string }>
+): Blob {
+  const entries: Record<string, Uint8Array> = {}
+  for (const { path: p, content } of files) {
+    const path = p.replace(/^\/+/, '').replace(/\/+/g, '/')
+    if (path) entries[path] = strToU8(content)
+  }
+  const zipBytes = zipSync(entries, { level: 6 })
+  return new Blob([zipBytes as BlobPart], { type: 'application/zip' })
+}
+
 /** Trigger download of the exported ZIP or any blob. */
 export function downloadExportBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob)
