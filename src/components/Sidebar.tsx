@@ -490,6 +490,10 @@ function RecentTabList({
                         {bookmarkedNotes.map((note, idx) => {
                             const isNoteActive =
                                 selectedNoteId === note.sessionId;
+                            const isOpenInPip =
+                                openInPipNoteIdsFromStore.includes(
+                                    note.sessionId
+                                );
                             const displayName =
                                 note.displayName || note.title || "Untitled";
                             const index = idx;
@@ -503,6 +507,10 @@ function RecentTabList({
                                     } ${
                                         isNoteSelected(note.sessionId)
                                             ? "sidebar-note-item-selected"
+                                            : ""
+                                    } ${
+                                        isOpenInPip
+                                            ? "sidebar-note-item-open-in-pip"
                                             : ""
                                     }`}
                                     data-session-id={note.sessionId}
@@ -604,6 +612,15 @@ function RecentTabList({
                                             .md
                                         </span>
                                     )}
+                                    {isOpenInPip && (
+                                        <span
+                                            className="sidebar-note-open-indicator"
+                                            aria-hidden
+                                            title="Open in editor"
+                                        >
+                                            <ExternalLink size={12} />
+                                        </span>
+                                    )}
                                 </div>
                             );
                         })}
@@ -693,6 +710,10 @@ function RecentTabList({
                                 {groupNotes.map((note, idx) => {
                                     const isNoteActive =
                                         selectedNoteId === note.sessionId;
+                                    const isOpenInPipDate =
+                                        openInPipNoteIdsFromStore.includes(
+                                            note.sessionId
+                                        );
                                     const displayName =
                                         note.displayName ||
                                         note.title ||
@@ -722,6 +743,10 @@ function RecentTabList({
                                             } ${
                                                 isNoteSelected(note.sessionId)
                                                     ? "sidebar-note-item-selected"
+                                                    : ""
+                                            } ${
+                                                isOpenInPipDate
+                                                    ? "sidebar-note-item-open-in-pip"
                                                     : ""
                                             }`}
                                             data-session-id={note.sessionId}
@@ -826,6 +851,15 @@ function RecentTabList({
                                                         displayName
                                                     )}
                                                     .md
+                                                </span>
+                                            )}
+                                            {isOpenInPipDate && (
+                                                <span
+                                                    className="sidebar-note-open-indicator"
+                                                    aria-hidden
+                                                    title="Open in editor"
+                                                >
+                                                    <ExternalLink size={12} />
                                                 </span>
                                             )}
                                         </div>
@@ -2134,6 +2168,8 @@ function FoldersTabList({
                                         i.type === "note" &&
                                         i.id === note.sessionId
                                 );
+                            const isOpenInPipFolder =
+                                _openInPipNoteIds.includes(note.sessionId);
                             /* Notes align with parent folder (same indent), not one level deeper */
                             const noteDepth = Math.min(depth, 6);
                             return (
@@ -2146,6 +2182,10 @@ function FoldersTabList({
                                     } ${
                                         selectedNoteIds.includes(note.sessionId)
                                             ? "sidebar-note-item-selected"
+                                            : ""
+                                    } ${
+                                        isOpenInPipFolder
+                                            ? "sidebar-note-item-open-in-pip"
                                             : ""
                                     }`}
                                     data-session-id={note.sessionId}
@@ -2254,6 +2294,15 @@ function FoldersTabList({
                                             .md
                                         </span>
                                     )}
+                                    {isOpenInPipFolder && (
+                                        <span
+                                            className="sidebar-note-open-indicator"
+                                            aria-hidden
+                                            title="Open in editor"
+                                        >
+                                            <ExternalLink size={12} />
+                                        </span>
+                                    )}
                                 </div>
                             );
                         })}
@@ -2300,6 +2349,8 @@ function FoldersTabList({
                                 note.displayName ?? note.title ?? "Untitled";
                             const isRenaming =
                                 noteRenameState?.noteId === note.sessionId;
+                            const isOpenInPipBm =
+                                _openInPipNoteIds.includes(note.sessionId);
                             const noteIndex =
                                 foldersOrderedSelectables.findIndex(
                                     (i) =>
@@ -2316,6 +2367,10 @@ function FoldersTabList({
                                     } ${
                                         selectedNoteIds.includes(note.sessionId)
                                             ? "sidebar-note-item-selected"
+                                            : ""
+                                    } ${
+                                        isOpenInPipBm
+                                            ? "sidebar-note-item-open-in-pip"
                                             : ""
                                     }`}
                                     data-session-id={note.sessionId}
@@ -2424,6 +2479,15 @@ function FoldersTabList({
                                             .md
                                         </span>
                                     )}
+                                    {isOpenInPipBm && (
+                                        <span
+                                            className="sidebar-note-open-indicator"
+                                            aria-hidden
+                                            title="Open in editor"
+                                        >
+                                            <ExternalLink size={12} />
+                                        </span>
+                                    )}
                                 </div>
                             );
                         })}
@@ -2476,6 +2540,8 @@ function FoldersTabList({
                                 note.displayName ?? note.title ?? "Untitled";
                             const isRenaming =
                                 noteRenameState?.noteId === note.sessionId;
+                            const isOpenInPipRoot =
+                                _openInPipNoteIds.includes(note.sessionId);
                             const noteIndex =
                                 foldersOrderedSelectables.findIndex(
                                     (i) =>
@@ -2598,6 +2664,15 @@ function FoldersTabList({
                                                 displayName
                                             )}
                                             .md
+                                        </span>
+                                    )}
+                                    {isOpenInPipRoot && (
+                                        <span
+                                            className="sidebar-note-open-indicator"
+                                            aria-hidden
+                                            title="Open in editor"
+                                        >
+                                            <ExternalLink size={12} />
                                         </span>
                                     )}
                                 </div>

@@ -872,6 +872,20 @@ body.dark-mode .sidebar-content::-webkit-scrollbar-thumb:hover {
   height: 14px;
 }
 
+/* Open in PiP indicator (rightmost) – align with folder count on folder header */
+.sidebar-note-open-indicator {
+  flex-shrink: 0;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  color: var(--accent-primary);
+}
+
+.sidebar-note-open-indicator svg {
+  width: 12px;
+  height: 12px;
+}
+
 /* Match extension: flex 1 + min-width 0 so title can shrink; overflow + ellipsis for truncation */
 .sidebar-note-title {
   flex: 1;
