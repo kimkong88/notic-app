@@ -48,14 +48,11 @@ export default defineConfig({
                 ],
             },
             workbox: {
-                // Exclude webmanifest and logo.svg from glob to avoid duplicate precache entry:
-                // we add them via additionalManifestEntries with revision: null. Glob would add
-                // the same URLs with __WB_REVISION__, causing "add-to-cache-list-conflicting-entries".
-                globPatterns: ["**/*.{js,css,html,ico,png,woff2}"],
-                globIgnores: ["**/logo.svg"],
+                // Include SVG files in glob - logo.svg will be picked up automatically
+                // Only add manifest.webmanifest to additionalManifestEntries since it's not matched by glob
+                globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
                 additionalManifestEntries: [
                     { url: "/manifest.webmanifest", revision: null },
-                    { url: "/logo.svg", revision: null },
                 ],
                 // Serve index.html for any navigation when offline (SPA offline-first)
                 navigateFallback: "/index.html",
