@@ -49,6 +49,8 @@ interface UIState {
   tutorialInProgress: boolean;
   /** When true, tutorial is ready for user to open a note (step 3). */
   tutorialReadyForNoteOpen: boolean;
+  /** When true, show visual hint to create a note (toolbar + button). */
+  tutorialShowCreateHint: boolean;
 }
 
 interface UIActions {
@@ -89,6 +91,7 @@ interface UIActions {
   setSyncLimitModalOpen: (value: boolean) => void;
   setTutorialInProgress: (value: boolean) => void;
   setTutorialReadyForNoteOpen: (value: boolean) => void;
+  setTutorialShowCreateHint: (value: boolean) => void;
 }
 
 const SIDEBAR_WIDTH_DEFAULT = 280;
@@ -116,6 +119,7 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
   syncLimitModalOpen: false,
   tutorialInProgress: false,
   tutorialReadyForNoteOpen: false,
+  tutorialShowCreateHint: false,
 
   setIsDarkMode: (value) => set({ isDarkMode: value }),
   setSidebarCollapsed: (value) => set({ sidebarCollapsed: value }),
@@ -161,6 +165,7 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
   setSyncLimitModalOpen: (value) => set({ syncLimitModalOpen: value }),
   setTutorialInProgress: (value) => set({ tutorialInProgress: value }),
   setTutorialReadyForNoteOpen: (value) => set({ tutorialReadyForNoteOpen: value }),
+  setTutorialShowCreateHint: (value) => set({ tutorialShowCreateHint: value }),
 }));
 
 export { SIDEBAR_WIDTH_MIN, SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_DEFAULT };

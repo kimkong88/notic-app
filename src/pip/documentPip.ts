@@ -323,7 +323,7 @@ function getPipIframeCloseScript(): string {
     '    if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage(d, "*");',
     '    return;',
     '  }',
-    '  if (e.source === window.opener && d && typeof d === "object" && (d.type === "notic-pip-tutorial-note-created" || d.type === "notic-pip-tutorial-note-bookmarked" || d.type === "notic-pip-tutorial-note-opened" || d.type === "tutorial-ready-for-note-open")) {',
+    '  if (e.source === window.opener && d && typeof d === "object" && (d.type === "notic-pip-tutorial-note-created" || d.type === "notic-pip-tutorial-note-bookmarked" || d.type === "notic-pip-tutorial-note-opened" || d.type === "tutorial-ready-for-note-open" || d.type === "tutorial-show-create-hint")) {',
     '    var iframe = document.getElementById("notic-pip-iframe");',
     '    if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage(d, "*");',
     '    return;',

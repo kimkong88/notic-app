@@ -146,6 +146,24 @@ export function TutorialPipView() {
   
   const noteTaskCompleted = noteCreated && noteBookmarked && noteOpened
   const noteTaskReadyForOpen = noteCreated && noteBookmarked && !noteOpened
+  const showCreateNoteHint = tabTaskCompleted && !noteCreated
+  
+  // Notify dashboard to show "create note" hint
+  useEffect(() => {
+    const parentWindow = window.parent && window.parent !== window ? window.parent : window
+    try {
+      if (parentWindow.opener && !parentWindow.opener.closed) {
+        parentWindow.opener.postMessage({ type: 'tutorial-show-create-hint', show: showCreateNoteHint }, '*')
+        if (import.meta.env.DEV) {
+          console.log('[TutorialPiP] Sent show-create-hint message to dashboard:', showCreateNoteHint)
+        }
+      }
+    } catch (e) {
+      if (import.meta.env.DEV) {
+        console.error('[TutorialPiP] Failed to notify dashboard:', e)
+      }
+    }
+  }, [showCreateNoteHint])
   
   // Notify dashboard when ready for note opening (step 3)
   useEffect(() => {

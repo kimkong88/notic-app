@@ -463,6 +463,7 @@ export function MainContent() {
   const setTutorialInProgress = useUIStore((s) => s.setTutorialInProgress)
   const tutorialReadyForNoteOpen = useUIStore((s) => s.tutorialReadyForNoteOpen)
   const setTutorialReadyForNoteOpen = useUIStore((s) => s.setTutorialReadyForNoteOpen)
+  const setTutorialShowCreateHint = useUIStore((s) => s.setTutorialShowCreateHint)
   const [showCelebration, setShowCelebration] = useState(false)
 
   // Close Share modal if the note was removed
@@ -500,10 +501,16 @@ export function MainContent() {
           console.log('[Tutorial] Ready for note opening step')
         }
       }
+      if (d && d.type === 'tutorial-show-create-hint') {
+        setTutorialShowCreateHint(d.show)
+        if (import.meta.env.DEV) {
+          console.log('[Tutorial] Show create hint:', d.show)
+        }
+      }
     }
     window.addEventListener('message', handler)
     return () => window.removeEventListener('message', handler)
-  }, [setToastMessage, setTutorialReadyForNoteOpen])
+  }, [setToastMessage, setTutorialReadyForNoteOpen, setTutorialShowCreateHint])
 
   // Track visibility changes when tutorial is active to detect tab switching
   useEffect(() => {
@@ -881,6 +888,7 @@ export function MainContent() {
         }
         setTutorialInProgress(false)
         setTutorialReadyForNoteOpen(false)
+        setTutorialShowCreateHint(false)
         setShowCelebration(true)
         setToastMessage('Perfect! 🎉 You\'re ready to use Notic')
         setTimeout(() => setShowCelebration(false), 3000)
@@ -1332,15 +1340,18 @@ export function MainContent() {
                       onClick={() => {
                         setTutorialInProgress(true)
                         setTutorialReadyForNoteOpen(false)
+                        setTutorialShowCreateHint(false)
                         void openTutorialPip({
                           isDarkMode,
                           onClose: () => {
                             setTutorialInProgress(false)
                             setTutorialReadyForNoteOpen(false)
+                            setTutorialShowCreateHint(false)
                           },
                           onError: () => {
                             setTutorialInProgress(false)
                             setTutorialReadyForNoteOpen(false)
+                            setTutorialShowCreateHint(false)
                             setPipUnsupportedModalOpen(true)
                           }
                         })

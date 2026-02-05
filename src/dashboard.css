@@ -4710,3 +4710,38 @@ body.dark-mode a.modal-btn-cta-upgrade:hover {
   font-size: 13px;
   white-space: nowrap;
 }
+
+/* Tutorial hint for creating notes */
+.tutorial-hint-create-note {
+  position: relative;
+  animation: tutorial-hint-pulse 2s ease-in-out infinite;
+}
+
+.tutorial-hint-create-note::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border: 2px solid var(--accent-primary);
+  border-radius: 6px;
+  pointer-events: none;
+  animation: tutorial-hint-glow 2s ease-in-out infinite;
+}
+
+@keyframes tutorial-hint-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes tutorial-hint-glow {
+  0%, 100% {
+    opacity: 0.5;
+    box-shadow: 0 0 8px var(--accent-primary);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 16px var(--accent-primary);
+  }
+}

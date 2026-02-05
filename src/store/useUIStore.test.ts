@@ -17,6 +17,7 @@ function resetUIStore(): void {
     openInPipActiveNoteId: null,
   tutorialInProgress: false,
   tutorialReadyForNoteOpen: false,
+  tutorialShowCreateHint: false,
 })
 }
 

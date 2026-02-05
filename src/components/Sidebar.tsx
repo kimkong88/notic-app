@@ -3686,6 +3686,7 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
     );
     const addNoteToPip = useUIStore((s) => s.addNoteToPip);
     const tutorialInProgress = useUIStore((s) => s.tutorialInProgress);
+    const tutorialShowCreateHint = useUIStore((s) => s.tutorialShowCreateHint);
     const currentWorkspaceId = useWorkspaceStore((s) => s.currentWorkspaceId);
     const workspaces = useWorkspaceStore((s) => s.workspaces);
     const currentTab = useNotesStore((s) => s.currentTab);
@@ -5070,7 +5071,7 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                     >
                         <button
                             type="button"
-                            className="toolbar-btn"
+                            className={`toolbar-btn${tutorialShowCreateHint ? ' tutorial-hint-create-note' : ''}`}
                             title="New Note"
                             onClick={handleNewNote}
                             aria-label="New Note"
