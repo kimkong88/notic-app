@@ -3970,13 +3970,13 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                     const partition = await getStoragePartition(db);
                     await loadPartitionIntoStores(db, partition);
                     // Only fetch subscription status and sync if online
-                    if (navigator.onLine) {
+                    if (isOnline) {
                         await useSubscriptionStore.getState().refresh(db);
                     }
                     await setSyncPaused(db, false);
                     startPeriodicPullCheck(db);
                     // Only trigger sync if online - avoid unnecessary failed API calls when offline
-                    if (navigator.onLine) {
+                    if (isOnline) {
                         try {
                             await triggerFullSync(db, { ignorePaused: true });
                         } catch (_) {
@@ -4012,7 +4012,7 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                 }
             }
         },
-        [restoreOfflineWithLastUser]
+        [restoreOfflineWithLastUser, isOnline]
     );
 
     const googleLogin = useGoogleLogin({
@@ -5637,7 +5637,7 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                                     title="Connect Google account (for sync)"
                                     aria-label="Connect for sync"
                                     onClick={() => {
-                                        if (!navigator.onLine) {
+                                        if (!isOnline) {
                                             setInfoModal({
                                                 title: "You're offline",
                                                 message:
