@@ -1,98 +1,106 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react-swc'
-import tailwindcss from '@tailwindcss/vite'
-import { VitePWA } from 'vite-plugin-pwa'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react-swc";
+import tailwindcss from "@tailwindcss/vite";
+import { VitePWA } from "vite-plugin-pwa";
 
 // COOP header so opener can check OAuth popup (window.closed). Required for Google sign-in popup.
-const COOP_HEADER = 'Cross-Origin-Opener-Policy'
-const COOP_VALUE = 'same-origin-allow-popups'
+const COOP_HEADER = "Cross-Origin-Opener-Policy";
+const COOP_VALUE = "same-origin-allow-popups";
 
 // https://vite.dev/config/
 export default defineConfig({
-  server: {
-    headers: {
-      [COOP_HEADER]: COOP_VALUE,
+    server: {
+        headers: {
+            [COOP_HEADER]: COOP_VALUE,
+        },
     },
-  },
-  plugins: [
-    react(),
-    tailwindcss(),
-    // Ensure COOP is set on every dev response (server.headers can miss HTML in some setups)
-    {
-      name: 'coop-header',
-      configureServer(server) {
-        server.middlewares.use((_req, res, next) => {
-          res.setHeader(COOP_HEADER, COOP_VALUE)
-          next()
-        })
-      },
-    },
-    VitePWA({
-      registerType: 'autoUpdate',
-      injectRegister: 'inline',
-      manifest: {
-        name: 'Notic',
-        short_name: 'Notic',
-        description: 'Your floating notepad. Always accessible.',
-        start_url: '/',
-        display: 'standalone',
-        background_color: '#ffffff',
-        theme_color: '#4f46e5',
-        icons: [
-          {
-            src: '/logo.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
-            purpose: 'any maskable',
-          },
-        ],
-      },
-      workbox: {
-        // Exclude webmanifest from glob to avoid duplicate precache entry: we add manifest
-        // via additionalManifestEntries with revision: null. Glob would add the same URL
-        // with __WB_REVISION__, causing "add-to-cache-list-conflicting-entries".
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        additionalManifestEntries: [
-          { url: '/manifest.webmanifest', revision: null },
-          { url: '/logo.svg', revision: null },
-        ],
-        // Serve index.html for any navigation when offline (SPA offline-first)
-        navigateFallback: '/index.html',
-        navigateFallbackDenylist: [
-          /^\/api\//,
-          /^https:\/\//,
-          /^\/src\//,
-          /^\/node_modules\//,
-          /^\/@vite\//,
-          /^\/@id\//,
-        ],
-        // Cache same-origin requests at runtime so dev and any missed assets work offline after first load
-        runtimeCaching: [
-          {
-            urlPattern: ({ sameOrigin, request }) => sameOrigin && request.destination !== 'document',
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'notic-assets',
-              expiration: { maxEntries: 64, maxAgeSeconds: 30 * 24 * 60 * 60 },
+    plugins: [
+        react(),
+        tailwindcss(),
+        // Ensure COOP is set on every dev response (server.headers can miss HTML in some setups)
+        {
+            name: "coop-header",
+            configureServer(server) {
+                server.middlewares.use((_req, res, next) => {
+                    res.setHeader(COOP_HEADER, COOP_VALUE);
+                    next();
+                });
             },
-          },
-          {
-            urlPattern: ({ sameOrigin }) => sameOrigin,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'notic-pages',
-              networkTimeoutSeconds: 1,
-              expiration: { maxEntries: 32, maxAgeSeconds: 24 * 60 * 60 },
+        },
+        VitePWA({
+            registerType: "autoUpdate",
+            injectRegister: "inline",
+            manifest: {
+                name: "Notic",
+                short_name: "Notic",
+                description: "Your floating notepad. Always accessible.",
+                start_url: "/",
+                display: "standalone",
+                background_color: "#ffffff",
+                theme_color: "#4f46e5",
+                icons: [
+                    {
+                        src: "/logo.svg",
+                        sizes: "any",
+                        type: "image/svg+xml",
+                        purpose: "any maskable",
+                    },
+                ],
             },
-          },
-        ],
-      },
-      devOptions: {
-        // Disable SW in dev: Vite serves /src/* and /@vite/* URLs that can't be precached,
-        // so the SW would log "No route found" for every request and break offline anyway.
-        // Test offline with: npm run build && npm run preview (then refresh while offline).
-        enabled: false,
-      },
-    }),
-  ],
-})
+            workbox: {
+                // Exclude webmanifest and logo.svg from glob to avoid duplicate precache entry:
+                // we add them via additionalManifestEntries with revision: null. Glob would add
+                // the same URLs with __WB_REVISION__, causing "add-to-cache-list-conflicting-entries".
+                globPatterns: ["**/*.{js,css,html,ico,png,woff2}"],
+                globIgnores: ["**/logo.svg"],
+                additionalManifestEntries: [
+                    { url: "/manifest.webmanifest", revision: null },
+                    { url: "/logo.svg", revision: null },
+                ],
+                // Serve index.html for any navigation when offline (SPA offline-first)
+                navigateFallback: "/index.html",
+                navigateFallbackDenylist: [
+                    /^\/api\//,
+                    /^https:\/\//,
+                    /^\/src\//,
+                    /^\/node_modules\//,
+                    /^\/@vite\//,
+                    /^\/@id\//,
+                ],
+                // Cache same-origin requests at runtime so dev and any missed assets work offline after first load
+                runtimeCaching: [
+                    {
+                        urlPattern: ({ sameOrigin, request }) =>
+                            sameOrigin && request.destination !== "document",
+                        handler: "CacheFirst",
+                        options: {
+                            cacheName: "notic-assets",
+                            expiration: {
+                                maxEntries: 64,
+                                maxAgeSeconds: 30 * 24 * 60 * 60,
+                            },
+                        },
+                    },
+                    {
+                        urlPattern: ({ sameOrigin }) => sameOrigin,
+                        handler: "NetworkFirst",
+                        options: {
+                            cacheName: "notic-pages",
+                            networkTimeoutSeconds: 1,
+                            expiration: {
+                                maxEntries: 32,
+                                maxAgeSeconds: 24 * 60 * 60,
+                            },
+                        },
+                    },
+                ],
+            },
+            devOptions: {
+                // Disable SW in dev: Vite serves /src/* and /@vite/* URLs that can't be precached,
+                // so the SW would log "No route found" for every request and break offline anyway.
+                // Test offline with: npm run build && npm run preview (then refresh while offline).
+                enabled: false,
+            },
+        }),
+    ],
+});

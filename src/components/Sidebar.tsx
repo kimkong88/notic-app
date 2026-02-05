@@ -53,7 +53,10 @@ import {
     MAX_FOLDER_DEPTH,
 } from "../utils/folderUtils";
 import { useAuthStore } from "../store/useAuthStore";
-import { useSubscriptionStore, FREE_NOTE_LIMIT } from "../store/useSubscriptionStore";
+import {
+    useSubscriptionStore,
+    FREE_NOTE_LIMIT,
+} from "../store/useSubscriptionStore";
 import { FREE_PIP_TAB_LIMIT } from "../constants";
 import {
     db,
@@ -64,7 +67,14 @@ import {
     setStoredUserId,
     currentWorkspaceIdKey,
 } from "../db";
-import { triggerFullSync, triggerSyncAfterUserAction, setSyncPaused, clearLastServerSnapshot, startPeriodicPullCheck, stopPeriodicPullCheck } from "../sync";
+import {
+    triggerFullSync,
+    triggerSyncAfterUserAction,
+    setSyncPaused,
+    clearLastServerSnapshot,
+    startPeriodicPullCheck,
+    stopPeriodicPullCheck,
+} from "../sync";
 import { PREFS_KEYS } from "../db/prefs-keys";
 import {
     persistLastUser,
@@ -413,7 +423,6 @@ function RecentTabList({
         return () => window.removeEventListener("keydown", onKeyDown);
     }, [setNoteContextMenuAnchor]);
 
-
     const isNoteSelected = (sessionId: string) =>
         selectedNoteIds.includes(sessionId);
 
@@ -601,7 +610,8 @@ function RecentTabList({
                                             <ExternalLink size={12} />
                                         </span>
                                     )}
-                                    {detailEditNoteIdRecent === note.sessionId && (
+                                    {detailEditNoteIdRecent ===
+                                        note.sessionId && (
                                         <span
                                             className="sidebar-note-open-indicator sidebar-note-editing-indicator"
                                             aria-hidden
@@ -851,7 +861,8 @@ function RecentTabList({
                                                     <ExternalLink size={12} />
                                                 </span>
                                             )}
-                                            {detailEditNoteIdRecent === note.sessionId && (
+                                            {detailEditNoteIdRecent ===
+                                                note.sessionId && (
                                                 <span
                                                     className="sidebar-note-open-indicator sidebar-note-editing-indicator"
                                                     aria-hidden
@@ -909,8 +920,16 @@ function RecentTabList({
                             >
                                 <button
                                     type="button"
-                                    className={`pip-context-menu-item${isNoteActiveInPip || isNoteEditedInMainRecent ? " pip-context-menu-item-disabled" : ""}`}
-                                    disabled={isNoteActiveInPip || isNoteEditedInMainRecent}
+                                    className={`pip-context-menu-item${
+                                        isNoteActiveInPip ||
+                                        isNoteEditedInMainRecent
+                                            ? " pip-context-menu-item-disabled"
+                                            : ""
+                                    }`}
+                                    disabled={
+                                        isNoteActiveInPip ||
+                                        isNoteEditedInMainRecent
+                                    }
                                     title={
                                         isNoteEditedInMainRecent
                                             ? "Already editing in main view"
@@ -919,7 +938,11 @@ function RecentTabList({
                                             : undefined
                                     }
                                     onClick={() => {
-                                        if (isNoteActiveInPip || isNoteEditedInMainRecent) return;
+                                        if (
+                                            isNoteActiveInPip ||
+                                            isNoteEditedInMainRecent
+                                        )
+                                            return;
                                         setSelectedNoteId(
                                             noteContextMenuAnchor.noteId
                                         );
@@ -934,8 +957,16 @@ function RecentTabList({
                                 </button>
                                 <button
                                     type="button"
-                                    className={`pip-context-menu-item${isNoteActiveInPip || isNoteEditedInMainRecent ? " pip-context-menu-item-disabled" : ""}`}
-                                    disabled={isNoteActiveInPip || isNoteEditedInMainRecent}
+                                    className={`pip-context-menu-item${
+                                        isNoteActiveInPip ||
+                                        isNoteEditedInMainRecent
+                                            ? " pip-context-menu-item-disabled"
+                                            : ""
+                                    }`}
+                                    disabled={
+                                        isNoteActiveInPip ||
+                                        isNoteEditedInMainRecent
+                                    }
                                     title={
                                         isNoteEditedInMainRecent
                                             ? "Finish editing in main view first"
@@ -944,8 +975,14 @@ function RecentTabList({
                                             : undefined
                                     }
                                     onClick={() => {
-                                        if (isNoteActiveInPip || isNoteEditedInMainRecent) return;
-                                        openNoteInPip(noteContextMenuAnchor.noteId);
+                                        if (
+                                            isNoteActiveInPip ||
+                                            isNoteEditedInMainRecent
+                                        )
+                                            return;
+                                        openNoteInPip(
+                                            noteContextMenuAnchor.noteId
+                                        );
                                         setNoteContextMenuAnchor(null);
                                     }}
                                 >
@@ -984,7 +1021,11 @@ function RecentTabList({
                                 </button>
                                 <button
                                     type="button"
-                                    className={`pip-context-menu-item${isNoteActiveInPip ? " pip-context-menu-item-disabled" : ""}`}
+                                    className={`pip-context-menu-item${
+                                        isNoteActiveInPip
+                                            ? " pip-context-menu-item-disabled"
+                                            : ""
+                                    }`}
                                     disabled={isNoteActiveInPip}
                                     title={
                                         isNoteActiveInPip
@@ -1015,7 +1056,12 @@ function RecentTabList({
                                 </button>
                                 <button
                                     type="button"
-                                    className={`pip-context-menu-item${isNoteActiveInPip || Object.keys(workspaces).length <= 1 ? " pip-context-menu-item-disabled" : ""}`}
+                                    className={`pip-context-menu-item${
+                                        isNoteActiveInPip ||
+                                        Object.keys(workspaces).length <= 1
+                                            ? " pip-context-menu-item-disabled"
+                                            : ""
+                                    }`}
                                     disabled={
                                         isNoteActiveInPip ||
                                         Object.keys(workspaces).length <= 1
@@ -1163,7 +1209,11 @@ function RecentTabList({
                                 </div>
                                 <button
                                     type="button"
-                                    className={`pip-context-menu-item${isNoteActiveInPip ? " pip-context-menu-item-disabled" : ""}`}
+                                    className={`pip-context-menu-item${
+                                        isNoteActiveInPip
+                                            ? " pip-context-menu-item-disabled"
+                                            : ""
+                                    }`}
                                     disabled={isNoteActiveInPip}
                                     title={
                                         isNoteActiveInPip
@@ -1186,7 +1236,11 @@ function RecentTabList({
                                 </button>
                                 <button
                                     type="button"
-                                    className={`pip-context-menu-item danger${isNoteActiveInPip ? " pip-context-menu-item-disabled" : ""}`}
+                                    className={`pip-context-menu-item danger${
+                                        isNoteActiveInPip
+                                            ? " pip-context-menu-item-disabled"
+                                            : ""
+                                    }`}
                                     disabled={isNoteActiveInPip}
                                     title={
                                         isNoteActiveInPip
@@ -1204,18 +1258,34 @@ function RecentTabList({
                                         const toDelete = isMulti
                                             ? selectedNoteIds
                                             : [noteContextMenuAnchor.noteId];
-                                        toDelete.forEach((id) => updateNote(id, { deletedAt: Date.now() }));
-                                        if (toDelete.length === 1) trackEvent("note_deleted");
-                                        else trackEvent("note_deleted", { count: toDelete.length });
+                                        toDelete.forEach((id) =>
+                                            updateNote(id, {
+                                                deletedAt: Date.now(),
+                                            })
+                                        );
+                                        if (toDelete.length === 1)
+                                            trackEvent("note_deleted");
+                                        else
+                                            trackEvent("note_deleted", {
+                                                count: toDelete.length,
+                                            });
                                         setSelection([], []);
                                         const remaining =
-                                            notes.find((n) => !toDelete.includes(n.sessionId))?.sessionId ??
-                                            null;
+                                            notes.find(
+                                                (n) =>
+                                                    !toDelete.includes(
+                                                        n.sessionId
+                                                    )
+                                            )?.sessionId ?? null;
                                         setSelectedNoteId(remaining);
                                         setNoteContextMenuAnchor(null);
-                                        useUIStore.getState().setToastMessage(
-                                            toDelete.length === 1 ? "Moved to trash" : `${toDelete.length} items moved to trash`
-                                        );
+                                        useUIStore
+                                            .getState()
+                                            .setToastMessage(
+                                                toDelete.length === 1
+                                                    ? "Moved to trash"
+                                                    : `${toDelete.length} items moved to trash`
+                                            );
                                         triggerSyncAfterUserAction(db);
                                     }}
                                 >
@@ -1726,7 +1796,6 @@ function FoldersTabList({
             window.removeEventListener("keydown", onKey);
         };
     }, [noteContextMenuAnchor, setNoteContextMenuAnchor]);
-
 
     const bookmarkedNotes = sortNotes(
         notesInWorkspace.filter((n) => n.isBookmarked),
@@ -2253,7 +2322,8 @@ function FoldersTabList({
                                             <ExternalLink size={12} />
                                         </span>
                                     )}
-                                    {detailEditNoteIdFolders === note.sessionId && (
+                                    {detailEditNoteIdFolders ===
+                                        note.sessionId && (
                                         <span
                                             className="sidebar-note-open-indicator sidebar-note-editing-indicator"
                                             aria-hidden
@@ -2308,8 +2378,9 @@ function FoldersTabList({
                                 note.displayName ?? note.title ?? "Untitled";
                             const isRenaming =
                                 noteRenameState?.noteId === note.sessionId;
-                            const isOpenInPipBm =
-                                _openInPipNoteIds.includes(note.sessionId);
+                            const isOpenInPipBm = _openInPipNoteIds.includes(
+                                note.sessionId
+                            );
                             const noteIndex =
                                 foldersOrderedSelectables.findIndex(
                                     (i) =>
@@ -2499,8 +2570,9 @@ function FoldersTabList({
                                 note.displayName ?? note.title ?? "Untitled";
                             const isRenaming =
                                 noteRenameState?.noteId === note.sessionId;
-                            const isOpenInPipRoot =
-                                _openInPipNoteIds.includes(note.sessionId);
+                            const isOpenInPipRoot = _openInPipNoteIds.includes(
+                                note.sessionId
+                            );
                             const noteIndex =
                                 foldersOrderedSelectables.findIndex(
                                     (i) =>
@@ -2634,7 +2706,8 @@ function FoldersTabList({
                                             <ExternalLink size={12} />
                                         </span>
                                     )}
-                                    {detailEditNoteIdFolders === note.sessionId && (
+                                    {detailEditNoteIdFolders ===
+                                        note.sessionId && (
                                         <span
                                             className="sidebar-note-open-indicator sidebar-note-editing-indicator"
                                             aria-hidden
@@ -2729,13 +2802,18 @@ function FoldersTabList({
                                     triggerSyncAfterUserAction(db);
                                     trackEvent("note_created");
                                     setFolderContextMenuAnchor(null);
-                                    
+
                                     // Tutorial tracking: send message to tutorial PiP
                                     if (tutorialInProgress) {
                                         const pipWin = getPipWindow();
                                         if (pipWin && !pipWin.closed) {
                                             try {
-                                                pipWin.postMessage({ type: "notic-pip-tutorial-note-created" }, "*");
+                                                pipWin.postMessage(
+                                                    {
+                                                        type: "notic-pip-tutorial-note-created",
+                                                    },
+                                                    "*"
+                                                );
                                             } catch {}
                                         }
                                     }
@@ -2932,8 +3010,16 @@ function FoldersTabList({
                         >
                             <button
                                 type="button"
-                                className={`pip-context-menu-item${isNoteActiveInPipFolders || isNoteEditedInMainFolders ? " pip-context-menu-item-disabled" : ""}`}
-                                disabled={isNoteActiveInPipFolders || isNoteEditedInMainFolders}
+                                className={`pip-context-menu-item${
+                                    isNoteActiveInPipFolders ||
+                                    isNoteEditedInMainFolders
+                                        ? " pip-context-menu-item-disabled"
+                                        : ""
+                                }`}
+                                disabled={
+                                    isNoteActiveInPipFolders ||
+                                    isNoteEditedInMainFolders
+                                }
                                 title={
                                     isNoteEditedInMainFolders
                                         ? "Already editing in main view"
@@ -2942,7 +3028,11 @@ function FoldersTabList({
                                         : undefined
                                 }
                                 onClick={() => {
-                                    if (isNoteActiveInPipFolders || isNoteEditedInMainFolders) return;
+                                    if (
+                                        isNoteActiveInPipFolders ||
+                                        isNoteEditedInMainFolders
+                                    )
+                                        return;
                                     setSelectedNoteId(
                                         noteContextMenuAnchor.noteId
                                     );
@@ -2957,8 +3047,16 @@ function FoldersTabList({
                             </button>
                             <button
                                 type="button"
-                                className={`pip-context-menu-item${isNoteActiveInPipFolders || isNoteEditedInMainFolders ? " pip-context-menu-item-disabled" : ""}`}
-                                disabled={isNoteActiveInPipFolders || isNoteEditedInMainFolders}
+                                className={`pip-context-menu-item${
+                                    isNoteActiveInPipFolders ||
+                                    isNoteEditedInMainFolders
+                                        ? " pip-context-menu-item-disabled"
+                                        : ""
+                                }`}
+                                disabled={
+                                    isNoteActiveInPipFolders ||
+                                    isNoteEditedInMainFolders
+                                }
                                 title={
                                     isNoteEditedInMainFolders
                                         ? "Finish editing in main view first"
@@ -2967,7 +3065,11 @@ function FoldersTabList({
                                         : undefined
                                 }
                                 onClick={() => {
-                                    if (isNoteActiveInPipFolders || isNoteEditedInMainFolders) return;
+                                    if (
+                                        isNoteActiveInPipFolders ||
+                                        isNoteEditedInMainFolders
+                                    )
+                                        return;
                                     openNoteInPip(noteContextMenuAnchor.noteId);
                                     setNoteContextMenuAnchor(null);
                                 }}
@@ -3006,7 +3108,11 @@ function FoldersTabList({
                             </button>
                             <button
                                 type="button"
-                                className={`pip-context-menu-item${isNoteActiveInPipFolders ? " pip-context-menu-item-disabled" : ""}`}
+                                className={`pip-context-menu-item${
+                                    isNoteActiveInPipFolders
+                                        ? " pip-context-menu-item-disabled"
+                                        : ""
+                                }`}
                                 disabled={isNoteActiveInPipFolders}
                                 title={
                                     isNoteActiveInPipFolders
@@ -3037,7 +3143,12 @@ function FoldersTabList({
                             </button>
                             <button
                                 type="button"
-                                className={`pip-context-menu-item${isNoteActiveInPipFolders || Object.keys(workspaces).length <= 1 ? " pip-context-menu-item-disabled" : ""}`}
+                                className={`pip-context-menu-item${
+                                    isNoteActiveInPipFolders ||
+                                    Object.keys(workspaces).length <= 1
+                                        ? " pip-context-menu-item-disabled"
+                                        : ""
+                                }`}
                                 disabled={
                                     isNoteActiveInPipFolders ||
                                     Object.keys(workspaces).length <= 1
@@ -3177,7 +3288,11 @@ function FoldersTabList({
                             </div>
                             <button
                                 type="button"
-                                className={`pip-context-menu-item${isNoteActiveInPipFolders ? " pip-context-menu-item-disabled" : ""}`}
+                                className={`pip-context-menu-item${
+                                    isNoteActiveInPipFolders
+                                        ? " pip-context-menu-item-disabled"
+                                        : ""
+                                }`}
                                 disabled={isNoteActiveInPipFolders}
                                 title={
                                     isNoteActiveInPipFolders
@@ -3200,7 +3315,11 @@ function FoldersTabList({
                             </button>
                             <button
                                 type="button"
-                                className={`pip-context-menu-item danger${isNoteActiveInPipFolders ? " pip-context-menu-item-disabled" : ""}`}
+                                className={`pip-context-menu-item danger${
+                                    isNoteActiveInPipFolders
+                                        ? " pip-context-menu-item-disabled"
+                                        : ""
+                                }`}
                                 disabled={isNoteActiveInPipFolders}
                                 title={
                                     isNoteActiveInPipFolders
@@ -3218,18 +3337,33 @@ function FoldersTabList({
                                     const ids = isMulti
                                         ? selectedNoteIds
                                         : [noteContextMenuAnchor.noteId];
-                                    ids.forEach((id) => updateNote(id, { deletedAt: Date.now() }));
-                                    if (ids.length === 1) trackEvent("note_deleted");
-                                    else trackEvent("note_deleted", { count: ids.length });
-                                    if (ids.includes(selectedNoteId ?? "")) setSelectedNoteId(null);
+                                    ids.forEach((id) =>
+                                        updateNote(id, {
+                                            deletedAt: Date.now(),
+                                        })
+                                    );
+                                    if (ids.length === 1)
+                                        trackEvent("note_deleted");
+                                    else
+                                        trackEvent("note_deleted", {
+                                            count: ids.length,
+                                        });
+                                    if (ids.includes(selectedNoteId ?? ""))
+                                        setSelectedNoteId(null);
                                     setSelection(
-                                        selectedNoteIds.filter((id) => !ids.includes(id)),
+                                        selectedNoteIds.filter(
+                                            (id) => !ids.includes(id)
+                                        ),
                                         selectedFolderIds
                                     );
                                     setNoteContextMenuAnchor(null);
-                                    useUIStore.getState().setToastMessage(
-                                        ids.length === 1 ? "Moved to trash" : `${ids.length} items moved to trash`
-                                    );
+                                    useUIStore
+                                        .getState()
+                                        .setToastMessage(
+                                            ids.length === 1
+                                                ? "Moved to trash"
+                                                : `${ids.length} items moved to trash`
+                                        );
                                     triggerSyncAfterUserAction(db);
                                 }}
                             >
@@ -3251,9 +3385,10 @@ function FoldersTabList({
                         <div className="modal-header">
                             <h3 className="modal-title">Delete Folder</h3>
                             <p className="modal-message">
-                                Delete &quot;{folderDeleteConfirm.displayName}&quot; and any
-                                subfolders? All notes inside will be moved to Trash. You can
-                                restore them from Trash before emptying.
+                                Delete &quot;{folderDeleteConfirm.displayName}
+                                &quot; and any subfolders? All notes inside will
+                                be moved to Trash. You can restore them from
+                                Trash before emptying.
                             </p>
                         </div>
                         <div className="modal-actions">
@@ -3267,11 +3402,11 @@ function FoldersTabList({
                             <button
                                 type="button"
                                 className="modal-btn pip-modal-btn-danger"
-                            onClick={() => {
-                                removeFolder(folderDeleteConfirm.folderId);
-                                setFolderDeleteConfirm(null);
-                                triggerSyncAfterUserAction(db);
-                            }}
+                                onClick={() => {
+                                    removeFolder(folderDeleteConfirm.folderId);
+                                    setFolderDeleteConfirm(null);
+                                    triggerSyncAfterUserAction(db);
+                                }}
                             >
                                 Delete
                             </button>
@@ -3332,8 +3467,7 @@ function MoveToFolderModal() {
     const foldersInWorkspace = useMemo(
         () =>
             Object.values(folders).filter(
-                (f) =>
-                    String(f.workspaceId ?? DEFAULT_WORKSPACE_ID) === wsIdStr
+                (f) => String(f.workspaceId ?? DEFAULT_WORKSPACE_ID) === wsIdStr
             ),
         [folders, wsIdStr]
     );
@@ -3900,8 +4034,7 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
     const foldersInWorkspace = useMemo(
         () =>
             Object.values(folders).filter(
-                (f) =>
-                    String(f.workspaceId ?? "workspace_1") === defaultWsIdStr
+                (f) => String(f.workspaceId ?? "workspace_1") === defaultWsIdStr
             ),
         [folders, defaultWsIdStr]
     );
@@ -3986,7 +4119,10 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                 const removeNote = useNotesStore.getState().removeNote;
                 ids.forEach((id) => {
                     const n = notes[id];
-                    if (n?.createdFromPip === true && n.hasEverHadContent !== true)
+                    if (
+                        n?.createdFromPip === true &&
+                        n.hasEverHadContent !== true
+                    )
                         removeNote(id);
                 });
                 useUIStore.getState().setOpenInPipNoteIds([]);
@@ -4033,7 +4169,16 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                 const notes = useNotesStore.getState().notes;
                 const noteTitles: Record<string, string> = {};
                 const noteColors: Record<string, string> = {};
-                const notePayloads: Record<string, { content?: string; title?: string; displayName?: string; color?: string; workspaceId?: string }> = {};
+                const notePayloads: Record<
+                    string,
+                    {
+                        content?: string;
+                        title?: string;
+                        displayName?: string;
+                        color?: string;
+                        workspaceId?: string;
+                    }
+                > = {};
                 state.openInPipNoteIds.forEach((id) => {
                     const n = notes[id];
                     noteTitles[id] = n?.displayName ?? n?.title ?? "Untitled";
@@ -4046,7 +4191,11 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                         workspaceId: n?.workspaceId,
                     };
                 });
-                sendNotesUpdateToPip(state.openInPipNoteIds, state.openInPipActiveNoteId, { noteTitles, noteColors, notePayloads });
+                sendNotesUpdateToPip(
+                    state.openInPipNoteIds,
+                    state.openInPipActiveNoteId,
+                    { noteTitles, noteColors, notePayloads }
+                );
                 return;
             }
             const state = useUIStore.getState();
@@ -4058,7 +4207,10 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                     const removeNote = useNotesStore.getState().removeNote;
                     ids.forEach((id) => {
                         const n = notes[id];
-                        if (n?.createdFromPip === true && n.hasEverHadContent !== true)
+                        if (
+                            n?.createdFromPip === true &&
+                            n.hasEverHadContent !== true
+                        )
                             removeNote(id);
                     });
                     useUIStore.getState().setOpenInPipNoteIds([]);
@@ -4102,13 +4254,16 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                 ]);
             }
         }
-        
+
         // Tutorial tracking: send message to tutorial PiP
         if (tutorialInProgress) {
             const pipWin = getPipWindow();
             if (pipWin && !pipWin.closed) {
                 try {
-                    pipWin.postMessage({ type: "notic-pip-tutorial-note-created" }, "*");
+                    pipWin.postMessage(
+                        { type: "notic-pip-tutorial-note-created" },
+                        "*"
+                    );
                 } catch {}
             }
         }
@@ -4954,7 +5109,11 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                                             setSelectedNoteId(null);
                                             setSelection([], []);
                                             stopPeriodicPullCheck();
-                                            useUIStore.getState().setServerNewerBannerVisible(false);
+                                            useUIStore
+                                                .getState()
+                                                .setServerNewerBannerVisible(
+                                                    false
+                                                );
                                             clearLastServerSnapshot();
                                             await clearStoredTokens(db);
                                             await loadPartitionIntoStores(
@@ -5071,7 +5230,11 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                     >
                         <button
                             type="button"
-                            className={`toolbar-btn${tutorialShowCreateHint ? ' tutorial-hint-create-note' : ''}`}
+                            className={`toolbar-btn${
+                                tutorialShowCreateHint
+                                    ? " tutorial-hint-create-note"
+                                    : ""
+                            }`}
                             title="New Note"
                             onClick={handleNewNote}
                             aria-label="New Note"
@@ -5172,26 +5335,36 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
 
                     {/* Quota warning: free user over note limit (matches notic extension updateQuotaWarning) */}
                     <div
-                        className={`quota-warning-slot ${isSubscribed === false && Object.keys(notes).length > FREE_NOTE_LIMIT ? "quota-warning-visible" : ""}`}
+                        className={`quota-warning-slot ${
+                            isSubscribed === false &&
+                            Object.keys(notes).length > FREE_NOTE_LIMIT
+                                ? "quota-warning-visible"
+                                : ""
+                        }`}
                         id="quotaWarningSlot"
                         aria-live="polite"
                     >
-                        {isSubscribed === false && Object.keys(notes).length > FREE_NOTE_LIMIT && (
-                            <div className="quota-warning" role="status">
-                                <p className="quota-warning-text">
-                                    Sync limit reached: Notic is in Private Local Mode. Upgrade to Pro to sync all {Object.keys(notes).length} notes.
-                                </p>
-                                <button
-                                    type="button"
-                                    className="quota-warning-info"
-                                    title="More info"
-                                    aria-label="More info about free plan limit"
-                                    onClick={() => setSyncLimitModalOpen(true)}
-                                >
-                                    <Info size={16} aria-hidden />
-                                </button>
-                            </div>
-                        )}
+                        {isSubscribed === false &&
+                            Object.keys(notes).length > FREE_NOTE_LIMIT && (
+                                <div className="quota-warning" role="status">
+                                    <p className="quota-warning-text">
+                                        Sync limit reached: Notic is in Private
+                                        Local Mode. Upgrade to Pro to sync all{" "}
+                                        {Object.keys(notes).length} notes.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        className="quota-warning-info"
+                                        title="More info"
+                                        aria-label="More info about free plan limit"
+                                        onClick={() =>
+                                            setSyncLimitModalOpen(true)
+                                        }
+                                    >
+                                        <Info size={16} aria-hidden />
+                                    </button>
+                                </div>
+                            )}
                     </div>
 
                     {/* Empty area context menu: entire sidebar when right-click not on note/folder (Recent = New Note only; Folders = New Note + New Folder – matches notic extension) */}
@@ -5238,9 +5411,21 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                         id="sidebarContent"
                         onContextMenu={(e) => {
                             const target = e.target as HTMLElement;
-                            if (target.closest(".sidebar-note-item") || target.closest(".sidebar-date-folder") || target.closest("[data-context-menu-trigger]")) return;
-                            const folderHeader = target.closest(".sidebar-folder-header");
-                            if (folderHeader && folderHeader.getAttribute("data-folder-id") !== ROOT_SENTINEL) return;
+                            if (
+                                target.closest(".sidebar-note-item") ||
+                                target.closest(".sidebar-date-folder") ||
+                                target.closest("[data-context-menu-trigger]")
+                            )
+                                return;
+                            const folderHeader = target.closest(
+                                ".sidebar-folder-header"
+                            );
+                            if (
+                                folderHeader &&
+                                folderHeader.getAttribute("data-folder-id") !==
+                                    ROOT_SENTINEL
+                            )
+                                return;
                             e.preventDefault();
                             setEmptyContextMenu({ x: e.clientX, y: e.clientY });
                         }}
