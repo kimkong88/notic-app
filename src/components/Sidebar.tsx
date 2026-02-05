@@ -43,7 +43,6 @@ import {
     ChevronDown as ChevronDownIcon,
     FileText,
     Bookmark,
-    Info,
 } from "lucide-react";
 import {
     getFolderDepth,
