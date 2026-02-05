@@ -358,10 +358,16 @@ export function TutorialPipView() {
         <>
             <div className="tutorial-pip-container">
                 {/* Realistic tab bar (same design as real PiP) */}
-                <div className="pip-tabs">
+                <div
+                    className={`pip-tabs ${
+                        tabTaskActive ? "tutorial-tabs-active" : ""
+                    }`}
+                >
                     <div
                         className={`pip-tab-item active ${
-                            tabTaskActive ? "tutorial-interactive" : ""
+                            tabTaskActive
+                                ? "tutorial-interactive tutorial-tab-highlight"
+                                : ""
                         }`}
                         onContextMenu={handleTabContextMenu}
                         style={
@@ -423,7 +429,11 @@ export function TutorialPipView() {
                                 </span>
                                 <span
                                     key={currentInstruction}
-                                    className="tutorial-pip-task-hint"
+                                    className={`tutorial-pip-task-hint ${
+                                        !floatTestCompleted
+                                            ? "tutorial-pip-task-hint-active"
+                                            : ""
+                                    }`}
                                 >
                                     {currentInstruction}
                                 </span>
@@ -458,7 +468,11 @@ export function TutorialPipView() {
                                 {floatTestCompleted && (
                                     <span
                                         key={tabTaskInstruction}
-                                        className="tutorial-pip-task-hint"
+                                        className={`tutorial-pip-task-hint ${
+                                            !tabTaskCompleted
+                                                ? "tutorial-pip-task-hint-active"
+                                                : ""
+                                        }`}
                                     >
                                         {tabTaskInstruction}
                                     </span>
@@ -494,7 +508,11 @@ export function TutorialPipView() {
                                 {tabTaskCompleted && (
                                     <span
                                         key={noteTaskInstruction}
-                                        className="tutorial-pip-task-hint"
+                                        className={`tutorial-pip-task-hint ${
+                                            !noteTaskCompleted
+                                                ? "tutorial-pip-task-hint-active"
+                                                : ""
+                                        }`}
                                     >
                                         {noteTaskInstruction}
                                     </span>

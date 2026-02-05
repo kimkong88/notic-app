@@ -4201,10 +4201,21 @@ body.pip-page.dark-mode[data-note-theme="high-contrast"] .pip-content .note-cont
 }
 
 .tutorial-pip-task-hint {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--accent-primary);
-  font-weight: 600;
+  font-weight: 700;
   animation: hint-highlight 0.5s ease-out;
+}
+
+/* Badge styling only for active (non-complete) hints */
+.tutorial-pip-task-hint-active {
+  background: var(--accent-hover);
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 2px solid var(--accent-primary);
+  display: inline-block;
+  animation: hint-highlight 0.5s ease-out, hint-pulse 2s ease-in-out infinite 0.5s;
+  box-shadow: 0 0 0 0 var(--accent-primary);
 }
 
 @keyframes hint-highlight {
@@ -4711,37 +4722,147 @@ body.dark-mode a.modal-btn-cta-upgrade:hover {
   white-space: nowrap;
 }
 
-/* Tutorial hint for creating notes */
+/* Tutorial tab highlight - points directly at the tab */
+.tutorial-tab-highlight {
+  position: relative;
+  animation: tutorial-tab-pulse 1.5s ease-in-out infinite;
+  z-index: 10;
+}
+
+/* Bouncing finger pointing UP at the tab from below */
+.tutorial-tabs-active::before {
+  content: '👆';
+  position: absolute;
+  left: 60px;
+  top: 50px;
+  font-size: 32px;
+  pointer-events: none;
+  z-index: 1001;
+  animation: tutorial-finger-bounce-vertical-up 1s ease-in-out infinite;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.3));
+}
+
+.tutorial-tab-highlight::before {
+  content: '👆 Right-click here';
+  position: absolute;
+  bottom: -45px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent-primary);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  animation: tutorial-hint-bounce-vertical 1.5s ease-in-out infinite;
+}
+
+.tutorial-tab-highlight::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 3px solid var(--accent-primary);
+  border-radius: 6px;
+  pointer-events: none;
+  animation: tutorial-tab-glow 1.5s ease-in-out infinite;
+  box-shadow: 0 0 20px var(--accent-primary);
+}
+
+@keyframes tutorial-tab-pulse {
+  0%, 100% { 
+    transform: scale(1);
+  }
+  50% { 
+    transform: scale(1.05);
+  }
+}
+
+@keyframes tutorial-tab-glow {
+  0%, 100% {
+    opacity: 0.7;
+    box-shadow: 0 0 15px var(--accent-primary), 0 0 25px var(--accent-primary);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 25px var(--accent-primary), 0 0 40px var(--accent-primary);
+  }
+}
+
+@keyframes tutorial-hint-bounce-vertical {
+  0%, 100% { 
+    transform: translateX(-50%) translateY(0); 
+  }
+  50% { 
+    transform: translateX(-50%) translateY(-8px); 
+  }
+}
+
+@keyframes tutorial-finger-bounce-vertical-up {
+  0%, 100% { 
+    transform: translateY(0); 
+  }
+  50% { 
+    transform: translateY(-10px);
+  }
+}
+
+/* Tutorial hint for creating notes - ENHANCED for better visibility */
 .tutorial-hint-create-note {
   position: relative;
-  animation: tutorial-hint-pulse 2s ease-in-out infinite;
+  animation: tutorial-hint-pulse-strong 1.5s ease-in-out infinite;
+  z-index: 1;
+}
+
+.tutorial-hint-create-note::before {
+  content: '👉';
+  position: absolute;
+  left: -35px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 24px;
+  animation: tutorial-hint-bounce 1s ease-in-out infinite;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .tutorial-hint-create-note::after {
   content: '';
   position: absolute;
-  top: -4px;
-  left: -4px;
-  right: -4px;
-  bottom: -4px;
-  border: 2px solid var(--accent-primary);
-  border-radius: 6px;
+  top: -6px;
+  left: -6px;
+  right: -6px;
+  bottom: -6px;
+  border: 3px solid var(--accent-primary);
+  border-radius: 8px;
   pointer-events: none;
-  animation: tutorial-hint-glow 2s ease-in-out infinite;
+  animation: tutorial-hint-glow-strong 1.5s ease-in-out infinite;
+  box-shadow: 0 0 20px var(--accent-primary);
 }
 
-@keyframes tutorial-hint-pulse {
+@keyframes tutorial-hint-pulse-strong {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  50% { transform: scale(1.08); }
 }
 
-@keyframes tutorial-hint-glow {
+@keyframes tutorial-hint-bounce {
+  0%, 100% { 
+    transform: translateY(-50%) translateX(0); 
+  }
+  50% { 
+    transform: translateY(-50%) translateX(-8px); 
+  }
+}
+
+@keyframes tutorial-hint-glow-strong {
   0%, 100% {
-    opacity: 0.5;
-    box-shadow: 0 0 8px var(--accent-primary);
+    opacity: 0.6;
+    box-shadow: 0 0 12px var(--accent-primary), 0 0 20px var(--accent-primary);
   }
   50% {
     opacity: 1;
-    box-shadow: 0 0 16px var(--accent-primary);
+    box-shadow: 0 0 20px var(--accent-primary), 0 0 32px var(--accent-primary);
   }
 }
