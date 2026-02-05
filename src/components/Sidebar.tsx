@@ -77,10 +77,7 @@ import {
     getGoogleClientId,
     fetchGoogleProfileFromToken,
 } from "../auth";
-import {
-    authenticateWithGoogleToken,
-    clearStoredTokens,
-} from "../api/backend";
+import { authenticateWithGoogleToken, clearStoredTokens } from "../api/backend";
 import { useGoogleLogin } from "@react-oauth/google";
 import { getRangeSelection } from "../utils/selectionRange";
 import { stripMarkdownForDisplay } from "../utils/noteUtils";
@@ -95,7 +92,7 @@ import type { GoogleUserProfile } from "../store/useAuthStore";
 import { trackEvent } from "../analytics";
 
 const TOOLBAR_POSITION_KEY = "notic_toolbarPosition";
-const TOOLBAR_DEFAULT = { top: 60, right: -40 };
+const TOOLBAR_DEFAULT = { top: 64, right: -60 };
 const TOOLBAR_MIN_RIGHT = -60;
 const TOOLBAR_MAX_RIGHT = 20;
 const TOOLBAR_MIN_TOP = 0;
