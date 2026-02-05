@@ -9,9 +9,6 @@ import { PREFS_KEYS } from "../db/prefs-keys";
 import { getStoredTokens } from "../api/backend";
 import { getBillingStatus } from "../api/backend";
 
-/** Free plan note limit. Over this and not Pro: app switches to Local (sync paused). Match notic extension. */
-export const FREE_NOTE_LIMIT = 10;
-
 interface SubscriptionState {
     /** true = Pro, false = Free, null = unknown/loading */
     isSubscribed: boolean | null;

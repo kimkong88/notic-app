@@ -123,9 +123,6 @@ function SyncStatusButton({
     const [syncPaused, setSyncPausedState] = useState(false);
     const [syncLogOpen, setSyncLogOpen] = useState(false);
     const [syncLogEntries, setSyncLogEntries] = useState<SyncLogEntry[]>([]);
-    const syncLimitModalOpen = useUIStore((s) => s.syncLimitModalOpen);
-    const setSyncLimitModalOpen = useUIStore((s) => s.setSyncLimitModalOpen);
-    const setToastMessage = useUIStore((s) => s.setToastMessage);
     const wrapperRef = useRef<HTMLDivElement>(null);
     const authUser = useAuthStore((s) => s.user);
     const notes = useNotesStore((s) => s.notes);
@@ -207,20 +204,13 @@ function SyncStatusButton({
     const handlePauseResume = useCallback(async () => {
         const paused = await getSyncPaused(db);
         if (paused) {
-            const subscribed = isSubscribed === true;
-            const totalNoteCount = Object.keys(notes).length;
-            if (!subscribed && totalNoteCount > FREE_NOTE_LIMIT) {
-                setDropdownOpen(false);
-                setSyncLimitModalOpen(true);
-                return;
-            }
             await setSyncPaused(db, false);
             setSyncPausedState(false);
         } else {
             await setSyncPaused(db, true);
             setSyncPausedState(true);
         }
-    }, [isSubscribed, notes]);
+    }, []);
 
     const handleAccessSyncLog = useCallback(() => {
         setDropdownOpen(false);
@@ -427,51 +417,6 @@ function SyncStatusButton({
                                 onClick={() => setSyncLogOpen(false)}
                             >
                                 Close
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Sync limit reached (free user over limit – from sidebar quota warning or Resume sync) */}
-            {syncLimitModalOpen && (
-                <div
-                    className="modal-overlay"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby="sync-limit-title"
-                    onClick={() => setSyncLimitModalOpen(false)}
-                >
-                    <div className="modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h3 id="sync-limit-title" className="modal-title">
-                                Sync limit reached
-                            </h3>
-                            <p className="modal-message">
-                                Notic is now running in Private Local Mode to
-                                protect your data. Upgrade to Pro to resume
-                                Cloud Sync for all {Object.keys(notes).length}{" "}
-                                notes, or delete notes from Trash to free sync
-                                space.
-                            </p>
-                        </div>
-                        <div className="modal-actions">
-                            <button
-                                type="button"
-                                className="modal-btn modal-btn-secondary"
-                                onClick={() => setSyncLimitModalOpen(false)}
-                            >
-                                Close
-                            </button>
-                            <button
-                                type="button"
-                                className="modal-btn modal-btn-primary"
-                                onClick={() => {
-                                    void openBillingPage(db, setToastMessage);
-                                    setSyncLimitModalOpen(false);
-                                }}
-                            >
-                                Upgrade
                             </button>
                         </div>
                     </div>
@@ -1774,103 +1719,113 @@ export function MainContent() {
                                         </div>
                                     </div>
 
-                                    <div className="onboarding-ctas">
-                                        <button
-                                            type="button"
-                                            className="onboarding-cta onboarding-cta-primary"
-                                            disabled={tutorialInProgress}
-                                            title={
-                                                tutorialInProgress
-                                                    ? "Finish the tutorial first"
-                                                    : undefined
-                                            }
-                                            onClick={() => {
-                                                const workspaceId =
-                                                    currentWorkspaceId ??
-                                                    undefined;
-                                                const newId = addNote({
-                                                    workspaceId,
-                                                });
-                                                trackEvent("note_created");
-                                                setSelectedNoteId(newId);
-                                                const newNote =
-                                                    useNotesStore.getState()
-                                                        .notes[newId];
-                                                if (
-                                                    newNote &&
-                                                    isDocumentPipSupported()
-                                                )
-                                                    openNoteInPip(newNote);
-                                            }}
-                                        >
-                                            {typeof window !== "undefined" &&
-                                            !(
-                                                "documentPictureInPicture" in
-                                                window
-                                            )
-                                                ? "Create note"
-                                                : "Create note"}
-                                        </button>
-                                        {typeof window !== "undefined" &&
-                                            "documentPictureInPicture" in
-                                                window && (
-                                                <button
-                                                    type="button"
-                                                    className="onboarding-cta onboarding-cta-secondary"
-                                                    disabled={
-                                                        tutorialInProgress ||
-                                                        pipIsOpen
-                                                    }
-                                                    title={
-                                                        tutorialInProgress ||
-                                                        pipIsOpen
-                                                            ? "Close the floating window first"
-                                                            : undefined
-                                                    }
-                                                    onClick={() => {
-                                                        setTutorialInProgress(
-                                                            true
-                                                        );
-                                                        setTutorialReadyForNoteOpen(
-                                                            false
-                                                        );
-                                                        setTutorialShowCreateHint(
-                                                            false
-                                                        );
-                                                        void openTutorialPip({
-                                                            isDarkMode,
-                                                            onClose: () => {
-                                                                setTutorialInProgress(
-                                                                    false
-                                                                );
-                                                                setTutorialReadyForNoteOpen(
-                                                                    false
-                                                                );
-                                                                setTutorialShowCreateHint(
-                                                                    false
-                                                                );
-                                                            },
-                                                            onError: () => {
-                                                                setTutorialInProgress(
-                                                                    false
-                                                                );
-                                                                setTutorialReadyForNoteOpen(
-                                                                    false
-                                                                );
-                                                                setTutorialShowCreateHint(
-                                                                    false
-                                                                );
-                                                                setPipUnsupportedModalOpen(
-                                                                    true
-                                                                );
-                                                            },
-                                                        });
-                                                    }}
-                                                >
-                                                    Start tutorial
-                                                </button>
-                                            )}
-                                    </div>
+                                    {isDocumentPipSupported() ? (
+                                        <div className="onboarding-ctas">
+                                            <button
+                                                type="button"
+                                                className="onboarding-cta onboarding-cta-primary"
+                                                disabled={tutorialInProgress}
+                                                title={
+                                                    tutorialInProgress
+                                                        ? "Finish the tutorial first"
+                                                        : undefined
+                                                }
+                                                onClick={() => {
+                                                    const workspaceId =
+                                                        currentWorkspaceId ??
+                                                        undefined;
+                                                    const newId = addNote({
+                                                        workspaceId,
+                                                    });
+                                                    trackEvent("note_created");
+                                                    setSelectedNoteId(newId);
+                                                    const newNote =
+                                                        useNotesStore.getState()
+                                                            .notes[newId];
+                                                    if (newNote)
+                                                        openNoteInPip(newNote);
+                                                }}
+                                            >
+                                                Create note
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="onboarding-cta onboarding-cta-secondary"
+                                                disabled={
+                                                    tutorialInProgress ||
+                                                    pipIsOpen
+                                                }
+                                                title={
+                                                    tutorialInProgress ||
+                                                    pipIsOpen
+                                                        ? "Close the floating window first"
+                                                        : undefined
+                                                }
+                                                onClick={() => {
+                                                    setTutorialInProgress(true);
+                                                    setTutorialReadyForNoteOpen(
+                                                        false
+                                                    );
+                                                    setTutorialShowCreateHint(
+                                                        false
+                                                    );
+                                                    void openTutorialPip({
+                                                        isDarkMode,
+                                                        onClose: () => {
+                                                            setTutorialInProgress(
+                                                                false
+                                                            );
+                                                            setTutorialReadyForNoteOpen(
+                                                                false
+                                                            );
+                                                            setTutorialShowCreateHint(
+                                                                false
+                                                            );
+                                                        },
+                                                        onError: () => {
+                                                            setTutorialInProgress(
+                                                                false
+                                                            );
+                                                            setTutorialReadyForNoteOpen(
+                                                                false
+                                                            );
+                                                            setTutorialShowCreateHint(
+                                                                false
+                                                            );
+                                                            setPipUnsupportedModalOpen(
+                                                                true
+                                                            );
+                                                        },
+                                                    });
+                                                }}
+                                            >
+                                                Start tutorial
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="onboarding-alert">
+                                            <AlertCircle
+                                                size={20}
+                                                strokeWidth={2}
+                                                className="onboarding-alert-icon"
+                                            />
+                                            <div className="onboarding-alert-content">
+                                                <h3 className="onboarding-alert-title">
+                                                    Picture-in-Picture not
+                                                    supported
+                                                </h3>
+                                                <p className="onboarding-alert-message">
+                                                    Your browser doesn't support
+                                                    the Document
+                                                    Picture-in-Picture API
+                                                    needed for floating notes.
+                                                    Please use a supported
+                                                    browser like Chrome, Edge,
+                                                    or Brave.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     <p className="onboarding-hint">
                                         Works offline • No setup required

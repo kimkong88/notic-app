@@ -2857,6 +2857,43 @@ body.dark-mode .note-detail-action-btn.note-detail-open-active:not(.note-detail-
   text-align: center;
 }
 
+.onboarding-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--border-color);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  max-width: 100%;
+}
+
+.onboarding-alert-icon {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.onboarding-alert-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.onboarding-alert-title {
+  margin: 0 0 6px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.onboarding-alert-message {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
 /* Tutorial preview modal */
 .tutorial-modal-overlay {
   display: flex;
