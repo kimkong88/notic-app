@@ -3969,13 +3969,19 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                     }
                     const partition = await getStoragePartition(db);
                     await loadPartitionIntoStores(db, partition);
-                    await useSubscriptionStore.getState().refresh(db);
+                    // Only fetch subscription status and sync if online
+                    if (navigator.onLine) {
+                        await useSubscriptionStore.getState().refresh(db);
+                    }
                     await setSyncPaused(db, false);
                     startPeriodicPullCheck(db);
-                    try {
-                        await triggerFullSync(db, { ignorePaused: true });
-                    } catch (_) {
-                        // Sync may fail (e.g. offline); no manual sync – full sync runs on sign-in only
+                    // Only trigger sync if online - avoid unnecessary failed API calls when offline
+                    if (navigator.onLine) {
+                        try {
+                            await triggerFullSync(db, { ignorePaused: true });
+                        } catch (_) {
+                            // Sync may fail (e.g. offline); no manual sync – full sync runs on sign-in only
+                        }
                     }
                     return;
                 }
@@ -4569,7 +4575,16 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
     }, [authUser?.sub]);
 
     useEffect(() => {
-        const onOnline = () => setIsOnline(true);
+        const onOnline = async () => {
+            setIsOnline(true);
+            // Trigger sync when coming back online (if signed in)
+            const partition = await getStoragePartition(db);
+            if (partition !== "local") {
+                void triggerFullSync(db, { ignorePaused: true }).catch(
+                    () => {}
+                );
+            }
+        };
         const onOffline = () => setIsOnline(false);
         window.addEventListener("online", onOnline);
         window.addEventListener("offline", onOffline);
