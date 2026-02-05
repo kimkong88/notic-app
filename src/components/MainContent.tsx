@@ -65,7 +65,6 @@ import { useSubscriptionStore } from "../store/useSubscriptionStore";
 import { publishNote, unpublishNote, openBillingPage } from "../api/backend";
 import { FREE_PIP_TAB_LIMIT } from "../constants";
 
-const FREE_NOTE_LIMIT = 10;
 const SHARE_PUBLIC_BASE =
     (typeof import.meta !== "undefined" &&
         (import.meta.env?.VITE_PUBLIC_URL as string)) ||
@@ -125,8 +124,6 @@ function SyncStatusButton({
     const [syncLogEntries, setSyncLogEntries] = useState<SyncLogEntry[]>([]);
     const wrapperRef = useRef<HTMLDivElement>(null);
     const authUser = useAuthStore((s) => s.user);
-    const notes = useNotesStore((s) => s.notes);
-    const isSubscribed = useSubscriptionStore((s) => s.isSubscribed);
 
     useEffect(() => {
         const onOnline = () => setIsOnline(true);

@@ -43,7 +43,7 @@ interface UIState {
     toastMessage: string | null;
     /** When true, show "Data updated on another device. Refresh to get the latest." banner (matches extension serverNewerBanner). */
     serverNewerBannerVisible: boolean;
-    /** When true, show "Sync limit reached" modal (free user over note limit). Openable from sidebar quota warning or sync status Resume. */
+    /** @deprecated Sync limit modal removed - free users now have unlimited notes */
     syncLimitModalOpen: boolean;
     /** When true, tutorial is in progress (blocks real PiP opening, enables tutorial message tracking). */
     tutorialInProgress: boolean;
