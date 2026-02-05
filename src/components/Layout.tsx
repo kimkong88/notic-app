@@ -504,13 +504,11 @@ export function Layout() {
                                 id="pip-unsupported-title"
                                 className="modal-title"
                             >
-                                Picture-in-Picture not supported
+                                Browser not supported
                             </h2>
                             <p className="modal-message">
-                                Your browser does not support the Document
-                                Picture-in-Picture API. Use a supported browser
-                                (e.g. Chrome) to open notes in a floating
-                                window.
+                                Floating windows are available in Chrome, Edge,
+                                and Brave.
                             </p>
                         </div>
                         <div className="modal-actions">
@@ -521,7 +519,7 @@ export function Layout() {
                                     setPipUnsupportedModalOpen(false)
                                 }
                             >
-                                OK
+                                Got it
                             </button>
                         </div>
                     </div>

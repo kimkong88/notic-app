@@ -1627,48 +1627,6 @@ export function MainContent() {
                             allNotesInWorkspace.length === 0 &&
                             !searchQuery.trim() ? (
                                 <div className="onboarding">
-                                    {typeof window !== "undefined" &&
-                                        !(
-                                            "documentPictureInPicture" in window
-                                        ) && (
-                                            <div
-                                                className="onboarding-browser-warning"
-                                                role="alert"
-                                            >
-                                                <div className="onboarding-browser-warning-icon">
-                                                    <AlertCircle
-                                                        size={20}
-                                                        strokeWidth={2}
-                                                    />
-                                                </div>
-                                                <div className="onboarding-browser-warning-content">
-                                                    <h3 className="onboarding-browser-warning-title">
-                                                        Browser not supported
-                                                    </h3>
-                                                    <p className="onboarding-browser-warning-desc">
-                                                        Pop-out editor requires
-                                                        one of these browsers:
-                                                    </p>
-                                                    <div className="onboarding-browser-logos">
-                                                        <img
-                                                            src={chromeLogo}
-                                                            alt="Chrome"
-                                                            className="onboarding-browser-logo"
-                                                        />
-                                                        <img
-                                                            src={edgeLogo}
-                                                            alt="Edge"
-                                                            className="onboarding-browser-logo"
-                                                        />
-                                                        <img
-                                                            src={braveLogo}
-                                                            alt="Brave"
-                                                            className="onboarding-browser-logo"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
                                     <div className="onboarding-hero">
                                         <div
                                             className="onboarding-logo"
@@ -1803,26 +1761,41 @@ export function MainContent() {
                                             </button>
                                         </div>
                                     ) : (
-                                        <div className="onboarding-alert">
-                                            <AlertCircle
-                                                size={20}
-                                                strokeWidth={2}
-                                                className="onboarding-alert-icon"
-                                            />
-                                            <div className="onboarding-alert-content">
-                                                <h3 className="onboarding-alert-title">
-                                                    Picture-in-Picture not
-                                                    supported
+                                        <div
+                                            className="onboarding-browser-info"
+                                            role="status"
+                                        >
+                                            <div className="onboarding-browser-info-icon">
+                                                <AlertCircle
+                                                    size={20}
+                                                    strokeWidth={2}
+                                                />
+                                            </div>
+                                            <div className="onboarding-browser-info-content">
+                                                <h3 className="onboarding-browser-info-title">
+                                                    Browser not supported
                                                 </h3>
-                                                <p className="onboarding-alert-message">
-                                                    Your browser doesn't support
-                                                    the Document
-                                                    Picture-in-Picture API
-                                                    needed for floating notes.
-                                                    Please use a supported
-                                                    browser like Chrome, Edge,
-                                                    or Brave.
+                                                <p className="onboarding-browser-info-desc">
+                                                    Floating windows are
+                                                    available in these browsers:
                                                 </p>
+                                                <div className="onboarding-browser-logos">
+                                                    <img
+                                                        src={chromeLogo}
+                                                        alt="Chrome"
+                                                        className="onboarding-browser-logo"
+                                                    />
+                                                    <img
+                                                        src={edgeLogo}
+                                                        alt="Edge"
+                                                        className="onboarding-browser-logo"
+                                                    />
+                                                    <img
+                                                        src={braveLogo}
+                                                        alt="Brave"
+                                                        className="onboarding-browser-logo"
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                     )}
