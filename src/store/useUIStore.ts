@@ -45,6 +45,8 @@ interface UIState {
   serverNewerBannerVisible: boolean;
   /** When true, show "Sync limit reached" modal (free user over note limit). Openable from sidebar quota warning or sync status Resume. */
   syncLimitModalOpen: boolean;
+  /** When true, tutorial is in progress (blocks real PiP opening, enables tutorial message tracking). */
+  tutorialInProgress: boolean;
 }
 
 interface UIActions {
@@ -83,6 +85,7 @@ interface UIActions {
   setToastMessage: (message: string | null) => void;
   setServerNewerBannerVisible: (value: boolean) => void;
   setSyncLimitModalOpen: (value: boolean) => void;
+  setTutorialInProgress: (value: boolean) => void;
 }
 
 const SIDEBAR_WIDTH_DEFAULT = 280;
@@ -108,6 +111,7 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
   toastMessage: null,
   serverNewerBannerVisible: false,
   syncLimitModalOpen: false,
+  tutorialInProgress: false,
 
   setIsDarkMode: (value) => set({ isDarkMode: value }),
   setSidebarCollapsed: (value) => set({ sidebarCollapsed: value }),
@@ -151,6 +155,7 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
   setToastMessage: (message) => set({ toastMessage: message }),
   setServerNewerBannerVisible: (value) => set({ serverNewerBannerVisible: value }),
   setSyncLimitModalOpen: (value) => set({ syncLimitModalOpen: value }),
+  setTutorialInProgress: (value) => set({ tutorialInProgress: value }),
 }));
 
 export { SIDEBAR_WIDTH_MIN, SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_DEFAULT };

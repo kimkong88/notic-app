@@ -2832,7 +2832,7 @@ body.dark-mode .note-detail-action-btn.note-detail-open-active:not(.note-detail-
   border: 1.5px solid var(--border-color);
 }
 
-.onboarding-cta-secondary:hover {
+.onboarding-cta-secondary:hover:not(:disabled) {
   background: var(--bg-tertiary);
   border-color: var(--accent-primary);
   color: var(--accent-primary);
@@ -2840,9 +2840,14 @@ body.dark-mode .note-detail-action-btn.note-detail-open-active:not(.note-detail-
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.onboarding-cta-secondary:active {
+.onboarding-cta-secondary:active:not(:disabled) {
   transform: translateY(0);
   box-shadow: none;
+}
+
+.onboarding-cta-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .onboarding-hint {
@@ -2850,6 +2855,252 @@ body.dark-mode .note-detail-action-btn.note-detail-open-active:not(.note-detail-
   font-size: 13px;
   color: var(--text-muted);
   text-align: center;
+}
+
+/* Tutorial preview modal */
+.tutorial-modal-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.tutorial-modal {
+  width: 90%;
+  max-width: 540px;
+  background: var(--bg-primary);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+}
+
+.tutorial-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.tutorial-modal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: rgba(79, 70, 229, 0.1);
+  border: 1px solid rgba(79, 70, 229, 0.3);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-primary);
+}
+
+.tutorial-modal-badge svg {
+  flex-shrink: 0;
+}
+
+.tutorial-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tutorial-modal-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.tutorial-modal-content {
+  padding: 32px 24px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.tutorial-modal-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 12px 0;
+  line-height: 1.3;
+}
+
+.tutorial-modal-desc {
+  font-size: 15px;
+  color: var(--text-secondary);
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+}
+
+.tutorial-task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tutorial-task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.tutorial-task-checkbox {
+  flex-shrink: 0;
+  font-size: 16px;
+  color: var(--text-secondary);
+  user-select: none;
+}
+
+.tutorial-task-text {
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.tutorial-task-text kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  font-size: 12px;
+  font-family: ui-monospace, monospace;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-secondary);
+}
+
+.tutorial-info-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(79, 70, 229, 0.05);
+  border: 1px solid rgba(79, 70, 229, 0.2);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.tutorial-info-callout svg {
+  flex-shrink: 0;
+  color: var(--accent-primary);
+  margin-top: 2px;
+}
+
+.tutorial-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+/* Confetti celebration animation */
+.confetti-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10003;
+  overflow: hidden;
+}
+
+.confetti-particle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  opacity: 1;
+  animation: confetti-fall 3s ease-out forwards;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+/* Tutorial banner (shown when tutorial PiP is active) */
+.tutorial-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--accent-light);
+  border-bottom: 1px solid var(--accent-border);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.tutorial-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.tutorial-banner-icon {
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+.tutorial-banner-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.tutorial-banner-close {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  transition: all 0.2s;
+}
+
+.tutorial-banner-close:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 /* Browser warning banner (shown when PiP not supported) */
@@ -3889,6 +4140,184 @@ body.pip-page.dark-mode[data-note-theme="high-contrast"] .pip-content .note-cont
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+}
+
+/* Tutorial PiP view (separate route /pip-tutorial, isolated from real editor) */
+.tutorial-pip-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.tutorial-pip-content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.tutorial-pip-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 12px 0;
+  line-height: 1.3;
+}
+
+.tutorial-pip-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+.tutorial-pip-task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px 0;
+}
+
+.tutorial-pip-task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.tutorial-pip-task-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.tutorial-pip-task-label {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.tutorial-pip-task-hint {
+  font-size: 14px;
+  color: var(--accent-primary);
+  font-weight: 600;
+  animation: hint-highlight 0.5s ease-out;
+}
+
+@keyframes hint-highlight {
+  0% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tutorial-pip-checkbox {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--text-muted);
+  border-radius: 5px;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  background: var(--bg-secondary);
+}
+
+.tutorial-pip-checkbox-checked {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: white;
+}
+
+.tutorial-pip-checkbox-pulse {
+  animation: checkbox-pulse 0.6s ease-out;
+}
+
+@keyframes checkbox-pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.tutorial-pip-task-checked {
+  opacity: 0.65;
+}
+
+.tutorial-pip-task-disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.tutorial-pip-task-disabled .tutorial-pip-checkbox {
+  background: var(--bg-tertiary);
+  border-color: var(--border-secondary);
+}
+
+.tutorial-pip-task-disabled .tutorial-pip-task-label {
+  color: var(--text-muted);
+}
+
+/* Tutorial interactive tab */
+.tutorial-interactive {
+  position: relative;
+  animation: tab-pulse 2s ease-in-out infinite;
+}
+
+.tutorial-interactive::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border: 2px solid var(--accent-primary);
+  border-radius: 6px;
+  pointer-events: none;
+  opacity: 0.6;
+  animation: tab-border-pulse 2s ease-in-out infinite;
+}
+
+@keyframes tab-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+@keyframes tab-border-pulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.tutorial-pip-note {
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: var(--accent-light);
+  border: 1px solid var(--accent-border);
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
 }
 
 .modal-header {

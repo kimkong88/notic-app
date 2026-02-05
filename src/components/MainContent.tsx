@@ -343,6 +343,7 @@ import type { NoteData, SortOption, Folder } from '../store/types'
 import {
   isDocumentPipSupported,
   openPipWithNote,
+  openTutorialPip,
   getPipWindow,
   sendNotesUpdateToPip,
   requestPipFlushSave,
@@ -458,6 +459,9 @@ export function MainContent() {
     noteName?: string
     count?: number
   } | null>(null)
+  const tutorialInProgress = useUIStore((s) => s.tutorialInProgress)
+  const setTutorialInProgress = useUIStore((s) => s.setTutorialInProgress)
+  const [showCelebration, setShowCelebration] = useState(false)
 
   // Close Share modal if the note was removed
   useEffect(() => {
@@ -473,6 +477,80 @@ export function MainContent() {
     const t = setTimeout(() => setShareToast(null), 2000)
     return () => clearTimeout(t)
   }, [shareToast])
+
+  // Listen for tutorial task completion from PiP
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      const d = e.data
+      if (d && d.type === 'tutorial-task-completed' && d.taskId === 'float-test') {
+        setShowCelebration(true)
+        setToastMessage('Nice! 🎉 This window floats above everything')
+        setTimeout(() => setShowCelebration(false), 3000)
+      }
+      if (d && d.type === 'tutorial-task-completed' && d.taskId === 'tab-customization') {
+        setShowCelebration(true)
+        setToastMessage('Great! 🎨 You can personalize every tab')
+        setTimeout(() => setShowCelebration(false), 3000)
+      }
+    }
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [setToastMessage])
+
+  // Track visibility changes when tutorial is active to detect tab switching
+  useEffect(() => {
+    if (!tutorialInProgress) return
+
+    let hasLeftTab = false
+
+    const handleVisibilityChange = () => {
+      if (import.meta.env.DEV) {
+        console.log('[Tutorial] Visibility changed. document.hidden:', document.hidden)
+      }
+      
+      if (document.hidden) {
+        hasLeftTab = true
+        if (import.meta.env.DEV) {
+          console.log('[Tutorial] User left Notic tab')
+        }
+        // Notify PiP that user left (step 1 of 2)
+        const pipWin = getPipWindow()
+        if (pipWin && !pipWin.closed) {
+          try {
+            pipWin.postMessage({ type: 'notic-pip-tutorial-tab-left' }, '*')
+          } catch {
+            // Ignore
+          }
+        }
+      } else if (hasLeftTab) {
+        if (import.meta.env.DEV) {
+          console.log('[Tutorial] User returned to Notic tab, sending message to PiP')
+        }
+        // User returned to Notic tab after leaving - send to PiP
+        const pipWin = getPipWindow()
+        if (pipWin && !pipWin.closed) {
+          try {
+            pipWin.postMessage({ type: 'notic-pip-tutorial-tab-returned' }, '*')
+            if (import.meta.env.DEV) {
+              console.log('[Tutorial] Message sent to PiP window')
+            }
+          } catch (e) {
+            if (import.meta.env.DEV) {
+              console.error('[Tutorial] Failed to send message to PiP:', e)
+            }
+          }
+        } else {
+          if (import.meta.env.DEV) {
+            console.log('[Tutorial] PiP window not found or closed')
+          }
+        }
+        hasLeftTab = false
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [tutorialInProgress])
 
   // Clear detail edit mode when switching to a different note (match extension behavior)
   useEffect(() => {
@@ -773,11 +851,28 @@ export function MainContent() {
 
   const handlePipIconClick = (e: React.MouseEvent, note: NoteData) => {
     e.stopPropagation()
+    
     const isOpenInPip = openInPipNoteIds.includes(note.sessionId)
     const shouldDisable = isOpenInPip && pipIsOpen
     if (shouldDisable) return
     if (isOpenInPip) closeNoteInPip(note.sessionId)
-    else openNoteInPip(note)
+    else {
+      // Tutorial tracking: close tutorial PiP and show confetti before opening real editor
+      if (tutorialInProgress) {
+        const pipWin = getPipWindow()
+        if (pipWin && !pipWin.closed) {
+          try {
+            pipWin.close()
+          } catch {}
+        }
+        setTutorialInProgress(false)
+        setShowCelebration(true)
+        setToastMessage('Perfect! 🎉 You\'re ready to use Notic')
+        setTimeout(() => setShowCelebration(false), 3000)
+      }
+      
+      openNoteInPip(note)
+    }
   }
 
   const saveNoteContentDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -1075,6 +1170,17 @@ export function MainContent() {
 
   return (
     <>
+      {showCelebration && (
+        <div className="confetti-container" aria-hidden>
+          {Array.from({ length: 50 }).map((_, i) => (
+            <div key={i} className="confetti-particle" style={{
+              left: `${50 + (Math.random() - 0.5) * 20}%`,
+              animationDelay: `${Math.random() * 0.3}s`,
+              backgroundColor: ['#4f46e5', '#6366f1', '#22c55e', '#f59e0b', '#ef4444'][Math.floor(Math.random() * 5)]
+            }} />
+          ))}
+        </div>
+      )}
       <main className="main-content">
         <div className="breadcrumbs-row" id="mainHeaderRow">
           <div className="breadcrumbs" id="breadcrumbs">
@@ -1102,6 +1208,23 @@ export function MainContent() {
           </div>
           <SyncStatusButton setCurrentView={setCurrentView} />
         </div>
+
+        {tutorialInProgress && pipIsOpen && (
+          <div className="tutorial-banner" role="status">
+            <div className="tutorial-banner-content">
+              <span className="tutorial-banner-icon">📖</span>
+              <span className="tutorial-banner-text">Tutorial in progress - Follow the steps in the floating window</span>
+            </div>
+            <button
+              type="button"
+              className="tutorial-banner-close"
+              onClick={() => setTutorialInProgress(false)}
+              aria-label="Dismiss banner"
+            >
+              ×
+            </button>
+          </div>
+        )}
 
         {currentView === 'notes' && (
           <div className={`content-view${isTrashView ? ' trash-view-active' : ''}`} id="notesView">
@@ -1173,6 +1296,8 @@ export function MainContent() {
                     <button
                       type="button"
                       className="onboarding-cta onboarding-cta-primary"
+                      disabled={tutorialInProgress}
+                      title={tutorialInProgress ? 'Finish the tutorial first' : undefined}
                       onClick={() => {
                         const workspaceId = currentWorkspaceId ?? undefined
                         const newId = addNote({ workspaceId })
@@ -1187,9 +1312,20 @@ export function MainContent() {
                     <button
                       type="button"
                       className="onboarding-cta onboarding-cta-secondary"
+                      disabled={tutorialInProgress || pipIsOpen}
+                      title={tutorialInProgress || pipIsOpen ? 'Close the floating window first' : undefined}
                       onClick={() => {
-                        // TODO: Implement tutorial
-                        console.log('Start tutorial')
+                        setTutorialInProgress(true)
+                        void openTutorialPip({
+                          isDarkMode,
+                          onClose: () => {
+                            setTutorialInProgress(false)
+                          },
+                          onError: () => {
+                            setTutorialInProgress(false)
+                            setPipUnsupportedModalOpen(true)
+                          }
+                        })
                       }}
                     >
                       Start tutorial
@@ -2033,6 +2169,21 @@ export function MainContent() {
                 title={isNoteActiveInPipDetail ? 'Note is already open in editor' : undefined}
                 onClick={() => {
                   if (isNoteActiveInPipDetail) return
+                  
+                  // Tutorial tracking: close tutorial PiP and show confetti before opening real editor
+                  if (tutorialInProgress) {
+                    const pipWin = getPipWindow()
+                    if (pipWin && !pipWin.closed) {
+                      try {
+                        pipWin.close()
+                      } catch {}
+                    }
+                    setTutorialInProgress(false)
+                    setShowCelebration(true)
+                    setToastMessage('Perfect! 🎉 You\'re ready to use Notic')
+                    setTimeout(() => setShowCelebration(false), 3000)
+                  }
+                  
                   openNoteInPip(menuNote)
                   setNoteContextMenuAnchor(null)
                 }}
@@ -2043,8 +2194,19 @@ export function MainContent() {
                 type="button"
                 className="pip-context-menu-item"
                 onClick={() => {
-                  updateNote(noteContextMenuAnchor!.noteId, { isBookmarked: !isBookmarked })
+                  const willBeBookmarked = !isBookmarked
+                  updateNote(noteContextMenuAnchor!.noteId, { isBookmarked: willBeBookmarked })
                   setNoteContextMenuAnchor(null)
+                  
+                  // Tutorial tracking: send message when user bookmarks a note (not unbookmark)
+                  if (tutorialInProgress && willBeBookmarked) {
+                    const pipWin = getPipWindow()
+                    if (pipWin && !pipWin.closed) {
+                      try {
+                        pipWin.postMessage({ type: 'notic-pip-tutorial-note-bookmarked' }, '*')
+                      } catch {}
+                    }
+                  }
                 }}
               >
                 {isBookmarked ? 'Remove from Bookmarks' : 'Add to Bookmarks'}
@@ -2087,8 +2249,9 @@ export function MainContent() {
                     'Rename note',
                     menuNote.displayName ?? menuNote.title ?? 'Untitled'
                   )
-                  if (value != null && value.trim())
+                  if (value != null && value.trim()) {
                     updateNote(noteContextMenuAnchor!.noteId, { displayName: value.trim() })
+                  }
                   setNoteContextMenuAnchor(null)
                 }}
               >

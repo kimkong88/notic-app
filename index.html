@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <link rel="apple-touch-icon" href="/logo.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Notic – The note that floats over every tab</title>
     <meta name="description" content="Chrome extension: sticky notes that float over every tab. Markdown, folders, sync. No hunting for that tab." />
@@ -35,9 +36,7 @@
           script.src = 'https://cloud.umami.is/script.js';
           script.setAttribute('data-website-id', 'ccf99e7d-0bb2-4ce3-8931-f43b5e4ed52f');
           script.onerror = function() { 
-            if (import.meta && import.meta.env && import.meta.env.DEV) {
-              console.log('Analytics unavailable'); 
-            }
+            // Silently fail when analytics unavailable (offline/blocked)
           };
           document.head.appendChild(script);
         })();

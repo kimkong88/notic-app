@@ -1325,6 +1325,7 @@ interface FoldersTabListProps {
     updateNote: (sessionId: string, patch: Partial<NoteData>) => void;
     duplicateNote: (sessionId: string) => string | null;
     currentTab: "recent" | "folders";
+    tutorialInProgress: boolean;
 }
 
 const DND_TYPE_FOLDER = "application/x-notic-folder-id";
@@ -1364,6 +1365,7 @@ function FoldersTabList({
     updateNote,
     duplicateNote,
     currentTab,
+    tutorialInProgress,
 }: FoldersTabListProps) {
     const folderContextMenuSubmenuTimerRef = useRef<ReturnType<
         typeof setTimeout
@@ -2727,6 +2729,16 @@ function FoldersTabList({
                                     triggerSyncAfterUserAction(db);
                                     trackEvent("note_created");
                                     setFolderContextMenuAnchor(null);
+                                    
+                                    // Tutorial tracking: send message to tutorial PiP
+                                    if (tutorialInProgress) {
+                                        const pipWin = getPipWindow();
+                                        if (pipWin && !pipWin.closed) {
+                                            try {
+                                                pipWin.postMessage({ type: "notic-pip-tutorial-note-created" }, "*");
+                                            } catch {}
+                                        }
+                                    }
                                 }}
                             >
                                 New Note
@@ -3673,6 +3685,7 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
         (s) => s.setOpenInPipActiveNoteId
     );
     const addNoteToPip = useUIStore((s) => s.addNoteToPip);
+    const tutorialInProgress = useUIStore((s) => s.tutorialInProgress);
     const currentWorkspaceId = useWorkspaceStore((s) => s.currentWorkspaceId);
     const workspaces = useWorkspaceStore((s) => s.workspaces);
     const currentTab = useNotesStore((s) => s.currentTab);
@@ -4086,6 +4099,16 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                     ...expandedSidebarFolderIds,
                     ROOT_SENTINEL,
                 ]);
+            }
+        }
+        
+        // Tutorial tracking: send message to tutorial PiP
+        if (tutorialInProgress) {
+            const pipWin = getPipWindow();
+            if (pipWin && !pipWin.closed) {
+                try {
+                    pipWin.postMessage({ type: "notic-pip-tutorial-note-created" }, "*");
+                } catch {}
             }
         }
         setPendingNoteRenameId(newId);
@@ -5300,6 +5323,7 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                                     updateNote={updateNote}
                                     duplicateNote={duplicateNote}
                                     currentTab={currentTab}
+                                    tutorialInProgress={tutorialInProgress}
                                 />
                             </div>
                         )}

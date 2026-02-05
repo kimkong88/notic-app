@@ -53,6 +53,73 @@ export interface PipNoteData {
 }
 
 /**
+ * Open tutorial PiP - separate from real notes.
+ * Shows static tutorial content, no editor, no database.
+ * Must be called from a user gesture (e.g. click).
+ */
+export async function openTutorialPip(options: {
+  isDarkMode: boolean
+  onClose: () => void
+  onError?: () => void
+}): Promise<void> {
+  if (!isDocumentPipSupported()) {
+    options.onError?.()
+    return
+  }
+
+  const { isDarkMode, onClose, onError } = options
+
+  try {
+    const requestedWindow = await window.documentPictureInPicture!.requestWindow({
+      width: 420,
+      height: 560,
+    })
+
+    pipWindowRef = requestedWindow
+
+    try {
+      const { trackEvent } = await import('../analytics')
+      trackEvent('tutorial_pip_opened')
+    } catch {
+      // ignore
+    }
+
+    requestedWindow.document.documentElement.innerHTML = '<head></head><body></body>'
+    requestedWindow.document.title = 'Notic – Tutorial'
+
+    const style = requestedWindow.document.createElement('style')
+    style.textContent = getPipIframeStyles()
+    requestedWindow.document.head.appendChild(style)
+
+    const iframe = requestedWindow.document.createElement('iframe')
+    iframe.id = 'notic-pip-iframe'
+    iframe.setAttribute('title', 'Notic tutorial')
+    requestedWindow.document.body.appendChild(iframe)
+
+    const script = requestedWindow.document.createElement('script')
+    script.textContent = getPipIframeCloseScript()
+    requestedWindow.document.body.appendChild(script)
+
+    // Point to /pip-tutorial route
+    const origin = typeof window !== 'undefined' ? window.location.origin : ''
+    const darkStr = isDarkMode ? '1' : '0'
+    iframe.src = `${origin}/pip-tutorial?dark=${darkStr}`
+
+    if (closeCheckInterval) clearInterval(closeCheckInterval)
+    closeCheckInterval = setInterval(() => {
+      if (requestedWindow.closed) {
+        if (closeCheckInterval) clearInterval(closeCheckInterval)
+        closeCheckInterval = null
+        pipWindowRef = null
+        onClose()
+      }
+    }, 300)
+  } catch (error) {
+    onError?.()
+  }
+}
+
+/**
  * Open Chrome Document PiP window with an iframe loading our app at /pip.
  * Must be called from a user gesture (e.g. click).
  * Pass noteIds (array) and activeId for multi-tab PiP (same pattern as notic).
@@ -242,6 +309,21 @@ function getPipIframeCloseScript(): string {
     '    return;',
     '  }',
     '  if (e.source === window.opener && d && typeof d === "object" && d.type === "flushSave") {',
+    '    var iframe = document.getElementById("notic-pip-iframe");',
+    '    if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage(d, "*");',
+    '    return;',
+    '  }',
+    '  if (e.source === window.opener && d && typeof d === "object" && d.type === "notic-pip-tutorial-tab-left") {',
+    '    var iframe = document.getElementById("notic-pip-iframe");',
+    '    if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage(d, "*");',
+    '    return;',
+    '  }',
+    '  if (e.source === window.opener && d && typeof d === "object" && d.type === "notic-pip-tutorial-tab-returned") {',
+    '    var iframe = document.getElementById("notic-pip-iframe");',
+    '    if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage(d, "*");',
+    '    return;',
+    '  }',
+    '  if (e.source === window.opener && d && typeof d === "object" && (d.type === "notic-pip-tutorial-note-created" || d.type === "notic-pip-tutorial-note-bookmarked" || d.type === "notic-pip-tutorial-note-opened")) {',
     '    var iframe = document.getElementById("notic-pip-iframe");',
     '    if (iframe && iframe.contentWindow) iframe.contentWindow.postMessage(d, "*");',
     '    return;',

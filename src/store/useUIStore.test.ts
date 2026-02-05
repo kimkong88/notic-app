@@ -15,6 +15,7 @@ function resetUIStore(): void {
     isTrashView: false,
     openInPipNoteIds: [],
     openInPipActiveNoteId: null,
+    tutorialInProgress: false,
   })
 }
 
@@ -87,6 +88,14 @@ describe('useUIStore', () => {
       useUIStore.getState().removeNoteFromPip('n1')
       expect(useUIStore.getState().openInPipNoteIds).toEqual(['n2'])
       expect(useUIStore.getState().openInPipActiveNoteId).toBe('n2')
+    })
+
+    it('setTutorialInProgress updates state', () => {
+      expect(useUIStore.getState().tutorialInProgress).toBe(false)
+      useUIStore.getState().setTutorialInProgress(true)
+      expect(useUIStore.getState().tutorialInProgress).toBe(true)
+      useUIStore.getState().setTutorialInProgress(false)
+      expect(useUIStore.getState().tutorialInProgress).toBe(false)
     })
   })
 })
