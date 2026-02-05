@@ -136,9 +136,16 @@ function SyncStatusButton({
         const onOffline = () => setIsOnline(false);
         window.addEventListener("online", onOnline);
         window.addEventListener("offline", onOffline);
+
+        // Fallback: Poll navigator.onLine every 3s (DevTools offline mode doesn't always fire events)
+        const pollInterval = setInterval(() => {
+            setIsOnline(navigator.onLine);
+        }, 3000);
+
         return () => {
             window.removeEventListener("online", onOnline);
             window.removeEventListener("offline", onOffline);
+            clearInterval(pollInterval);
         };
     }, []);
 
@@ -1780,69 +1787,80 @@ export function MainContent() {
                                                 const newNote =
                                                     useNotesStore.getState()
                                                         .notes[newId];
-                                                if (newNote && isDocumentPipSupported())
+                                                if (
+                                                    newNote &&
+                                                    isDocumentPipSupported()
+                                                )
                                                     openNoteInPip(newNote);
                                             }}
                                         >
                                             {typeof window !== "undefined" &&
-                                            !("documentPictureInPicture" in window)
+                                            !(
+                                                "documentPictureInPicture" in
+                                                window
+                                            )
                                                 ? "Create note"
                                                 : "Create note"}
                                         </button>
                                         {typeof window !== "undefined" &&
-                                            "documentPictureInPicture" in window && (
-                                            <button
-                                                type="button"
-                                                className="onboarding-cta onboarding-cta-secondary"
-                                                disabled={
-                                                    tutorialInProgress || pipIsOpen
-                                                }
-                                                title={
-                                                    tutorialInProgress || pipIsOpen
-                                                        ? "Close the floating window first"
-                                                        : undefined
-                                                }
-                                            onClick={() => {
-                                                setTutorialInProgress(true);
-                                                setTutorialReadyForNoteOpen(
-                                                    false
-                                                );
-                                                setTutorialShowCreateHint(
-                                                    false
-                                                );
-                                                void openTutorialPip({
-                                                    isDarkMode,
-                                                    onClose: () => {
+                                            "documentPictureInPicture" in
+                                                window && (
+                                                <button
+                                                    type="button"
+                                                    className="onboarding-cta onboarding-cta-secondary"
+                                                    disabled={
+                                                        tutorialInProgress ||
+                                                        pipIsOpen
+                                                    }
+                                                    title={
+                                                        tutorialInProgress ||
+                                                        pipIsOpen
+                                                            ? "Close the floating window first"
+                                                            : undefined
+                                                    }
+                                                    onClick={() => {
                                                         setTutorialInProgress(
-                                                            false
-                                                        );
-                                                        setTutorialReadyForNoteOpen(
-                                                            false
-                                                        );
-                                                        setTutorialShowCreateHint(
-                                                            false
-                                                        );
-                                                    },
-                                                    onError: () => {
-                                                        setTutorialInProgress(
-                                                            false
-                                                        );
-                                                        setTutorialReadyForNoteOpen(
-                                                            false
-                                                        );
-                                                        setTutorialShowCreateHint(
-                                                            false
-                                                        );
-                                                        setPipUnsupportedModalOpen(
                                                             true
                                                         );
-                                                    },
-                                                });
-                                            }}
-                                        >
-                                            Start tutorial
-                                        </button>
-                                        )}
+                                                        setTutorialReadyForNoteOpen(
+                                                            false
+                                                        );
+                                                        setTutorialShowCreateHint(
+                                                            false
+                                                        );
+                                                        void openTutorialPip({
+                                                            isDarkMode,
+                                                            onClose: () => {
+                                                                setTutorialInProgress(
+                                                                    false
+                                                                );
+                                                                setTutorialReadyForNoteOpen(
+                                                                    false
+                                                                );
+                                                                setTutorialShowCreateHint(
+                                                                    false
+                                                                );
+                                                            },
+                                                            onError: () => {
+                                                                setTutorialInProgress(
+                                                                    false
+                                                                );
+                                                                setTutorialReadyForNoteOpen(
+                                                                    false
+                                                                );
+                                                                setTutorialShowCreateHint(
+                                                                    false
+                                                                );
+                                                                setPipUnsupportedModalOpen(
+                                                                    true
+                                                                );
+                                                            },
+                                                        });
+                                                    }}
+                                                >
+                                                    Start tutorial
+                                                </button>
+                                            )}
                                     </div>
 
                                     <p className="onboarding-hint">
