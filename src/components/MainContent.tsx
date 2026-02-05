@@ -178,15 +178,6 @@ function SyncStatusButton({
         };
     }, [authUser]);
 
-    // Update paused state when sync limit is reached (free user > 10 notes)
-    useEffect(() => {
-        if (isSubscribed !== false) return;
-        const totalNoteCount = Object.keys(notes).length;
-        if (totalNoteCount > FREE_NOTE_LIMIT) {
-            setSyncPausedState(true);
-        }
-    }, [isSubscribed, notes]);
-
     useEffect(() => {
         if (!dropdownOpen) return;
         const close = (e: MouseEvent) => {
@@ -202,6 +193,9 @@ function SyncStatusButton({
     }, [dropdownOpen]);
 
     const handlePauseResume = useCallback(async () => {
+        // Only allow pausing/resuming when signed in
+        if (!authUser) return;
+
         const paused = await getSyncPaused(db);
         if (paused) {
             await setSyncPaused(db, false);
@@ -210,7 +204,7 @@ function SyncStatusButton({
             await setSyncPaused(db, true);
             setSyncPausedState(true);
         }
-    }, []);
+    }, [authUser]);
 
     const handleAccessSyncLog = useCallback(() => {
         setDropdownOpen(false);
@@ -291,13 +285,18 @@ function SyncStatusButton({
                 type="button"
                 className={`sync-status sync-status-trigger${
                     syncStatusClass ? ` ${syncStatusClass}` : ""
-                }`}
+                }${!isSignedIn ? " sync-status-no-dropdown" : ""}`}
                 id="syncStatus"
                 aria-expanded={dropdownOpen}
-                aria-haspopup="true"
+                aria-haspopup={isSignedIn}
                 aria-label="Sync status"
                 title={statusTitle}
-                onClick={() => setDropdownOpen((prev) => !prev)}
+                onClick={() => {
+                    // Only allow dropdown when signed in
+                    if (isSignedIn) {
+                        setDropdownOpen((prev) => !prev);
+                    }
+                }}
             >
                 <StatusIcon
                     className="sync-status-icon"

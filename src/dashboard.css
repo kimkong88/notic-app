@@ -1487,6 +1487,14 @@ body.dark-mode .sidebar-content::-webkit-scrollbar-thumb:hover {
   font: inherit;
 }
 
+.sync-status-no-dropdown {
+  cursor: default !important;
+}
+
+.sync-status-no-dropdown .sync-status-chevron {
+  display: none;
+}
+
 .sync-status-trigger:hover {
   background: var(--bg-hover);
   color: var(--text-secondary);
