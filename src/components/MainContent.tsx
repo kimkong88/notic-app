@@ -461,6 +461,8 @@ export function MainContent() {
   } | null>(null)
   const tutorialInProgress = useUIStore((s) => s.tutorialInProgress)
   const setTutorialInProgress = useUIStore((s) => s.setTutorialInProgress)
+  const tutorialReadyForNoteOpen = useUIStore((s) => s.tutorialReadyForNoteOpen)
+  const setTutorialReadyForNoteOpen = useUIStore((s) => s.setTutorialReadyForNoteOpen)
   const [showCelebration, setShowCelebration] = useState(false)
 
   // Close Share modal if the note was removed
@@ -492,10 +494,16 @@ export function MainContent() {
         setToastMessage('Great! 🎨 You can personalize every tab')
         setTimeout(() => setShowCelebration(false), 3000)
       }
+      if (d && d.type === 'tutorial-ready-for-note-open') {
+        setTutorialReadyForNoteOpen(true)
+        if (import.meta.env.DEV) {
+          console.log('[Tutorial] Ready for note opening step')
+        }
+      }
     }
     window.addEventListener('message', handler)
     return () => window.removeEventListener('message', handler)
-  }, [setToastMessage])
+  }, [setToastMessage, setTutorialReadyForNoteOpen])
 
   // Track visibility changes when tutorial is active to detect tab switching
   useEffect(() => {
@@ -857,8 +865,14 @@ export function MainContent() {
     if (shouldDisable) return
     if (isOpenInPip) closeNoteInPip(note.sessionId)
     else {
+      // Block note opening during tutorial until it's time
+      if (tutorialInProgress && !tutorialReadyForNoteOpen) {
+        setToastMessage('Follow the tutorial steps in the floating window first')
+        return
+      }
+      
       // Tutorial tracking: close tutorial PiP and show confetti before opening real editor
-      if (tutorialInProgress) {
+      if (tutorialInProgress && tutorialReadyForNoteOpen) {
         const pipWin = getPipWindow()
         if (pipWin && !pipWin.closed) {
           try {
@@ -866,6 +880,7 @@ export function MainContent() {
           } catch {}
         }
         setTutorialInProgress(false)
+        setTutorialReadyForNoteOpen(false)
         setShowCelebration(true)
         setToastMessage('Perfect! 🎉 You\'re ready to use Notic')
         setTimeout(() => setShowCelebration(false), 3000)
@@ -1316,13 +1331,16 @@ export function MainContent() {
                       title={tutorialInProgress || pipIsOpen ? 'Close the floating window first' : undefined}
                       onClick={() => {
                         setTutorialInProgress(true)
+                        setTutorialReadyForNoteOpen(false)
                         void openTutorialPip({
                           isDarkMode,
                           onClose: () => {
                             setTutorialInProgress(false)
+                            setTutorialReadyForNoteOpen(false)
                           },
                           onError: () => {
                             setTutorialInProgress(false)
+                            setTutorialReadyForNoteOpen(false)
                             setPipUnsupportedModalOpen(true)
                           }
                         })
@@ -2155,6 +2173,14 @@ export function MainContent() {
                 title={isNoteActiveInPipDetail ? 'Note is already open in editor' : undefined}
                 onClick={() => {
                   if (isNoteActiveInPipDetail) return
+                  
+                  // Block note opening during tutorial until it's time
+                  if (tutorialInProgress && !tutorialReadyForNoteOpen) {
+                    setToastMessage('Follow the tutorial steps in the floating window first')
+                    setNoteContextMenuAnchor(null)
+                    return
+                  }
+                  
                   setSelectedNoteId(noteContextMenuAnchor!.noteId)
                   addNoteToPip(noteContextMenuAnchor!.noteId, true)
                   setNoteContextMenuAnchor(null)
@@ -2170,8 +2196,15 @@ export function MainContent() {
                 onClick={() => {
                   if (isNoteActiveInPipDetail) return
                   
+                  // Block note opening during tutorial until it's time
+                  if (tutorialInProgress && !tutorialReadyForNoteOpen) {
+                    setToastMessage('Follow the tutorial steps in the floating window first')
+                    setNoteContextMenuAnchor(null)
+                    return
+                  }
+                  
                   // Tutorial tracking: close tutorial PiP and show confetti before opening real editor
-                  if (tutorialInProgress) {
+                  if (tutorialInProgress && tutorialReadyForNoteOpen) {
                     const pipWin = getPipWindow()
                     if (pipWin && !pipWin.closed) {
                       try {
@@ -2179,6 +2212,7 @@ export function MainContent() {
                       } catch {}
                     }
                     setTutorialInProgress(false)
+                    setTutorialReadyForNoteOpen(false)
                     setShowCelebration(true)
                     setToastMessage('Perfect! 🎉 You\'re ready to use Notic')
                     setTimeout(() => setShowCelebration(false), 3000)

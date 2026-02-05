@@ -15,8 +15,9 @@ function resetUIStore(): void {
     isTrashView: false,
     openInPipNoteIds: [],
     openInPipActiveNoteId: null,
-    tutorialInProgress: false,
-  })
+  tutorialInProgress: false,
+  tutorialReadyForNoteOpen: false,
+})
 }
 
 describe('useUIStore', () => {

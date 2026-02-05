@@ -47,6 +47,8 @@ interface UIState {
   syncLimitModalOpen: boolean;
   /** When true, tutorial is in progress (blocks real PiP opening, enables tutorial message tracking). */
   tutorialInProgress: boolean;
+  /** When true, tutorial is ready for user to open a note (step 3). */
+  tutorialReadyForNoteOpen: boolean;
 }
 
 interface UIActions {
@@ -86,6 +88,7 @@ interface UIActions {
   setServerNewerBannerVisible: (value: boolean) => void;
   setSyncLimitModalOpen: (value: boolean) => void;
   setTutorialInProgress: (value: boolean) => void;
+  setTutorialReadyForNoteOpen: (value: boolean) => void;
 }
 
 const SIDEBAR_WIDTH_DEFAULT = 280;
@@ -112,6 +115,7 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
   serverNewerBannerVisible: false,
   syncLimitModalOpen: false,
   tutorialInProgress: false,
+  tutorialReadyForNoteOpen: false,
 
   setIsDarkMode: (value) => set({ isDarkMode: value }),
   setSidebarCollapsed: (value) => set({ sidebarCollapsed: value }),
@@ -156,6 +160,7 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
   setServerNewerBannerVisible: (value) => set({ serverNewerBannerVisible: value }),
   setSyncLimitModalOpen: (value) => set({ syncLimitModalOpen: value }),
   setTutorialInProgress: (value) => set({ tutorialInProgress: value }),
+  setTutorialReadyForNoteOpen: (value) => set({ tutorialReadyForNoteOpen: value }),
 }));
 
 export { SIDEBAR_WIDTH_MIN, SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_DEFAULT };

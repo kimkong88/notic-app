@@ -145,6 +145,30 @@ export function TutorialPipView() {
   const tabTaskActive = floatTestCompleted && !tabTaskCompleted
   
   const noteTaskCompleted = noteCreated && noteBookmarked && noteOpened
+  const noteTaskReadyForOpen = noteCreated && noteBookmarked && !noteOpened
+  
+  // Notify dashboard when ready for note opening (step 3)
+  useEffect(() => {
+    if (!noteTaskReadyForOpen) return
+    if (import.meta.env.DEV) {
+      console.log('[TutorialPiP] Ready for note opening step')
+    }
+    
+    // Notify main dashboard to enable note opening
+    const parentWindow = window.parent && window.parent !== window ? window.parent : window
+    try {
+      if (parentWindow.opener && !parentWindow.opener.closed) {
+        parentWindow.opener.postMessage({ type: 'tutorial-ready-for-note-open' }, '*')
+        if (import.meta.env.DEV) {
+          console.log('[TutorialPiP] Sent ready-for-note-open message to dashboard')
+        }
+      }
+    } catch (e) {
+      if (import.meta.env.DEV) {
+        console.error('[TutorialPiP] Failed to notify dashboard:', e)
+      }
+    }
+  }, [noteTaskReadyForOpen])
   
   // Notify dashboard when tab customization task is completed
   useEffect(() => {
