@@ -2701,14 +2701,16 @@ body.dark-mode .note-detail-action-btn.note-detail-open-active:not(.note-detail-
   font-size: 14px;
 }
 
-/* Onboarding (0 notes in workspace) – hero + feature cards (from extension, copy revised for web app) */
+/* Onboarding (0 notes in workspace) – modern, polished design (Option B) */
 .onboarding {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 24px 56px;
-  max-width: 420px;
+  padding: 48px 24px;
+  min-height: 0;
+  flex: 1;
+  max-width: 560px;
   margin: 0 auto;
 }
 
@@ -2717,110 +2719,201 @@ body.dark-mode .note-detail-action-btn.note-detail-open-active:not(.note-detail-
   margin-bottom: 32px;
 }
 
-.onboarding-hero-icon {
-  width: 72px;
-  height: 72px;
-  margin: 0 auto 20px;
-  padding: 16px;
-  background: var(--accent-light);
-  border-radius: 16px;
-  color: var(--accent-primary);
+.onboarding-logo {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  animation: onboarding-logo-glow 3s ease-in-out infinite;
 }
 
-.onboarding-hero-icon svg {
+@keyframes onboarding-logo-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 8px rgba(79, 70, 229, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 16px rgba(79, 70, 229, 0.5));
+  }
+}
+
+.onboarding-logo-image {
   width: 100%;
   height: 100%;
   display: block;
 }
 
 .onboarding-hero-title {
-  font-size: 22px;
-  font-weight: 600;
+  font-size: 28px;
+  font-weight: 700;
   color: var(--text-primary);
-  margin: 0 0 8px;
-  line-height: 1.3;
-  letter-spacing: -0.02em;
+  margin: 0 0 12px 0;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
 }
 
 .onboarding-hero-desc {
-  font-size: 15px;
-  color: var(--text-muted);
+  font-size: 16px;
+  color: var(--text-secondary);
   margin: 0;
-  line-height: 1.45;
+  line-height: 1.5;
+  max-width: 460px;
 }
 
-.onboarding-cards {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-  width: 100%;
-  margin-bottom: 28px;
-}
-
-.onboarding-card {
+.onboarding-features {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-primary);
-  border-radius: 12px;
-  text-align: left;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
 }
 
-.onboarding-card-icon {
+.onboarding-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.onboarding-badge svg {
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  padding: 8px;
-  background: var(--bg-tertiary);
-  border-radius: 10px;
   color: var(--accent-primary);
 }
 
-.onboarding-card-icon svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.onboarding-card-text {
+.onboarding-ctas {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.onboarding-card-label {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.onboarding-card-desc {
-  font-size: 13px;
-  color: var(--text-muted);
-  line-height: 1.4;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
 }
 
 .onboarding-cta {
-  padding: 12px 24px;
+  padding: 12px 28px;
   font-size: 15px;
-  font-weight: 500;
-  color: var(--text-inverse);
-  background: var(--accent-primary);
+  font-weight: 600;
+  border-radius: 10px;
   border: none;
-  border-radius: 12px;
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
+  transition: all 0.15s ease-out;
+  white-space: nowrap;
+  position: relative;
 }
 
-.onboarding-cta:hover {
-  background: var(--accent-primary-hover);
+.onboarding-cta-primary {
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
-.onboarding-cta:active {
-  transform: scale(0.98);
+.onboarding-cta-primary:hover {
+  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
+}
+
+.onboarding-cta-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.onboarding-cta-secondary {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1.5px solid var(--border-color);
+}
+
+.onboarding-cta-secondary:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.onboarding-cta-secondary:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.onboarding-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Browser warning banner (shown when PiP not supported) */
+.onboarding-browser-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  width: 100%;
+  max-width: 480px;
+  padding: 16px 18px;
+  margin-bottom: 24px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 12px;
+}
+
+.onboarding-browser-warning-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: rgb(239, 68, 68);
+  margin-top: 2px;
+}
+
+.onboarding-browser-warning-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.onboarding-browser-warning-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgb(239, 68, 68);
+  line-height: 1.3;
+}
+
+.onboarding-browser-warning-desc {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.onboarding-browser-logos {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.onboarding-browser-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  opacity: 0.9;
+  transition: opacity 0.2s;
+}
+
+.onboarding-browser-logo:hover {
+  opacity: 1;
 }
 
 /* PiP-style note panel (floating, matches pip window look) */

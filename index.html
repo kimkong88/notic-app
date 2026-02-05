@@ -26,8 +26,23 @@
     <meta name="twitter:image" content="https://app.getnotic.io/logo.svg" />
     <!-- Robots -->
     <meta name="robots" content="index, follow" />
-    <!-- Umami analytics -->
-    <script defer src="https://cloud.umami.is/script.js" data-website-id="ccf99e7d-0bb2-4ce3-8931-f43b5e4ed52f"></script>
+    <!-- Umami analytics (non-blocking, skipped when offline) -->
+    <script>
+      if (navigator.onLine) {
+        (function() {
+          var script = document.createElement('script');
+          script.defer = true;
+          script.src = 'https://cloud.umami.is/script.js';
+          script.setAttribute('data-website-id', 'ccf99e7d-0bb2-4ce3-8931-f43b5e4ed52f');
+          script.onerror = function() { 
+            if (import.meta && import.meta.env && import.meta.env.DEV) {
+              console.log('Analytics unavailable'); 
+            }
+          };
+          document.head.appendChild(script);
+        })();
+      }
+    </script>
     <!-- JSON-LD: Organization -->
     <script type="application/ld+json">
     {"@context":"https://schema.org","@type":"Organization","name":"Notic","url":"https://app.getnotic.io","logo":"https://app.getnotic.io/logo.svg","description":"Chrome extension: the note that floats over every tab. Local-first sticky notes, Markdown, folders, sync."}

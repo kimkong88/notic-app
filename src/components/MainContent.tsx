@@ -1,7 +1,7 @@
 import { useMemo, useCallback, useEffect, useRef, useState, Fragment } from 'react'
 import { createPortal } from 'react-dom'
 import { useUIStore, useWorkspaceStore, useNotesStore } from '../store'
-import { Search, ExternalLink, FileText, Pencil, Check, Share2, MoreHorizontal, Folder as FolderIcon, HardDrive, ChevronDown, WifiOff, Cloud, AlertCircle, Loader2, Copy, Pause, FilePlus, PanelTop, CloudSync } from 'lucide-react'
+import { Search, ExternalLink, FileText, Pencil, Check, Share2, MoreHorizontal, Folder as FolderIcon, HardDrive, ChevronDown, WifiOff, Cloud, AlertCircle, Loader2, Copy, Pause, PanelTop, CloudSync } from 'lucide-react'
 import { SettingsView } from './SettingsView'
 import {
   getContentPreview,
@@ -18,6 +18,10 @@ const FOLDER_DROP_TYPE = 'application/x-notic-folder-id'
 import { BOOKMARKS_SENTINEL, ROOT_SENTINEL } from '../store/types'
 import { useAuthStore } from '../store/useAuthStore'
 import { db } from '../db'
+import chromeLogo from '../assets/chrome.svg'
+import edgeLogo from '../assets/edge.svg'
+import braveLogo from '../assets/brave.svg'
+import noticLogo from '../assets/logo.svg'
 import { getSyncStatus, subscribeSyncStatus, getLastPullAt, getSyncPaused, setSyncPaused, triggerSyncAfterUserAction } from '../sync'
 import { getSyncChangeLog } from '../sync-change-log'
 import type { SyncLogEntry } from '../sync-change-log'
@@ -448,6 +452,12 @@ export function MainContent() {
   const [sharePublishLoading, setSharePublishLoading] = useState(false)
   const [shareUnpublishConfirm, setShareUnpublishConfirm] = useState(false)
   const [shareToast, setShareToast] = useState<string | null>(null)
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState<{
+    type: 'single' | 'emptyTrash'
+    noteId?: string
+    noteName?: string
+    count?: number
+  } | null>(null)
 
   // Close Share modal if the note was removed
   useEffect(() => {
@@ -1116,62 +1126,79 @@ export function MainContent() {
             <div className="notes-content" id="notesContent">
               {!isTrashView && allNotesInWorkspace.length === 0 && !searchQuery.trim() ? (
                 <div className="onboarding">
-                  <div className="onboarding-hero">
-                    <div className="onboarding-hero-icon" aria-hidden>
-                      <FilePlus size={40} strokeWidth={1.5} />
+                  {typeof window !== 'undefined' && !('documentPictureInPicture' in window) && (
+                    <div className="onboarding-browser-warning" role="alert">
+                      <div className="onboarding-browser-warning-icon">
+                        <AlertCircle size={20} strokeWidth={2} />
+                      </div>
+                      <div className="onboarding-browser-warning-content">
+                        <h3 className="onboarding-browser-warning-title">Browser not supported</h3>
+                        <p className="onboarding-browser-warning-desc">
+                          Pop-out editor requires one of these browsers:
+                        </p>
+                        <div className="onboarding-browser-logos">
+                          <img src={chromeLogo} alt="Chrome" className="onboarding-browser-logo" />
+                          <img src={edgeLogo} alt="Edge" className="onboarding-browser-logo" />
+                          <img src={braveLogo} alt="Brave" className="onboarding-browser-logo" />
+                        </div>
+                      </div>
                     </div>
-                    <h2 className="onboarding-hero-title">Your notes, always a click away</h2>
+                  )}
+                  <div className="onboarding-hero">
+                    <div className="onboarding-logo" aria-hidden>
+                      <img src={noticLogo} alt="" className="onboarding-logo-image" />
+                    </div>
+                    <h2 className="onboarding-hero-title">Your floating notepad. Always accessible.</h2>
                     <p className="onboarding-hero-desc">
-                      Quick capture, folders, and a pop-out editor. All in the browser.
+                      Capture ideas instantly with a pop-out editor that stays on top of everything.
                     </p>
                   </div>
-                  <div className="onboarding-cards">
-                    <div className="onboarding-card">
-                      <div className="onboarding-card-icon" aria-hidden>
-                        <PanelTop size={24} strokeWidth={1.5} />
-                      </div>
-                      <div className="onboarding-card-text">
-                        <span className="onboarding-card-label">Pop-out editor</span>
-                        <span className="onboarding-card-desc">
-                          Open a note in a floating window to edit over other tabs or apps.
-                        </span>
-                      </div>
+
+                  <div className="onboarding-features">
+                    <div className="onboarding-badge">
+                      <PanelTop size={14} strokeWidth={2} />
+                      <span>Pop-out editor</span>
                     </div>
-                    <div className="onboarding-card">
-                      <div className="onboarding-card-icon" aria-hidden>
-                        <FolderIcon size={24} strokeWidth={1.5} />
-                      </div>
-                      <div className="onboarding-card-text">
-                        <span className="onboarding-card-label">Folders &amp; workspaces</span>
-                        <span className="onboarding-card-desc">Organize notes your way.</span>
-                      </div>
+                    <div className="onboarding-badge">
+                      <FolderIcon size={14} strokeWidth={2} />
+                      <span>Organized</span>
                     </div>
-                    <div className="onboarding-card">
-                      <div className="onboarding-card-icon" aria-hidden>
-                        <CloudSync size={24} strokeWidth={1.5} />
-                      </div>
-                      <div className="onboarding-card-text">
-                        <span className="onboarding-card-label">Sync</span>
-                        <span className="onboarding-card-desc">
-                          {authUser ? 'Synced across your devices.' : 'Sign in to sync across devices.'}
-                        </span>
-                      </div>
+                    <div className="onboarding-badge">
+                      <CloudSync size={14} strokeWidth={2} />
+                      <span>{authUser ? 'Synced' : 'Cloud sync'}</span>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    className="onboarding-cta"
-                    onClick={() => {
-                      const workspaceId = currentWorkspaceId ?? undefined
-                      const newId = addNote({ workspaceId })
-                      trackEvent('note_created')
-                      setSelectedNoteId(newId)
-                      const newNote = useNotesStore.getState().notes[newId]
-                      if (newNote) openNoteInPip(newNote)
-                    }}
-                  >
-                    Create your first note
-                  </button>
+
+                  <div className="onboarding-ctas">
+                    <button
+                      type="button"
+                      className="onboarding-cta onboarding-cta-primary"
+                      onClick={() => {
+                        const workspaceId = currentWorkspaceId ?? undefined
+                        const newId = addNote({ workspaceId })
+                        trackEvent('note_created')
+                        setSelectedNoteId(newId)
+                        const newNote = useNotesStore.getState().notes[newId]
+                        if (newNote) openNoteInPip(newNote)
+                      }}
+                    >
+                      Create note
+                    </button>
+                    <button
+                      type="button"
+                      className="onboarding-cta onboarding-cta-secondary"
+                      onClick={() => {
+                        // TODO: Implement tutorial
+                        console.log('Start tutorial')
+                      }}
+                    >
+                      Start tutorial
+                    </button>
+                  </div>
+
+                  <p className="onboarding-hint">
+                    Works offline • No setup required
+                  </p>
                 </div>
               ) : isTrashView ? (
                 <div className="settings-page">
@@ -1183,15 +1210,10 @@ export function MainContent() {
                           type="button"
                           className="modal-btn modal-btn-secondary trash-empty-all-btn"
                           onClick={() => {
-                            const ok = window.confirm(
-                              `Permanently delete all ${trashNotesInWorkspace.length} note${trashNotesInWorkspace.length === 1 ? '' : 's'}? This cannot be undone.`
-                            )
-                            if (ok) {
-                              const count = trashNotesInWorkspace.length
-                              trashNotesInWorkspace.forEach((n) => removeNote(n.sessionId))
-                              if (count === 1) trackEvent('note_deleted')
-                              else trackEvent('note_deleted', { count })
-                            }
+                            setDeleteConfirmModal({
+                              type: 'emptyTrash',
+                              count: trashNotesInWorkspace.length
+                            })
                           }}
                         >
                           Empty trash
@@ -1236,13 +1258,11 @@ export function MainContent() {
                                     title="Delete permanently"
                                     onClick={(e) => {
                                       e.stopPropagation()
-                                      const ok = window.confirm(
-                                        `Permanently delete "${displayName}"? This cannot be undone.`
-                                      )
-                                      if (ok) {
-                                        removeNote(note.sessionId)
-                                        trackEvent('note_deleted')
-                                      }
+                                      setDeleteConfirmModal({
+                                        type: 'single',
+                                        noteId: note.sessionId,
+                                        noteName: displayName
+                                      })
                                     }}
                                   >
                                     Delete
@@ -2094,6 +2114,58 @@ export function MainContent() {
             document.body
           )
         })()}
+      {/* Delete confirmation modal */}
+      {deleteConfirmModal && (
+        <div
+          className="modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setDeleteConfirmModal(null)}
+          onKeyDown={(e) => { if (e.key === 'Escape') setDeleteConfirmModal(null) }}
+        >
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">
+                {deleteConfirmModal.type === 'emptyTrash' 
+                  ? 'Empty trash'
+                  : 'Delete permanently'}
+              </h3>
+              <p className="modal-message">
+                {deleteConfirmModal.type === 'emptyTrash'
+                  ? `Permanently delete all ${deleteConfirmModal.count} note${deleteConfirmModal.count === 1 ? '' : 's'}? This cannot be undone.`
+                  : `Permanently delete "${deleteConfirmModal.noteName}"? This cannot be undone.`}
+              </p>
+            </div>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="modal-btn modal-btn-secondary"
+                onClick={() => setDeleteConfirmModal(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="modal-btn pip-modal-btn-danger"
+                onClick={() => {
+                  if (deleteConfirmModal.type === 'emptyTrash') {
+                    const count = deleteConfirmModal.count!
+                    trashNotesInWorkspace.forEach((n) => removeNote(n.sessionId))
+                    if (count === 1) trackEvent('note_deleted')
+                    else trackEvent('note_deleted', { count })
+                  } else {
+                    removeNote(deleteConfirmModal.noteId!)
+                    trackEvent('note_deleted')
+                  }
+                  setDeleteConfirmModal(null)
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

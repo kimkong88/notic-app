@@ -33,11 +33,19 @@ export default defineConfig({
       manifest: {
         name: 'Notic',
         short_name: 'Notic',
-        description: 'Notes and sync',
+        description: 'Your floating notepad. Always accessible.',
         start_url: '/',
         display: 'standalone',
         background_color: '#ffffff',
-        theme_color: '#0f172a',
+        theme_color: '#4f46e5',
+        icons: [
+          {
+            src: '/logo.svg',
+            sizes: 'any',
+            type: 'image/svg+xml',
+            purpose: 'any maskable',
+          },
+        ],
       },
       workbox: {
         // Exclude webmanifest from glob to avoid duplicate precache entry: we add manifest
@@ -73,7 +81,7 @@ export default defineConfig({
             handler: 'NetworkFirst',
             options: {
               cacheName: 'notic-pages',
-              networkTimeoutSeconds: 3,
+              networkTimeoutSeconds: 1,
               expiration: { maxEntries: 32, maxAgeSeconds: 24 * 60 * 60 },
             },
           },

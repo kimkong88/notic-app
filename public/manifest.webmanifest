@@ -1,9 +1,17 @@
 {
   "name": "Notic",
   "short_name": "Notic",
-  "description": "Notes and sync",
+  "description": "Your floating notepad. Always accessible.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#0f172a"
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }
