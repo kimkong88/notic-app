@@ -77,7 +77,10 @@ import {
     getGoogleClientId,
     fetchGoogleProfileFromToken,
 } from "../auth";
-import { authenticateWithGoogleToken, clearStoredTokens } from "../api/backend";
+import {
+    authenticateWithGoogleToken,
+    clearStoredTokens,
+} from "../api/backend";
 import { useGoogleLogin } from "@react-oauth/google";
 import { getRangeSelection } from "../utils/selectionRange";
 import { stripMarkdownForDisplay } from "../utils/noteUtils";
@@ -4625,10 +4628,10 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
     useEffect(() => {
         const onOnline = async () => {
             setIsOnline(true);
-            // Trigger sync when coming back online (if signed in)
-            // Note: respects paused state (e.g. free user over limit should stay paused)
+            // Trigger sync when coming back online (only if not in local-only mode)
             const partition = await getStoragePartition(db);
-            if (partition !== "local") {
+            const isLocalMode = partition === LOCAL_PARTITION;
+            if (!isLocalMode) {
                 void triggerFullSync(db).catch(() => {});
             }
         };

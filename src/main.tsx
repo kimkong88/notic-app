@@ -24,12 +24,14 @@ async function init() {
     await hydrateStores(db);
     startPersist(db);
 
-    // Full sync on load when already signed in (matches extension: storedUserId => enableSyncAndTrigger on init).
+    // Start sync when not in local-only mode (i.e., user is signed in and has sync capability).
+    // Partition represents sync mode: "local" = local-only, user-id = sync-capable.
     const partition = await getStoragePartition(db);
-    if (partition !== LOCAL_PARTITION) {
+    const isLocalMode = partition === LOCAL_PARTITION;
+    
+    if (!isLocalMode) {
         startPeriodicPullCheck(db);
         // Only trigger sync if online - avoid unnecessary failed API calls when offline
-        // Note: respects paused state (e.g. free user over limit should stay paused)
         if (navigator.onLine) {
             void triggerFullSync(db).catch(() => {
                 // Sync may fail (e.g. offline or paused); status shows "Sync failed", will retry on next reload/sign-in
