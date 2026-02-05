@@ -28,6 +28,9 @@ export default defineConfig({
             },
         },
         VitePWA({
+            strategies: "injectManifest",
+            srcDir: "src",
+            filename: "sw.ts",
             registerType: "autoUpdate",
             injectRegister: "inline",
             manifest: {
@@ -47,46 +50,13 @@ export default defineConfig({
                     },
                 ],
             },
-            workbox: {
-                // Let glob handle all files - no manual additions needed
-                globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2,webmanifest}"],
-                // Serve index.html for any navigation when offline (SPA offline-first)
-                navigateFallback: "/index.html",
-                navigateFallbackDenylist: [
-                    /^\/api\//,
-                    /^https:\/\//,
-                    /^\/src\//,
-                    /^\/node_modules\//,
-                    /^\/@vite\//,
-                    /^\/@id\//,
+            injectManifest: {
+                // Glob handles most files, but exclude logo.svg and manifest.webmanifest
+                // since vite-plugin-pwa adds them automatically
+                globPatterns: [
+                    "**/*.{js,css,html,ico,png,svg,woff2,webmanifest}",
                 ],
-                // Cache same-origin requests at runtime so dev and any missed assets work offline after first load
-                runtimeCaching: [
-                    {
-                        urlPattern: ({ sameOrigin, request }) =>
-                            sameOrigin && request.destination !== "document",
-                        handler: "CacheFirst",
-                        options: {
-                            cacheName: "notic-assets",
-                            expiration: {
-                                maxEntries: 64,
-                                maxAgeSeconds: 30 * 24 * 60 * 60,
-                            },
-                        },
-                    },
-                    {
-                        urlPattern: ({ sameOrigin }) => sameOrigin,
-                        handler: "NetworkFirst",
-                        options: {
-                            cacheName: "notic-pages",
-                            networkTimeoutSeconds: 1,
-                            expiration: {
-                                maxEntries: 32,
-                                maxAgeSeconds: 24 * 60 * 60,
-                            },
-                        },
-                    },
-                ],
+                globIgnores: ["**/logo.svg", "**/manifest.webmanifest"],
             },
             devOptions: {
                 // Disable SW in dev: Vite serves /src/* and /@vite/* URLs that can't be precached,
