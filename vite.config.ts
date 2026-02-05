@@ -48,12 +48,8 @@ export default defineConfig({
                 ],
             },
             workbox: {
-                // Include SVG files in glob - logo.svg will be picked up automatically
-                // Only add manifest.webmanifest to additionalManifestEntries since it's not matched by glob
-                globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-                additionalManifestEntries: [
-                    { url: "/manifest.webmanifest", revision: null },
-                ],
+                // Let glob handle all files - no manual additions needed
+                globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2,webmanifest}"],
                 // Serve index.html for any navigation when offline (SPA offline-first)
                 navigateFallback: "/index.html",
                 navigateFallbackDenylist: [
