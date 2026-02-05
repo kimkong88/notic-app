@@ -2081,11 +2081,11 @@ export function MainContent() {
                 title={isNoteActiveInPipDetail ? 'Cannot delete note open in editor' : undefined}
                 onClick={() => {
                   if (isNoteActiveInPipDetail) return
-                  const ok = window.confirm(
-                    `Delete "${menuNote.displayName ?? menuNote.title ?? 'Untitled'}"? This cannot be undone.`
-                  )
-                  if (ok) removeNote(noteContextMenuAnchor!.noteId)
+                  // Soft delete: move to trash (matches sidebar and extension - no confirmation, sync triggered by store)
+                  updateNote(noteContextMenuAnchor!.noteId, { deletedAt: Date.now() })
+                  trackEvent('note_deleted')
                   setNoteContextMenuAnchor(null)
+                  setToastMessage('Moved to trash')
                 }}
               >
                 Delete
