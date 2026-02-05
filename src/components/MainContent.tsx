@@ -181,6 +181,15 @@ function SyncStatusButton({
         };
     }, [authUser]);
 
+    // Update paused state when sync limit is reached (free user > 10 notes)
+    useEffect(() => {
+        if (isSubscribed !== false) return;
+        const totalNoteCount = Object.keys(notes).length;
+        if (totalNoteCount > FREE_NOTE_LIMIT) {
+            setSyncPausedState(true);
+        }
+    }, [isSubscribed, notes]);
+
     useEffect(() => {
         if (!dropdownOpen) return;
         const close = (e: MouseEvent) => {
