@@ -322,8 +322,13 @@ export function requestPipFlushSave(): void {
 function getPipIframeStyles(): string {
     return [
         "* { box-sizing: border-box; }",
-        "html, body { margin: 0; padding: 0; height: 100%; width: 100%; }",
+        "html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; }",
         "#notic-pip-iframe { display: block; width: 100%; height: 100%; border: none; }",
+        "* { scrollbar-width: thin; scrollbar-color: rgba(128, 128, 128, 0.3) transparent; }",
+        "*::-webkit-scrollbar { width: 8px; height: 8px; }",
+        "*::-webkit-scrollbar-track { background: transparent; }",
+        "*::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.3); border-radius: 4px; }",
+        "*::-webkit-scrollbar-thumb:hover { background: rgba(128, 128, 128, 0.5); }",
     ].join("\n");
 }
 

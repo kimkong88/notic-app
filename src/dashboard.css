@@ -3760,6 +3760,25 @@ body.dark-mode .note-detail-action-btn.note-detail-open-active:not(.note-detail-
   min-height: 0;
   overflow-y: auto;
   padding: 16px;
+  scrollbar-color: var(--border-secondary) transparent;
+  scrollbar-width: thin;
+}
+
+.pip-content .note-container .note-editor-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.pip-content .note-container .note-editor-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pip-content .note-container .note-editor-body::-webkit-scrollbar-thumb {
+  background: var(--border-secondary);
+  border-radius: 4px;
+}
+
+.pip-content .note-container .note-editor-body::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
 }
 
 /* PiP editor: 16px base font and theme colors (match notic .editor-root; no markdown rendering – Lexical rich text only) */
@@ -4245,6 +4264,25 @@ body.pip-page.dark-mode[data-note-theme="high-contrast"] .pip-content .note-cont
   flex: 1;
   padding: 24px;
   overflow-y: auto;
+  scrollbar-color: var(--border-secondary) transparent;
+  scrollbar-width: thin;
+}
+
+.tutorial-pip-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.tutorial-pip-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tutorial-pip-content::-webkit-scrollbar-thumb {
+  background: var(--border-secondary);
+  border-radius: 4px;
+}
+
+.tutorial-pip-content::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
 }
 
 .tutorial-pip-title {
