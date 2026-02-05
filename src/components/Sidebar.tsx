@@ -4578,11 +4578,10 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
         const onOnline = async () => {
             setIsOnline(true);
             // Trigger sync when coming back online (if signed in)
+            // Note: respects paused state (e.g. free user over limit should stay paused)
             const partition = await getStoragePartition(db);
             if (partition !== "local") {
-                void triggerFullSync(db, { ignorePaused: true }).catch(
-                    () => {}
-                );
+                void triggerFullSync(db).catch(() => {});
             }
         };
         const onOffline = () => setIsOnline(false);

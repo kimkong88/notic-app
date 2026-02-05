@@ -29,9 +29,10 @@ async function init() {
     if (partition !== LOCAL_PARTITION) {
         startPeriodicPullCheck(db);
         // Only trigger sync if online - avoid unnecessary failed API calls when offline
+        // Note: respects paused state (e.g. free user over limit should stay paused)
         if (navigator.onLine) {
-            void triggerFullSync(db, { ignorePaused: true }).catch(() => {
-                // Sync may fail (e.g. offline); status shows "Sync failed", will retry on next reload/sign-in
+            void triggerFullSync(db).catch(() => {
+                // Sync may fail (e.g. offline or paused); status shows "Sync failed", will retry on next reload/sign-in
             });
         }
     }
