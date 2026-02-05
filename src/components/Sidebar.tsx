@@ -503,14 +503,29 @@ function RecentTabList({
                                             : ""
                                     }`}
                                     data-session-id={note.sessionId}
-                                    onClick={(e) =>
-                                        handleNoteClick(
-                                            e,
-                                            note.sessionId,
-                                            BOOKMARKS_SENTINEL,
-                                            index
-                                        )
-                                    }
+                                    onClick={(e) => {
+                                        if (e.detail === 1) {
+                                            handleNoteClick(
+                                                e,
+                                                note.sessionId,
+                                                BOOKMARKS_SENTINEL,
+                                                index
+                                            );
+                                        }
+                                    }}
+                                    onDoubleClick={(e) => {
+                                        if (!isOpenInPip) {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            setRenameState({
+                                                noteId: note.sessionId,
+                                                value:
+                                                    note.displayName ||
+                                                    note.title ||
+                                                    "Untitled",
+                                            });
+                                        }
+                                    }}
                                     onContextMenu={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
@@ -749,14 +764,29 @@ function RecentTabList({
                                                     : ""
                                             }`}
                                             data-session-id={note.sessionId}
-                                            onClick={(e) =>
-                                                handleNoteClick(
-                                                    e,
-                                                    note.sessionId,
-                                                    dateKey,
-                                                    index
-                                                )
-                                            }
+                                            onClick={(e) => {
+                                                if (e.detail === 1) {
+                                                    handleNoteClick(
+                                                        e,
+                                                        note.sessionId,
+                                                        dateKey,
+                                                        index
+                                                    );
+                                                }
+                                            }}
+                                            onDoubleClick={(e) => {
+                                                if (!isOpenInPipDate) {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    setRenameState({
+                                                        noteId: note.sessionId,
+                                                        value:
+                                                            note.displayName ||
+                                                            note.title ||
+                                                            "Untitled",
+                                                    });
+                                                }
+                                            }}
                                             onContextMenu={(e) => {
                                                 e.preventDefault();
                                                 e.stopPropagation();
@@ -2098,6 +2128,14 @@ function FoldersTabList({
                             e
                         )
                     }
+                    onDoubleClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setFolderRenameState({
+                            folderId: folder.id,
+                            value: displayName,
+                        });
+                    }}
                     onContextMenu={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -2217,13 +2255,25 @@ function FoldersTabList({
                                     }
                                     onDragEnd={handleNoteDragEnd}
                                     onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleNoteClick(
-                                            note.sessionId,
-                                            folder.id,
-                                            noteIndex,
-                                            e
-                                        );
+                                        if (e.detail === 1) {
+                                            e.stopPropagation();
+                                            handleNoteClick(
+                                                note.sessionId,
+                                                folder.id,
+                                                noteIndex,
+                                                e
+                                            );
+                                        }
+                                    }}
+                                    onDoubleClick={(e) => {
+                                        if (!isOpenInPipFolder) {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            setNoteRenameState({
+                                                noteId: note.sessionId,
+                                                value: displayName,
+                                            });
+                                        }
                                     }}
                                     onKeyDown={(e) => {
                                         if (
@@ -2601,13 +2651,25 @@ function FoldersTabList({
                                     }
                                     onDragEnd={handleNoteDragEnd}
                                     onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleNoteClick(
-                                            note.sessionId,
-                                            null,
-                                            noteIndex,
-                                            e
-                                        );
+                                        if (e.detail === 1) {
+                                            e.stopPropagation();
+                                            handleNoteClick(
+                                                note.sessionId,
+                                                null,
+                                                noteIndex,
+                                                e
+                                            );
+                                        }
+                                    }}
+                                    onDoubleClick={(e) => {
+                                        if (!isOpenInPipRoot) {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            setNoteRenameState({
+                                                noteId: note.sessionId,
+                                                value: displayName,
+                                            });
+                                        }
                                     }}
                                     onContextMenu={(e) => {
                                         e.preventDefault();
