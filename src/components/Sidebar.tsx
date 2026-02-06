@@ -26,7 +26,7 @@ import type { SortOption } from "../store/types";
 import { BOOKMARKS_SENTINEL, ROOT_SENTINEL } from "../store/types";
 import {
     ChevronDown,
-    ExternalLink,
+    PenLine,
     Pencil,
     CirclePlus,
     FolderPlus,
@@ -619,7 +619,7 @@ function RecentTabList({
                                             aria-hidden
                                             title="Open in editor"
                                         >
-                                            <ExternalLink size={12} />
+                                            <PenLine size={12} />
                                         </span>
                                     )}
                                     {detailEditNoteIdRecent ===
@@ -885,7 +885,7 @@ function RecentTabList({
                                                     aria-hidden
                                                     title="Open in editor"
                                                 >
-                                                    <ExternalLink size={12} />
+                                                    <PenLine size={12} />
                                                 </span>
                                             )}
                                             {detailEditNoteIdRecent ===
@@ -2366,7 +2366,7 @@ function FoldersTabList({
                                             aria-hidden
                                             title="Open in editor"
                                         >
-                                            <ExternalLink size={12} />
+                                            <PenLine size={12} />
                                         </span>
                                     )}
                                     {detailEditNoteIdFolders ===
@@ -2562,7 +2562,7 @@ function FoldersTabList({
                                             aria-hidden
                                             title="Open in editor"
                                         >
-                                            <ExternalLink size={12} />
+                                            <PenLine size={12} />
                                         </span>
                                     )}
                                 </div>
@@ -2762,7 +2762,7 @@ function FoldersTabList({
                                             aria-hidden
                                             title="Open in editor"
                                         >
-                                            <ExternalLink size={12} />
+                                            <PenLine size={12} />
                                         </span>
                                     )}
                                     {detailEditNoteIdFolders ===
@@ -5275,7 +5275,7 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                             aria-label="Open Notes"
                             onClick={handleOpenNotesClick}
                         >
-                            <ExternalLink size={14} />
+                            <PenLine size={14} />
                         </button>
                     </div>
 

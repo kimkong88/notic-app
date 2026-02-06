@@ -525,8 +525,8 @@ export function Layout() {
             </div>
             <PipPanel />
 
-            {/* Mobile FAB – hidden on desktop and when bottom sheet is open */}
-            {!bottomSheetOpen && (
+            {/* Mobile FAB – hidden on desktop, when bottom sheet is open, or when viewing a note detail */}
+            {!bottomSheetOpen && !selectedNoteId && (
                 <button
                     type="button"
                     className="mobile-fab"

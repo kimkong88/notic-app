@@ -1,8 +1,15 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
-import { useNotesStore, useUIStore, useWorkspaceStore } from "../store";
+import {
+    useNotesStore,
+    useUIStore,
+    useWorkspaceStore,
+    useSubscriptionStore,
+} from "../store";
 import { NoteEditor } from "./NoteEditor";
 import { Plus, X, Pin } from "lucide-react";
+import { FREE_PIP_TAB_LIMIT } from "../constants";
 import { triggerSyncAfterUserAction } from "../sync";
+import { openBillingPage } from "../api/backend";
 import { db } from "../db";
 import {
     resolveSnapTarget,
@@ -43,6 +50,9 @@ export function MobileBottomSheet() {
     const addNote = useNotesStore((s) => s.addNote);
     const removeNote = useNotesStore((s) => s.removeNote);
     const currentWorkspaceId = useWorkspaceStore((s) => s.currentWorkspaceId);
+    const isSubscribed = useSubscriptionStore((s) => s.isSubscribed);
+    const setToastMessage = useUIStore((s) => s.setToastMessage);
+    const [showTabLimitModal, setShowTabLimitModal] = useState(false);
 
     const contentTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
         null
@@ -198,13 +208,18 @@ export function MobileBottomSheet() {
     // --- Handlers ---
 
     const handleAddNote = useCallback(() => {
+        const tabLimit = isSubscribed === true ? Infinity : FREE_PIP_TAB_LIMIT;
+        if (noteIds.length >= tabLimit) {
+            setShowTabLimitModal(true);
+            return;
+        }
         const newId = addNote({
             workspaceId: currentWorkspaceId,
             createdFromPip: true,
         });
         addNoteToBottomSheet(newId, true);
         triggerSyncAfterUserAction(db);
-    }, [addNote, currentWorkspaceId, addNoteToBottomSheet]);
+    }, [addNote, currentWorkspaceId, addNoteToBottomSheet, noteIds, isSubscribed]);
 
     const handleSwitchTab = useCallback(
         (noteId: string) => {
@@ -659,6 +674,48 @@ export function MobileBottomSheet() {
                                 onClick={handleRenameSubmit}
                             >
                                 Rename
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Tab limit modal */}
+            {showTabLimitModal && (
+                <div
+                    className="pip-modal-overlay show"
+                    role="dialog"
+                    aria-modal="true"
+                    onClick={() => setShowTabLimitModal(false)}
+                >
+                    <div
+                        className="pip-modal"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="pip-modal-header">
+                            <h3 className="pip-modal-title">
+                                {FREE_PIP_TAB_LIMIT} tabs on free plan
+                            </h3>
+                            <p className="pip-modal-message">
+                                Upgrade to Pro to open more notes at once.
+                            </p>
+                        </div>
+                        <div className="pip-modal-actions">
+                            <button
+                                type="button"
+                                className="pip-modal-btn pip-modal-btn-primary"
+                                onClick={() =>
+                                    void openBillingPage(db, setToastMessage)
+                                }
+                            >
+                                Upgrade
+                            </button>
+                            <button
+                                type="button"
+                                className="pip-modal-btn pip-modal-btn-secondary"
+                                onClick={() => setShowTabLimitModal(false)}
+                            >
+                                OK
                             </button>
                         </div>
                     </div>

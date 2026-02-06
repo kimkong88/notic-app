@@ -10,10 +10,8 @@ import { createPortal } from "react-dom";
 import { useUIStore, useWorkspaceStore, useNotesStore } from "../store";
 import {
     Search,
-    ExternalLink,
+    PenLine,
     FileText,
-    Pencil,
-    Check,
     Share2,
     MoreHorizontal,
     Folder as FolderIcon,
@@ -60,7 +58,6 @@ import {
     getLastPullAt,
     getSyncPaused,
     setSyncPaused,
-    triggerSyncAfterUserAction,
 } from "../sync";
 import { getSyncChangeLog } from "../sync-change-log";
 import type { SyncLogEntry } from "../sync-change-log";
@@ -548,8 +545,6 @@ export function MainContent() {
     const setCurrentView = useUIStore((s) => s.setCurrentView);
     const settingsSubView = useUIStore((s) => s.settingsSubView);
     const setSettingsSubView = useUIStore((s) => s.setSettingsSubView);
-    const detailEditNoteId = useUIStore((s) => s.detailEditNoteId);
-    const setDetailEditNoteId = useUIStore((s) => s.setDetailEditNoteId);
     const noteContextMenuAnchor = useUIStore((s) => s.noteContextMenuAnchor);
     const setNoteContextMenuAnchor = useUIStore(
         (s) => s.setNoteContextMenuAnchor
@@ -562,6 +557,8 @@ export function MainContent() {
     const installPromptEvent = useUIStore((s) => s.installPromptEvent);
     const installBarDismissed = useUIStore((s) => s.installBarDismissed);
     const setInstallBarDismissed = useUIStore((s) => s.setInstallBarDismissed);
+    const addNoteToBottomSheet = useUIStore((s) => s.addNoteToBottomSheet);
+    const setBottomSheetOpen = useUIStore((s) => s.setBottomSheetOpen);
     const setInstallPromptEvent = useUIStore((s) => s.setInstallPromptEvent);
     const setMobileSidebarOpen = useUIStore((s) => s.setMobileSidebarOpen);
 
@@ -744,17 +741,6 @@ export function MainContent() {
             );
     }, [tutorialInProgress]);
 
-    // Clear detail edit mode when switching to a different note (match extension behavior)
-    useEffect(() => {
-        if (
-            selectedNoteId != null &&
-            detailEditNoteId != null &&
-            detailEditNoteId !== selectedNoteId
-        ) {
-            setDetailEditNoteId(null);
-        }
-    }, [selectedNoteId, detailEditNoteId, setDetailEditNoteId]);
-
     const detailContentRef = useRef<HTMLDivElement | null>(null);
 
     // Apply search highlight in read-only detail view when searchQuery is set
@@ -764,11 +750,7 @@ export function MainContent() {
         const contentEl = container.querySelector(
             ".note-editor-content-editable"
         ) as HTMLElement | null;
-        if (
-            !searchQuery.trim() ||
-            !selectedNoteId ||
-            detailEditNoteId === selectedNoteId
-        ) {
+        if (!searchQuery.trim() || !selectedNoteId) {
             if (contentEl) clearSearchHighlightInElement(contentEl);
             return;
         }
@@ -784,7 +766,7 @@ export function MainContent() {
             ) as HTMLElement | null;
             if (el) clearSearchHighlightInElement(el);
         };
-    }, [searchQuery, selectedNoteId, detailEditNoteId]);
+    }, [searchQuery, selectedNoteId]);
 
     // Close detail-view note context menu on outside click or Escape
     const isDetailNoteMenuOpen =
@@ -826,16 +808,18 @@ export function MainContent() {
         title?: string;
         content?: string;
     }) => {
+        // On mobile, open in bottom sheet instead of PiP
+        if (window.innerWidth <= 768) {
+            addNoteToBottomSheet(note.sessionId, true);
+            setBottomSheetOpen(true);
+            return;
+        }
         if (!isDocumentPipSupported()) {
             setPipUnsupportedModalOpen(true);
             return;
         }
         const noteId = note.sessionId;
         const ui = useUIStore.getState();
-        if (ui.detailEditNoteId === noteId) {
-            ui.setToastMessage("Finish editing in main view first.");
-            return;
-        }
         const ids = ui.openInPipNoteIds;
         const isSubscribed = useSubscriptionStore.getState().isSubscribed;
         const atLimit =
@@ -1132,39 +1116,6 @@ export function MainContent() {
             openNoteInPip(note);
         }
     };
-
-    const saveNoteContentDebounceRef = useRef<ReturnType<
-        typeof setTimeout
-    > | null>(null);
-    const SAVE_DEBOUNCE_MS = 700;
-
-    const handleNoteDetailContentChange = useCallback(
-        (content: string) => {
-            if (!selectedNoteId) return;
-            if (saveNoteContentDebounceRef.current)
-                clearTimeout(saveNoteContentDebounceRef.current);
-            saveNoteContentDebounceRef.current = setTimeout(() => {
-                saveNoteContentDebounceRef.current = null;
-                updateNote(selectedNoteId, { content });
-                // Note: sync is triggered only on flush (when user exits editor), not on every change
-            }, SAVE_DEBOUNCE_MS);
-        },
-        [selectedNoteId, updateNote]
-    );
-
-    const handleNoteDetailFlush = useCallback(
-        (content: string) => {
-            if (saveNoteContentDebounceRef.current) {
-                clearTimeout(saveNoteContentDebounceRef.current);
-                saveNoteContentDebounceRef.current = null;
-            }
-            if (selectedNoteId) {
-                updateNote(selectedNoteId, { content });
-                triggerSyncAfterUserAction(db);
-            }
-        },
-        [selectedNoteId, updateNote]
-    );
 
     const draggedFolderIdRef = useRef<string | null>(null);
 
@@ -1961,17 +1912,9 @@ export function MainContent() {
                                 </div>
                             ) : !searchQuery.trim() && selectedNote ? (
                                 (() => {
-                                    const isEditMode =
-                                        detailEditNoteId === selectedNoteId;
-                                    const isEditedInMain =
-                                        detailEditNoteId === selectedNoteId;
                                     const isActiveInPip =
                                         openInPipActiveNoteId ===
                                             selectedNoteId && pipIsOpen;
-                                    const shouldDisableOpen =
-                                        isActiveInPip || isEditedInMain;
-                                    const isNoteActiveInPipDetail =
-                                        shouldDisableOpen;
                                     return (
                                         <div className="note-detail-view">
                                             <div className="note-detail-header">
@@ -2006,86 +1949,32 @@ export function MainContent() {
                                                     </p>
                                                 </div>
                                                 <div className="note-detail-actions">
-                                                    {isEditMode ? (
-                                                        <button
-                                                            type="button"
-                                                            className="note-detail-action-btn note-detail-done-btn"
-                                                            title="Done editing"
-                                                            aria-label="Done editing"
-                                                            onClick={() =>
-                                                                setDetailEditNoteId(
-                                                                    null
-                                                                )
-                                                            }
-                                                        >
-                                                            <Check size={16} />
-                                                        </button>
-                                                    ) : (
-                                                        <button
-                                                            type="button"
-                                                            className={`note-detail-action-btn${
-                                                                isNoteActiveInPipDetail
-                                                                    ? " disabled"
-                                                                    : ""
-                                                            }`}
-                                                            id="noteDetailEditBtn"
-                                                            title={
-                                                                isNoteActiveInPipDetail
-                                                                    ? "Note is already open in editor"
-                                                                    : "Edit"
-                                                            }
-                                                            aria-label={
-                                                                isNoteActiveInPipDetail
-                                                                    ? "Note is already open in editor"
-                                                                    : "Edit"
-                                                            }
-                                                            disabled={
-                                                                isNoteActiveInPipDetail
-                                                            }
-                                                            onClick={() =>
-                                                                !isNoteActiveInPipDetail &&
-                                                                setDetailEditNoteId(
-                                                                    selectedNoteId!
-                                                                )
-                                                            }
-                                                        >
-                                                            <Pencil size={16} />
-                                                        </button>
-                                                    )}
                                                     <button
                                                         type="button"
                                                         className={`note-detail-action-btn ${
-                                                            shouldDisableOpen
+                                                            isActiveInPip
                                                                 ? "disabled note-detail-open-active"
                                                                 : ""
                                                         }`}
                                                         title={
-                                                            isEditedInMain
-                                                                ? "Finish editing in main view first"
-                                                                : isActiveInPip
+                                                            isActiveInPip
                                                                 ? "Note is already open in editor"
                                                                 : "Open editor"
                                                         }
                                                         aria-label={
-                                                            isEditedInMain
-                                                                ? "Finish editing in main view first"
-                                                                : isActiveInPip
+                                                            isActiveInPip
                                                                 ? "Note is already open in editor"
                                                                 : "Open editor"
                                                         }
-                                                        disabled={
-                                                            shouldDisableOpen
-                                                        }
+                                                        disabled={isActiveInPip}
                                                         onClick={() =>
-                                                            !shouldDisableOpen &&
+                                                            !isActiveInPip &&
                                                             openNoteInPip(
                                                                 selectedNote
                                                             )
                                                         }
                                                     >
-                                                        <ExternalLink
-                                                            size={16}
-                                                        />
+                                                        <PenLine size={16} />
                                                     </button>
                                                     <button
                                                         type="button"
@@ -2144,97 +2033,20 @@ export function MainContent() {
                                             </div>
                                             <div
                                                 ref={detailContentRef}
-                                                className={`note-detail-content ${
-                                                    isEditMode
-                                                        ? "note-detail-content-editing"
-                                                        : ""
-                                                } ${
-                                                    !isEditMode &&
-                                                    !isNoteActiveInPipDetail
-                                                        ? "note-detail-content-click-to-edit"
-                                                        : ""
-                                                }`}
-                                                role={
-                                                    !isEditMode &&
-                                                    !isNoteActiveInPipDetail
-                                                        ? "button"
-                                                        : undefined
-                                                }
-                                                tabIndex={
-                                                    !isEditMode &&
-                                                    !isNoteActiveInPipDetail
-                                                        ? 0
-                                                        : undefined
-                                                }
-                                                onClick={
-                                                    !isEditMode &&
-                                                    !isNoteActiveInPipDetail
-                                                        ? () =>
-                                                              setDetailEditNoteId(
-                                                                  selectedNoteId!
-                                                              )
-                                                        : undefined
-                                                }
-                                                onKeyDown={
-                                                    !isEditMode &&
-                                                    !isNoteActiveInPipDetail
-                                                        ? (e) => {
-                                                              if (
-                                                                  e.key ===
-                                                                      "Enter" ||
-                                                                  e.key === " "
-                                                              ) {
-                                                                  e.preventDefault();
-                                                                  setDetailEditNoteId(
-                                                                      selectedNoteId!
-                                                                  );
-                                                              }
-                                                          }
-                                                        : undefined
-                                                }
-                                                aria-label={
-                                                    !isEditMode &&
-                                                    !isNoteActiveInPipDetail
-                                                        ? "Click to edit note"
-                                                        : undefined
-                                                }
+                                                className="note-detail-content"
                                             >
-                                                {isEditMode ? (
-                                                    <NoteEditor
-                                                        key={selectedNoteId!}
-                                                        editorKey={
-                                                            selectedNoteId!
-                                                        }
-                                                        initialContent={
-                                                            selectedNote.content ??
-                                                            ""
-                                                        }
-                                                        onChange={
-                                                            handleNoteDetailContentChange
-                                                        }
-                                                        onFlush={
-                                                            handleNoteDetailFlush
-                                                        }
-                                                        placeholder=""
-                                                        className="note-detail-lexical-root"
-                                                        showToolbar
-                                                    />
-                                                ) : (
-                                                    <NoteEditor
-                                                        key={selectedNoteId!}
-                                                        editorKey={
-                                                            selectedNoteId!
-                                                        }
-                                                        initialContent={
-                                                            selectedNote.content ??
-                                                            ""
-                                                        }
-                                                        onChange={() => {}}
-                                                        placeholder=""
-                                                        className="note-detail-lexical-root note-detail-content-readonly"
-                                                        readOnly
-                                                    />
-                                                )}
+                                                <NoteEditor
+                                                    key={selectedNoteId!}
+                                                    editorKey={selectedNoteId!}
+                                                    initialContent={
+                                                        selectedNote.content ??
+                                                        ""
+                                                    }
+                                                    onChange={() => {}}
+                                                    placeholder=""
+                                                    className="note-detail-lexical-root note-detail-content-readonly"
+                                                    readOnly
+                                                />
                                             </div>
                                         </div>
                                     );
@@ -2254,12 +2066,8 @@ export function MainContent() {
                                                 openInPipNoteIds.includes(
                                                     note.sessionId
                                                 );
-                                            const isEditedInMain =
-                                                detailEditNoteId ===
-                                                note.sessionId;
                                             const shouldDisable =
-                                                (isOpenInPip && pipIsOpen) ||
-                                                isEditedInMain;
+                                                isOpenInPip && pipIsOpen;
                                             const displayName =
                                                 note.displayName ||
                                                 note.title ||
@@ -2369,7 +2177,7 @@ export function MainContent() {
                                                                 shouldDisable
                                                             }
                                                         >
-                                                            <ExternalLink
+                                                            <PenLine
                                                                 size={14}
                                                             />
                                                         </button>
@@ -2615,13 +2423,10 @@ export function MainContent() {
                                                         <button
                                                             type="button"
                                                             className={`note-pip-icon ${
-                                                                (openInPipActiveNoteId ===
+                                                                openInPipActiveNoteId ===
                                                                     item.data
                                                                         .sessionId &&
-                                                                    pipIsOpen) ||
-                                                                detailEditNoteId ===
-                                                                    item.data
-                                                                        .sessionId
+                                                                pipIsOpen
                                                                     ? "disabled"
                                                                     : ""
                                                             }`}
@@ -2632,42 +2437,29 @@ export function MainContent() {
                                                                 )
                                                             }
                                                             title={
-                                                                detailEditNoteId ===
-                                                                item.data
-                                                                    .sessionId
-                                                                    ? "Finish editing in main view first"
-                                                                    : openInPipActiveNoteId ===
-                                                                          item
-                                                                              .data
-                                                                              .sessionId &&
-                                                                      pipIsOpen
+                                                                openInPipActiveNoteId ===
+                                                                    item.data
+                                                                        .sessionId &&
+                                                                pipIsOpen
                                                                     ? "Note is already open in editor"
                                                                     : "Open editor"
                                                             }
                                                             aria-label={
-                                                                detailEditNoteId ===
-                                                                item.data
-                                                                    .sessionId
-                                                                    ? "Finish editing in main view first"
-                                                                    : openInPipActiveNoteId ===
-                                                                          item
-                                                                              .data
-                                                                              .sessionId &&
-                                                                      pipIsOpen
+                                                                openInPipActiveNoteId ===
+                                                                    item.data
+                                                                        .sessionId &&
+                                                                pipIsOpen
                                                                     ? "Note is already open in editor"
                                                                     : "Open editor"
                                                             }
                                                             disabled={
-                                                                (openInPipActiveNoteId ===
+                                                                openInPipActiveNoteId ===
                                                                     item.data
                                                                         .sessionId &&
-                                                                    pipIsOpen) ||
-                                                                detailEditNoteId ===
-                                                                    item.data
-                                                                        .sessionId
+                                                                pipIsOpen
                                                             }
                                                         >
-                                                            <ExternalLink
+                                                            <PenLine
                                                                 size={14}
                                                             />
                                                         </button>
@@ -2836,9 +2628,7 @@ export function MainContent() {
                                                         }
                                                         disabled={shouldDisable}
                                                     >
-                                                        <ExternalLink
-                                                            size={14}
-                                                        />
+                                                        <PenLine size={14} />
                                                     </button>
                                                 </div>
                                                 <div className="note-content">
@@ -3233,9 +3023,7 @@ export function MainContent() {
                     const menuNote = notes[noteContextMenuAnchor!.noteId];
                     if (!menuNote) return null;
                     const isNoteActiveInPipDetail =
-                        (openInPipActiveNoteId === selectedNoteId &&
-                            pipIsOpen) ||
-                        detailEditNoteId === noteContextMenuAnchor!.noteId;
+                        openInPipActiveNoteId === selectedNoteId && pipIsOpen;
                     const isBookmarked = menuNote.isBookmarked === true;
                     return createPortal(
                         <div
