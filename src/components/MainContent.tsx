@@ -27,6 +27,8 @@ import {
     Pause,
     PanelTop,
     CloudSync,
+    Download,
+    X,
 } from "lucide-react";
 import { SettingsView } from "./SettingsView";
 import {
@@ -556,6 +558,28 @@ export function MainContent() {
     const setShareModalNoteId = useUIStore((s) => s.setShareModalNoteId);
     const setToastMessage = useUIStore((s) => s.setToastMessage);
     const authUser = useAuthStore((s) => s.user);
+    const installPromptEvent = useUIStore((s) => s.installPromptEvent);
+    const installBarDismissed = useUIStore((s) => s.installBarDismissed);
+    const setInstallBarDismissed = useUIStore((s) => s.setInstallBarDismissed);
+    const setInstallPromptEvent = useUIStore((s) => s.setInstallPromptEvent);
+
+    const handleInstall = useCallback(async () => {
+        if (!installPromptEvent) return;
+        try {
+            await installPromptEvent.prompt();
+            const result = await installPromptEvent.userChoice;
+            if (result.outcome === "accepted") {
+                setInstallPromptEvent(null);
+                setInstallBarDismissed(true);
+            }
+        } catch (e) {
+            console.error("Install prompt failed", e);
+        }
+    }, [installPromptEvent, setInstallPromptEvent, setInstallBarDismissed]);
+
+    const handleDismissInstallBar = useCallback(() => {
+        setInstallBarDismissed(true);
+    }, [setInstallBarDismissed]);
 
     const [proRequiredModal, setProRequiredModal] = useState<{
         title: string;
@@ -3522,6 +3546,40 @@ export function MainContent() {
                                 Delete
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Bottom install bar - show when installable, not dismissed, and not already installed */}
+            {installPromptEvent && !installBarDismissed && (
+                <div className="install-bar">
+                    <div className="install-bar-content">
+                        <Download
+                            className="install-bar-icon"
+                            size={18}
+                            aria-hidden
+                        />
+                        <span className="install-bar-text">
+                            Install Notic for quick desktop access
+                        </span>
+                    </div>
+                    <div className="install-bar-actions">
+                        <button
+                            type="button"
+                            className="install-bar-btn install-bar-btn-primary"
+                            onClick={handleInstall}
+                        >
+                            Install
+                        </button>
+                        <button
+                            type="button"
+                            className="install-bar-btn install-bar-btn-dismiss"
+                            onClick={handleDismissInstallBar}
+                            aria-label="Dismiss"
+                            title="Dismiss"
+                        >
+                            <X size={16} aria-hidden />
+                        </button>
                     </div>
                 </div>
             )}

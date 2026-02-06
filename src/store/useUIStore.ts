@@ -51,6 +51,10 @@ interface UIState {
     tutorialReadyForNoteOpen: boolean;
     /** When true, show visual hint to create a note (toolbar + button). */
     tutorialShowCreateHint: boolean;
+    /** PWA install prompt event (captured from beforeinstallprompt). Null if not available or already installed. */
+    installPromptEvent: any | null;
+    /** When true, user dismissed the install bar (stored in localStorage). */
+    installBarDismissed: boolean;
 }
 
 interface UIActions {
@@ -94,11 +98,31 @@ interface UIActions {
     setTutorialInProgress: (value: boolean) => void;
     setTutorialReadyForNoteOpen: (value: boolean) => void;
     setTutorialShowCreateHint: (value: boolean) => void;
+    setInstallPromptEvent: (event: any | null) => void;
+    setInstallBarDismissed: (value: boolean) => void;
 }
 
 const SIDEBAR_WIDTH_DEFAULT = 280;
 const SIDEBAR_WIDTH_MIN = 200;
 const SIDEBAR_WIDTH_MAX = 480;
+const INSTALL_BAR_DISMISSED_KEY = "notic_installBarDismissed";
+
+function getInstallBarDismissed(): boolean {
+    try {
+        return localStorage.getItem(INSTALL_BAR_DISMISSED_KEY) === "true";
+    } catch {
+        return false;
+    }
+}
+
+function setInstallBarDismissedStorage(value: boolean): void {
+    try {
+        localStorage.setItem(
+            INSTALL_BAR_DISMISSED_KEY,
+            value ? "true" : "false"
+        );
+    } catch {}
+}
 
 export const useUIStore = create<UIState & UIActions>((set, get) => ({
     isDarkMode: false,
@@ -122,6 +146,8 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
     tutorialInProgress: false,
     tutorialReadyForNoteOpen: false,
     tutorialShowCreateHint: false,
+    installPromptEvent: null,
+    installBarDismissed: getInstallBarDismissed(),
 
     setIsDarkMode: (value) => set({ isDarkMode: value }),
     setSidebarCollapsed: (value) => set({ sidebarCollapsed: value }),
@@ -180,6 +206,11 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
         set({ tutorialReadyForNoteOpen: value }),
     setTutorialShowCreateHint: (value) =>
         set({ tutorialShowCreateHint: value }),
+    setInstallPromptEvent: (event) => set({ installPromptEvent: event }),
+    setInstallBarDismissed: (value) => {
+        setInstallBarDismissedStorage(value);
+        set({ installBarDismissed: value });
+    },
 }));
 
 export { SIDEBAR_WIDTH_MIN, SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_DEFAULT };

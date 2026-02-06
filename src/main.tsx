@@ -61,6 +61,18 @@ async function init() {
         }
     });
 
+    // Capture PWA install prompt (beforeinstallprompt event)
+    window.addEventListener("beforeinstallprompt", (e) => {
+        e.preventDefault(); // Prevent default browser install prompt
+        useUIStore.getState().setInstallPromptEvent(e);
+    });
+
+    // Detect when app is installed (hide install UI)
+    window.addEventListener("appinstalled", () => {
+        useUIStore.getState().setInstallPromptEvent(null);
+        useUIStore.getState().setInstallBarDismissed(true);
+    });
+
     const clientId = getGoogleClientId();
     createRoot(document.getElementById("root")!).render(
         <StrictMode>

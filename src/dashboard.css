@@ -1388,6 +1388,7 @@ body.dark-mode .sidebar-content::-webkit-scrollbar-thumb:hover {
   align-items: center;
   overflow-y: auto;
   overflow-x: hidden;
+  position: relative;
 }
 
 .main-content-spacer {
@@ -4493,6 +4494,10 @@ body.pip-page.dark-mode[data-note-theme="high-contrast"] .pip-content .note-cont
   border: 1px solid var(--border-primary);
   transition: all 0.2s;
   min-width: 80px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .modal-btn-primary {
@@ -4992,5 +4997,111 @@ body.dark-mode a.modal-btn-cta-upgrade:hover {
   50% {
     opacity: 1;
     box-shadow: 0 0 20px var(--accent-primary), 0 0 32px var(--accent-primary);
+  }
+}
+
+/* Install bar - bottom fixed bar for PWA installation prompt */
+.install-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-primary);
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  z-index: 100;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  height: 56px;
+}
+
+/* Add bottom padding to sidebar and main content when install bar is visible */
+.dashboard-container:has(.install-bar) .sidebar {
+  padding-bottom: 56px;
+}
+
+.dashboard-container:has(.install-bar) .main-content {
+  padding-bottom: 56px;
+}
+
+.install-bar-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.install-bar-icon {
+  color: var(--accent-primary);
+  flex-shrink: 0;
+}
+
+.install-bar-text {
+  font-size: 14px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.install-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.install-bar-btn {
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.install-bar-btn-primary {
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text, var(--text-inverse));
+  padding: 8px 16px;
+}
+
+.install-bar-btn-primary:hover {
+  background: var(--btn-primary-hover);
+}
+
+.install-bar-btn-dismiss {
+  background: transparent;
+  color: var(--text-tertiary);
+  padding: 8px;
+  width: 32px;
+  height: 32px;
+}
+
+.install-bar-btn-dismiss:hover {
+  background: var(--hover-background);
+  color: var(--text-secondary);
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .install-bar {
+    padding: 10px 16px;
+  }
+  
+  .install-bar-text {
+    font-size: 13px;
+  }
+  
+  .install-bar-btn-primary {
+    padding: 7px 14px;
+    font-size: 13px;
   }
 }
