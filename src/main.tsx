@@ -8,7 +8,11 @@ import { db } from "./db";
 import { getStoragePartition, LOCAL_PARTITION } from "./db";
 import { hydrateStores } from "./db/hydrate";
 import { startPersist } from "./db/persist";
-import { triggerFullSync, startPeriodicPullCheck } from "./sync";
+import {
+    triggerFullSync,
+    startPeriodicPullCheck,
+    resetSyncState,
+} from "./sync";
 import { useUIStore } from "./store";
 import { getGoogleClientId } from "./auth";
 
@@ -28,8 +32,11 @@ async function init() {
     // Partition represents sync mode: "local" = local-only, user-id = sync-capable.
     const partition = await getStoragePartition(db);
     const isLocalMode = partition === LOCAL_PARTITION;
-    
-    if (!isLocalMode) {
+
+    if (isLocalMode) {
+        // Reset sync state to idle when in local-only mode (no sync capability)
+        resetSyncState();
+    } else {
         startPeriodicPullCheck(db);
         // Only trigger sync if online - avoid unnecessary failed API calls when offline
         if (navigator.onLine) {

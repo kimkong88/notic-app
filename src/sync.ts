@@ -112,6 +112,11 @@ function setSyncState(s: SyncStatus): void {
     listeners.forEach((cb) => cb(syncState));
 }
 
+/** Reset sync state to idle. Call when signing out or entering local-only mode. */
+export function resetSyncState(): void {
+    setSyncState("idle");
+}
+
 export function getSyncStatus(): SyncStatus {
     return syncState;
 }

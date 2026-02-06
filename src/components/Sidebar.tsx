@@ -70,6 +70,7 @@ import {
     clearLastServerSnapshot,
     startPeriodicPullCheck,
     stopPeriodicPullCheck,
+    resetSyncState,
 } from "../sync";
 import { PREFS_KEYS } from "../db/prefs-keys";
 import {
@@ -5171,6 +5172,7 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                                             setSelectedNoteId(null);
                                             setSelection([], []);
                                             stopPeriodicPullCheck();
+                                            resetSyncState();
                                             useUIStore
                                                 .getState()
                                                 .setServerNewerBannerVisible(
