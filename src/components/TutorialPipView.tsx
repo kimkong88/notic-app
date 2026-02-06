@@ -192,11 +192,11 @@ export function TutorialPipView() {
 
     // Dynamic instruction for tab task
     const tabTaskInstruction = !tabMenuOpened
-        ? "Right-click the tab above (0/3)"
+        ? "Right-click (or double-click) the tab above to open menu (0/3)"
         : !tabRenamed
-        ? 'Click "Rename" and change the tab name (1/3)'
+        ? 'Select "Rename" and change the tab name (1/3)'
         : !tabColorChanged
-        ? "Right-click again and change the color (2/3)"
+        ? "Right-click the tab again and change its color (2/3)"
         : "Task complete! (3/3) 🎉";
 
     const tabTaskCompleted = tabMenuOpened && tabRenamed && tabColorChanged;
@@ -315,6 +315,13 @@ export function TutorialPipView() {
         }
     };
 
+    const handleTabDoubleClick = () => {
+        if (!tabTaskActive) return;
+        // Double-click counts as opening menu + opening rename
+        setTabMenuOpened(true);
+        setShowRenameModal(true);
+    };
+
     const handleRenameOpen = () => {
         setContextMenu(null);
         setShowRenameModal(true);
@@ -370,6 +377,7 @@ export function TutorialPipView() {
                                 : ""
                         }`}
                         onContextMenu={handleTabContextMenu}
+                        onDoubleClick={handleTabDoubleClick}
                         style={
                             tabTaskActive
                                 ? { cursor: "context-menu" }
