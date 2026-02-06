@@ -5216,6 +5216,11 @@ body.dark-mode a.modal-btn-cta-upgrade:hover {
     box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
   }
 
+  /* Hide PiP "Open Notes" button on mobile – FAB replaces it */
+  .open-notes-btn {
+    display: none !important;
+  }
+
   /* Backdrop */
   .mobile-sidebar-backdrop {
     display: block;
@@ -5314,32 +5319,35 @@ body.dark-mode a.modal-btn-cta-upgrade:hover {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 70vh;
+    height: 70vh; /* default, overridden by inline style for snap */
     z-index: 900;
     background: var(--bg-primary);
     border-top-left-radius: 16px;
     border-top-right-radius: 16px;
     box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.2);
-    animation: slideUp 0.25s ease;
     overflow: hidden;
+    transition: height 0.25s ease, border-radius 0.25s ease;
+    will-change: height;
   }
 
-  @keyframes slideUp {
-    from {
-      transform: translateY(100%);
-    }
-    to {
-      transform: translateY(0);
-    }
+  /* Disable transitions during active drag for instant feedback */
+  .mobile-bottom-sheet.dragging {
+    transition: none !important;
   }
 
   /* Drag handle pill above header */
   .mobile-bs-handle-row {
     display: flex;
     justify-content: center;
-    padding: 6px 0 0;
+    padding: 10px 0 2px;
     flex-shrink: 0;
     background-color: var(--tab-bar-bg);
+    cursor: grab;
+    touch-action: none; /* prevent browser scroll during drag */
+  }
+
+  .mobile-bottom-sheet.dragging .mobile-bs-handle-row {
+    cursor: grabbing;
   }
 
   .mobile-bs-drag-handle {
@@ -5358,6 +5366,7 @@ body.dark-mode a.modal-btn-cta-upgrade:hover {
     padding: 0 12px 8px 16px;
     flex-shrink: 0;
     background-color: var(--tab-bar-bg);
+    touch-action: none; /* allow vertical drag on header */
   }
 
   .mobile-bs-header-title {

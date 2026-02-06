@@ -4,6 +4,12 @@ import { NoteEditor } from "./NoteEditor";
 import { Plus, X, Pin } from "lucide-react";
 import { triggerSyncAfterUserAction } from "../sync";
 import { db } from "../db";
+import {
+    resolveSnapTarget,
+    SNAP_CLOSED,
+    SNAP_DEFAULT,
+    SNAP_FULL,
+} from "../utils/bottomSheetSnap";
 
 const SAVE_DEBOUNCE_MS = 700;
 const COLOR_OPTIONS: Array<{ label: string; value: string }> = [
@@ -55,6 +61,17 @@ export function MobileBottomSheet() {
         value: string;
     } | null>(null);
 
+    // --- Drag-to-snap state ---
+    const [snapHeight, setSnapHeight] = useState(SNAP_CLOSED); // start closed; animate to default on open
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragHeight, setDragHeight] = useState<number | null>(null); // px during drag
+    const dragStartY = useRef(0);
+    const dragStartHeight = useRef(0); // px at drag start
+    const dragLastY = useRef(0);
+    const dragLastTime = useRef(0);
+    const dragVelocity = useRef(0);
+    const sheetRef = useRef<HTMLDivElement>(null);
+
     const effectiveActiveId = noteIds.includes(activeNoteId ?? "")
         ? activeNoteId
         : noteIds[0] ?? null;
@@ -73,6 +90,110 @@ export function MobileBottomSheet() {
         window.addEventListener("click", close);
         return () => window.removeEventListener("click", close);
     }, [contextMenu]);
+
+    // Animate entrance: snapHeight starts at SNAP_CLOSED (0), transition to default on next frame
+    useEffect(() => {
+        if (bottomSheetOpen) {
+            setDragHeight(null);
+            setIsDragging(false);
+            // Ensure first paint is at height 0, then animate up
+            setSnapHeight(SNAP_CLOSED);
+            requestAnimationFrame(() => {
+                setSnapHeight(SNAP_DEFAULT);
+            });
+        }
+    }, [bottomSheetOpen]);
+
+    const handleMinimize = useCallback(() => {
+        // Start close animation immediately (no other state changes that could cause re-render)
+        setSnapHeight(SNAP_CLOSED);
+        setDragHeight(null);
+        // Flush content and unmount after transition completes
+        setTimeout(() => {
+            if (contentTimeoutRef.current) {
+                clearTimeout(contentTimeoutRef.current);
+                contentTimeoutRef.current = null;
+            }
+            flushRef.current?.();
+            setBottomSheetOpen(false);
+        }, 250);
+    }, [setBottomSheetOpen]);
+
+    // --- Drag handlers ---
+    const handleDragStart = useCallback(
+        (e: React.TouchEvent) => {
+            const touch = e.touches[0];
+            const vh = window.innerHeight;
+            const currentHeightPx = snapHeight * vh;
+            dragStartY.current = touch.clientY;
+            dragStartHeight.current = currentHeightPx;
+            dragLastY.current = touch.clientY;
+            dragLastTime.current = Date.now();
+            dragVelocity.current = 0;
+            setIsDragging(true);
+            setDragHeight(currentHeightPx);
+        },
+        [snapHeight]
+    );
+
+    const handleDragMove = useCallback(
+        (e: React.TouchEvent) => {
+            if (!isDragging) return;
+            const touch = e.touches[0];
+            const now = Date.now();
+            const dt = now - dragLastTime.current;
+            if (dt > 0) {
+                // velocity: positive = moving down (finger moving down = sheet shrinking)
+                dragVelocity.current = (touch.clientY - dragLastY.current) / dt;
+            }
+            dragLastY.current = touch.clientY;
+            dragLastTime.current = now;
+
+            const dy = touch.clientY - dragStartY.current;
+            const newHeight = Math.max(
+                0,
+                Math.min(window.innerHeight, dragStartHeight.current - dy)
+            );
+            setDragHeight(newHeight);
+        },
+        [isDragging]
+    );
+
+    const handleDragEnd = useCallback(() => {
+        if (!isDragging) return;
+
+        const vh = window.innerHeight;
+        const releasePx = dragHeight ?? snapHeight * vh;
+        const currentFraction = releasePx / vh;
+        // velocity: positive = dragging down (closing direction)
+        const vel = dragVelocity.current;
+        const target = resolveSnapTarget(currentFraction, vel);
+
+        // Frame 1: stop dragging (re-enables CSS transition) but keep
+        // dragHeight so the element stays at the release position.
+        setIsDragging(false);
+
+        // Frame 2 (next animation frame): clear dragHeight and set the
+        // target snap so the CSS transition animates from release → target.
+        requestAnimationFrame(() => {
+            if (target === SNAP_CLOSED) {
+                setDragHeight(null);
+                setSnapHeight(SNAP_CLOSED);
+                // Wait for transition to finish, then flush and unmount
+                setTimeout(() => {
+                    if (contentTimeoutRef.current) {
+                        clearTimeout(contentTimeoutRef.current);
+                        contentTimeoutRef.current = null;
+                    }
+                    flushRef.current?.();
+                    setBottomSheetOpen(false);
+                }, 250);
+            } else {
+                setSnapHeight(target);
+                setDragHeight(null);
+            }
+        });
+    }, [isDragging, dragHeight, snapHeight, setBottomSheetOpen]);
 
     // --- Handlers ---
 
@@ -147,37 +268,33 @@ export function MobileBottomSheet() {
         [effectiveActiveId, updateNote]
     );
 
-    const handleMinimize = useCallback(() => {
-        // Flush before closing
-        if (contentTimeoutRef.current) {
-            clearTimeout(contentTimeoutRef.current);
-            contentTimeoutRef.current = null;
-        }
-        flushRef.current?.();
-        setBottomSheetOpen(false);
-    }, [setBottomSheetOpen]);
-
     const handleCloseAll = useCallback(() => {
-        if (contentTimeoutRef.current) {
-            clearTimeout(contentTimeoutRef.current);
-            contentTimeoutRef.current = null;
-        }
-        flushRef.current?.();
-        // Auto-delete empty notes
-        noteIds.forEach((id) => {
-            const n = useNotesStore.getState().notes[id];
-            if (
-                n &&
-                n.createdFromPip === true &&
-                n.hasEverHadContent !== true &&
-                (n.content?.trim() ?? "") === ""
-            ) {
-                removeNote(id);
+        // Start close animation immediately
+        setSnapHeight(SNAP_CLOSED);
+        setDragHeight(null);
+        // Flush, cleanup, and unmount after transition completes
+        setTimeout(() => {
+            if (contentTimeoutRef.current) {
+                clearTimeout(contentTimeoutRef.current);
+                contentTimeoutRef.current = null;
             }
-        });
-        setBottomSheetNoteIds([]);
-        setBottomSheetActiveNoteId(null);
-        setBottomSheetOpen(false);
+            flushRef.current?.();
+            // Auto-delete empty notes
+            noteIds.forEach((id) => {
+                const n = useNotesStore.getState().notes[id];
+                if (
+                    n &&
+                    n.createdFromPip === true &&
+                    n.hasEverHadContent !== true &&
+                    (n.content?.trim() ?? "") === ""
+                ) {
+                    removeNote(id);
+                }
+            });
+            setBottomSheetNoteIds([]);
+            setBottomSheetActiveNoteId(null);
+            setBottomSheetOpen(false);
+        }, 250);
     }, [
         noteIds,
         removeNote,
@@ -245,20 +362,54 @@ export function MobileBottomSheet() {
         [setBottomSheetNoteIds, setBottomSheetActiveNoteId]
     );
 
+    // Compute the inline height style (must be above early return to keep hook order stable)
+    const sheetStyle = useMemo<React.CSSProperties>(() => {
+        if (isDragging && dragHeight != null) {
+            // Active drag: follow finger instantly (no transition)
+            return { height: `${dragHeight}px`, transition: "none" };
+        }
+        if (!isDragging && dragHeight != null) {
+            // Just released: hold at release position while CSS transition
+            // re-enables, then next rAF sets the snap target to animate to.
+            return { height: `${dragHeight}px` };
+        }
+        if (snapHeight === SNAP_FULL) {
+            return { height: "100vh", borderRadius: 0 };
+        }
+        if (snapHeight === SNAP_CLOSED) {
+            return { height: "0px" };
+        }
+        // default snap
+        return { height: `${snapHeight * 100}vh` };
+    }, [isDragging, dragHeight, snapHeight]);
+
     if (!bottomSheetOpen) return null;
 
     return (
         <div
-            className="mobile-bottom-sheet"
+            ref={sheetRef}
+            className={`mobile-bottom-sheet${isDragging ? " dragging" : ""}`}
             role="dialog"
             aria-label="Note editor"
+            style={sheetStyle}
         >
             {/* Drag handle */}
-            <div className="mobile-bs-handle-row" aria-hidden>
+            <div
+                className="mobile-bs-handle-row"
+                aria-hidden
+                onTouchStart={handleDragStart}
+                onTouchMove={handleDragMove}
+                onTouchEnd={handleDragEnd}
+            >
                 <div className="mobile-bs-drag-handle" />
             </div>
             {/* Header bar */}
-            <div className="mobile-bs-header">
+            <div
+                className="mobile-bs-header"
+                onTouchStart={handleDragStart}
+                onTouchMove={handleDragMove}
+                onTouchEnd={handleDragEnd}
+            >
                 <span className="mobile-bs-header-title">Notes</span>
                 <button
                     type="button"
