@@ -12,6 +12,7 @@
   --bg-tertiary: #e4e4e7;
   --bg-hover: #e4e4e7;
   --bg-card: #ffffff;
+  --tab-bar-bg: #ededf0; /* zinc-150 – tab bar needs more contrast from white active tab */
 
   /* Text - Zinc palette */
   --text-primary: #18181b;
@@ -87,6 +88,7 @@ body.dark-mode {
   --bg-tertiary: #3f3f46; /* zinc-700 */
   --bg-hover: #27272a; /* zinc-800 */
   --bg-card: #27272a;
+  --tab-bar-bg: #27272a; /* zinc-800 – same as bg-secondary, already good contrast in dark */
 
   /* Text - Zinc dark */
   --text-primary: #fafafa; /* zinc-50 */

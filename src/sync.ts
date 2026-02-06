@@ -5,7 +5,11 @@
 
 import type { NoticDB } from "./db/schema";
 import { fetchWithAuth, getStoredTokens } from "./api/backend";
-import { getStoragePartition, lastPullAtKey } from "./db/partition";
+import {
+    getStoragePartition,
+    lastPullAtKey,
+    LOCAL_PARTITION,
+} from "./db/partition";
 import { loadPartitionIntoStores } from "./db/hydrate";
 import { PREFS_KEYS } from "./db/prefs-keys";
 import { appendSyncChangeLog } from "./sync-change-log";
@@ -989,7 +993,7 @@ const DELTA_SYNC_DEBOUNCE_MS = 400;
 export function triggerSyncAfterUserAction(db: NoticDB): void {
     const partition = getStoragePartition(db);
     partition.then((p) => {
-        if (p === "local") return;
+        if (p === LOCAL_PARTITION) return;
         if (debouncedDeltaSync) clearTimeout(debouncedDeltaSync);
         debouncedDeltaSync = setTimeout(() => {
             if (import.meta.env.DEV)

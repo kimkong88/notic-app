@@ -3,12 +3,13 @@ import { useUIStore, useNotesStore, useWorkspaceStore } from "../store";
 import { Sidebar } from "./Sidebar";
 import { MainContent } from "./MainContent";
 import { PipPanel } from "./PipPanel";
+import { MobileBottomSheet } from "./MobileBottomSheet";
 import {
     sendNotesUpdateToPip,
     getPipWindow,
     requestPipFlushSave,
 } from "../pip/documentPip";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, PenLine } from "lucide-react";
 import {
     db,
     loadPartitionIntoStores,
@@ -47,6 +48,8 @@ export function Layout() {
     const setToastMessage = useUIStore((s) => s.setToastMessage);
     const mobileSidebarOpen = useUIStore((s) => s.mobileSidebarOpen);
     const setMobileSidebarOpen = useUIStore((s) => s.setMobileSidebarOpen);
+    const bottomSheetOpen = useUIStore((s) => s.bottomSheetOpen);
+    const setBottomSheetOpen = useUIStore((s) => s.setBottomSheetOpen);
     const serverNewerBannerVisible = useUIStore(
         (s) => s.serverNewerBannerVisible
     );
@@ -79,19 +82,13 @@ export function Layout() {
 
     const currentView = useUIStore((s) => s.currentView);
 
-    /** Close mobile sidebar whenever user navigates (selects note, changes tab, etc.) */
+    /** Close mobile sidebar only when user selects a note or opens settings (not for sidebar-internal navigation like tab switching or folder browsing). */
     useEffect(() => {
         if (mobileSidebarOpen) {
             setMobileSidebarOpen(false);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [
-        selectedNoteId,
-        selectedSidebarContext,
-        currentTab,
-        isTrashView,
-        currentView,
-    ]);
+    }, [selectedNoteId, currentView]);
 
     /** Best-effort: ask PiP to flush editors before main app unloads (e.g. refresh) so content isn't lost (match notic). */
     useEffect(() => {
@@ -436,6 +433,10 @@ export function Layout() {
         [sidebarCollapsed, setSidebarCollapsed]
     );
 
+    const handleFabClick = useCallback(() => {
+        setBottomSheetOpen(true);
+    }, [setBottomSheetOpen]);
+
     useEffect(() => {
         if (!toastMessage) return;
         const t = setTimeout(() => setToastMessage(null), 4000);
@@ -497,6 +498,8 @@ export function Layout() {
                     display: "flex",
                     flexDirection: "column",
                     minHeight: 0,
+                    minWidth: 0,
+                    overflow: "hidden",
                 }}
             >
                 {serverNewerBannerVisible && (
@@ -521,6 +524,23 @@ export function Layout() {
                 <MainContent />
             </div>
             <PipPanel />
+
+            {/* Mobile FAB – hidden on desktop and when bottom sheet is open */}
+            {!bottomSheetOpen && (
+                <button
+                    type="button"
+                    className="mobile-fab"
+                    onClick={handleFabClick}
+                    aria-label="Open editor"
+                    title="Open editor"
+                >
+                    <PenLine size={22} />
+                </button>
+            )}
+
+            {/* Mobile bottom sheet editor */}
+            <MobileBottomSheet />
+
             {pipUnsupportedModalOpen && (
                 <div
                     className="modal-overlay"

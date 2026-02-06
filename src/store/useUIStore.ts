@@ -57,6 +57,12 @@ interface UIState {
     installBarDismissed: boolean;
     /** Mobile sidebar open state (overlay drawer). Only used on mobile breakpoint. */
     mobileSidebarOpen: boolean;
+    /** Mobile bottom sheet open state. */
+    bottomSheetOpen: boolean;
+    /** Note ids open in the bottom sheet (tabs). */
+    bottomSheetNoteIds: string[];
+    /** Active note id in the bottom sheet. */
+    bottomSheetActiveNoteId: string | null;
 }
 
 interface UIActions {
@@ -103,6 +109,11 @@ interface UIActions {
     setInstallPromptEvent: (event: any | null) => void;
     setInstallBarDismissed: (value: boolean) => void;
     setMobileSidebarOpen: (value: boolean) => void;
+    setBottomSheetOpen: (value: boolean) => void;
+    setBottomSheetNoteIds: (ids: string[]) => void;
+    setBottomSheetActiveNoteId: (id: string | null) => void;
+    addNoteToBottomSheet: (noteId: string, setActive?: boolean) => void;
+    removeNoteFromBottomSheet: (noteId: string) => void;
 }
 
 const SIDEBAR_WIDTH_DEFAULT = 280;
@@ -151,6 +162,10 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
     tutorialShowCreateHint: false,
     installPromptEvent: null,
     installBarDismissed: getInstallBarDismissed(),
+    mobileSidebarOpen: false,
+    bottomSheetOpen: false,
+    bottomSheetNoteIds: [],
+    bottomSheetActiveNoteId: null,
 
     setIsDarkMode: (value) => set({ isDarkMode: value }),
     setSidebarCollapsed: (value) => set({ sidebarCollapsed: value }),
@@ -215,6 +230,34 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
         set({ installBarDismissed: value });
     },
     setMobileSidebarOpen: (value) => set({ mobileSidebarOpen: value }),
+    setBottomSheetOpen: (value) => set({ bottomSheetOpen: value }),
+    setBottomSheetNoteIds: (ids) => set({ bottomSheetNoteIds: ids }),
+    setBottomSheetActiveNoteId: (id) => set({ bottomSheetActiveNoteId: id }),
+    addNoteToBottomSheet: (noteId, setActive) => {
+        const { bottomSheetNoteIds } = get();
+        if (bottomSheetNoteIds.includes(noteId)) {
+            if (setActive) set({ bottomSheetActiveNoteId: noteId });
+            return;
+        }
+        const next = [...bottomSheetNoteIds, noteId];
+        set({
+            bottomSheetNoteIds: next,
+            ...(setActive ? { bottomSheetActiveNoteId: noteId } : {}),
+        });
+    },
+    removeNoteFromBottomSheet: (noteId) => {
+        const { bottomSheetNoteIds, bottomSheetActiveNoteId } = get();
+        const next = bottomSheetNoteIds.filter((id) => id !== noteId);
+        const nextActive =
+            bottomSheetActiveNoteId === noteId
+                ? next[0] ?? null
+                : bottomSheetActiveNoteId;
+        set({
+            bottomSheetNoteIds: next,
+            bottomSheetActiveNoteId: nextActive,
+            ...(next.length === 0 ? { bottomSheetOpen: false } : {}),
+        });
+    },
 }));
 
 export { SIDEBAR_WIDTH_MIN, SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_DEFAULT };

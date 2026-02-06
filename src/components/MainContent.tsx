@@ -3482,6 +3482,7 @@ export function MainContent() {
                                     });
                                     trackEvent("note_deleted");
                                     setNoteContextMenuAnchor(null);
+                                    setSelectedNoteId(null); // Navigate back to parent view
                                     setToastMessage("Moved to trash");
                                 }}
                             >
@@ -3550,6 +3551,7 @@ export function MainContent() {
                                         removeNote(deleteConfirmModal.noteId!);
                                         trackEvent("note_deleted");
                                     }
+                                    setSelectedNoteId(null); // Navigate back to parent view
                                     setDeleteConfirmModal(null);
                                 }}
                             >

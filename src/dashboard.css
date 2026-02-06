@@ -1052,6 +1052,48 @@ body.dark-mode .sidebar-content::-webkit-scrollbar-thumb:hover {
   color: var(--text-primary);
 }
 
+/* Mobile toolbar (hidden on desktop, shown on mobile via media query) */
+.mobile-toolbar {
+  display: none;
+  align-items: center;
+  justify-content: space-evenly;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border-primary);
+  flex-shrink: 0;
+  gap: 4px;
+}
+
+.mobile-toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: background 0.15s, color 0.15s;
+}
+
+.mobile-toolbar-btn:hover:not(:disabled),
+.mobile-toolbar-btn:active:not(:disabled) {
+  background: var(--hover-background);
+  color: var(--text-primary);
+}
+
+.mobile-toolbar-btn.active {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.mobile-toolbar-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
 /* Sidebar footer */
 .sidebar-footer {
   padding: 16px;
@@ -3593,7 +3635,7 @@ body.dark-mode .note-detail-action-btn.note-detail-open-active:not(.note-detail-
   display: flex;
   gap: 0;
   padding: 8px 8px 0 8px;
-  background-color: var(--bg-secondary);
+  background-color: var(--tab-bar-bg);
   border-bottom: 1px solid var(--border-primary);
   min-width: 0;
   overflow: hidden;
@@ -5114,6 +5156,17 @@ body.dark-mode a.modal-btn-cta-upgrade:hover {
 }
 
 /* ========================
+   Mobile FAB + Bottom Sheet (hidden on desktop)
+   ======================== */
+.mobile-fab {
+  display: none;
+}
+
+.mobile-bottom-sheet {
+  display: none;
+}
+
+/* ========================
    Mobile sidebar (desktop: no-op)
    ======================== */
 .mobile-sidebar-backdrop {
@@ -5198,9 +5251,15 @@ body.dark-mode a.modal-btn-cta-upgrade:hover {
     color: var(--text-primary);
   }
 
-  /* Tighten breadcrumbs-row padding on mobile */
+  /* Tighten breadcrumbs-row padding on mobile + prevent overflow */
   .breadcrumbs-row {
     padding: 12px 16px;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .breadcrumb-item {
+    max-width: 8rem;
   }
 
   /* Hide floating toolbar on mobile – it overflows the drawer */
@@ -5208,8 +5267,289 @@ body.dark-mode a.modal-btn-cta-upgrade:hover {
     display: none !important;
   }
 
+  /* Mobile toolbar – horizontal action bar above footer */
+  .mobile-toolbar {
+    display: flex !important;
+  }
+
   /* Editor padding adjustments for mobile */
   .editor-container {
     padding: 0 12px;
+  }
+
+  /* ========================
+     Mobile FAB (floating action button)
+     ======================== */
+  .mobile-fab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    bottom: 24px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+    z-index: 800;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .mobile-fab:active {
+    transform: scale(0.92);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  /* ========================
+     Mobile Bottom Sheet
+     ======================== */
+  .mobile-bottom-sheet {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 70vh;
+    z-index: 900;
+    background: var(--bg-primary);
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.25s ease;
+    overflow: hidden;
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  /* Drag handle pill above header */
+  .mobile-bs-handle-row {
+    display: flex;
+    justify-content: center;
+    padding: 6px 0 0;
+    flex-shrink: 0;
+    background-color: var(--tab-bar-bg);
+  }
+
+  .mobile-bs-drag-handle {
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--text-disabled);
+    opacity: 0.45;
+  }
+
+  /* Header bar */
+  .mobile-bs-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px 8px 16px;
+    flex-shrink: 0;
+    background-color: var(--tab-bar-bg);
+  }
+
+  .mobile-bs-header-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .mobile-bs-header-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .mobile-bs-header-btn:hover,
+  .mobile-bs-header-btn:active {
+    background: var(--hover-background);
+    color: var(--text-primary);
+  }
+
+  /* Tab bar — matches PiP tab design */
+  .mobile-bs-tabs {
+    flex-shrink: 0;
+    background-color: var(--tab-bar-bg);
+    border-bottom: 1px solid var(--border-primary);
+    padding: 0;
+    --pip-tab-hover: var(--bg-tertiary);
+  }
+
+  .mobile-bs-tabs-scroll {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 8px 8px 0 8px;
+    min-width: 0;
+  }
+
+  .mobile-bs-tabs-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-bs-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px 6px 12px;
+    border-radius: 8px 8px 0 0;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    cursor: pointer;
+    white-space: nowrap;
+    flex: 0 1 180px;
+    min-width: 0;
+    max-width: 180px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    transition: background-color 0.2s, color 0.2s, box-shadow 0.2s;
+  }
+
+  .mobile-bs-tab.active {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border-bottom-color: var(--accent-primary);
+    box-shadow: 0 1px 0 0 var(--bg-primary);
+  }
+
+  .mobile-bs-tab:not(.active):active {
+    color: var(--text-secondary);
+    background-color: var(--pip-tab-hover);
+  }
+
+  .mobile-bs-tab-color {
+    width: 8px;
+    height: 8px;
+    min-width: 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .mobile-bs-tab-pin-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+
+  .mobile-bs-tab-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  .mobile-bs-tab-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    transition: background-color 0.15s, color 0.15s;
+  }
+
+  .mobile-bs-tab-close:active {
+    color: var(--text-primary);
+    background-color: var(--bg-hover);
+  }
+
+  .mobile-bs-tab-add {
+    margin-left: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 10px;
+    background: transparent;
+    border: none;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    transition: background-color 0.2s, color 0.2s;
+  }
+
+  .mobile-bs-tab-add:active {
+    color: var(--text-primary);
+    background-color: var(--pip-tab-hover, var(--bg-tertiary));
+  }
+
+  /* Editor content area */
+  .mobile-bs-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 8px 16px 16px;
+  }
+
+  /* Empty state */
+  .mobile-bs-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 100%;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  .mobile-bs-empty-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: var(--accent-primary);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .mobile-bs-empty-btn:active {
+    background: var(--accent-hover);
+  }
+
+  /* Hide FAB when install bar is present to avoid overlap */
+  .dashboard-container:has(.install-bar) .mobile-fab {
+    bottom: 80px;
   }
 }
