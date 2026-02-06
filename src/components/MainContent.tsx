@@ -1918,27 +1918,27 @@ export function MainContent() {
                                     return (
                                         <div className="note-detail-view">
                                             <div className="note-detail-header">
-                                                <div className="note-detail-header-main">
-                                                    <div className="note-detail-title-row">
-                                                        {selectedNote.color && (
-                                                            <span
-                                                                className="note-detail-color"
-                                                                style={{
-                                                                    backgroundColor:
-                                                                        selectedNote.color,
-                                                                }}
-                                                                aria-hidden
-                                                            />
+                                                <div className="note-detail-title-row">
+                                                    {selectedNote.color && (
+                                                        <span
+                                                            className="note-detail-color"
+                                                            style={{
+                                                                backgroundColor:
+                                                                    selectedNote.color,
+                                                            }}
+                                                            aria-hidden
+                                                        />
+                                                    )}
+                                                    <h1 className="note-detail-title">
+                                                        {stripMarkdownForDisplay(
+                                                            selectedNote.displayName ||
+                                                                selectedNote.title ||
+                                                                "Untitled"
                                                         )}
-                                                        <h1 className="note-detail-title">
-                                                            {stripMarkdownForDisplay(
-                                                                selectedNote.displayName ||
-                                                                    selectedNote.title ||
-                                                                    "Untitled"
-                                                            )}
-                                                            .md
-                                                        </h1>
-                                                    </div>
+                                                        .md
+                                                    </h1>
+                                                </div>
+                                                <div className="note-detail-meta-row">
                                                     <p className="note-detail-meta-inline">
                                                         {formatDate(
                                                             selectedNote.lastModified
@@ -1947,106 +1947,125 @@ export function MainContent() {
                                                         {selectedNote.wordCount}{" "}
                                                         words
                                                     </p>
-                                                </div>
-                                                <div className="note-detail-actions">
-                                                    <button
-                                                        type="button"
-                                                        className={`note-detail-action-btn ${
-                                                            isActiveInPip
-                                                                ? "disabled note-detail-open-active"
-                                                                : ""
-                                                        }`}
-                                                        title={
-                                                            isActiveInPip
-                                                                ? "Note is already open in editor"
-                                                                : "Open editor"
-                                                        }
-                                                        aria-label={
-                                                            isActiveInPip
-                                                                ? "Note is already open in editor"
-                                                                : "Open editor"
-                                                        }
-                                                        disabled={isActiveInPip}
-                                                        onClick={() =>
-                                                            !isActiveInPip &&
-                                                            openNoteInPip(
-                                                                selectedNote
-                                                            )
-                                                        }
-                                                    >
-                                                        <PenLine size={16} />
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        className={`note-detail-action-btn ${
-                                                            selectedNote.shareCode
-                                                                ? "note-detail-action-shared"
-                                                                : ""
-                                                        }`}
-                                                        title={
-                                                            selectedNote.shareCode
-                                                                ? "Shared"
-                                                                : "Share"
-                                                        }
-                                                        aria-label={
-                                                            selectedNote.shareCode
-                                                                ? "Shared"
-                                                                : "Share"
-                                                        }
-                                                        onClick={() =>
-                                                            setShareModalNoteId(
-                                                                selectedNoteId!
-                                                            )
-                                                        }
-                                                    >
-                                                        <Share2 size={16} />
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        className="note-detail-action-btn"
-                                                        id="noteDetailMoreBtn"
-                                                        data-context-menu-trigger
-                                                        title="More actions"
-                                                        aria-label="More actions"
-                                                        aria-haspopup="true"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            const rect = (
-                                                                e.currentTarget as HTMLElement
-                                                            ).getBoundingClientRect();
-                                                            setNoteContextMenuAnchor(
-                                                                {
-                                                                    x: rect.left,
-                                                                    y:
-                                                                        rect.bottom +
-                                                                        4,
-                                                                    noteId: selectedNoteId!,
-                                                                }
-                                                            );
-                                                        }}
-                                                    >
-                                                        <MoreHorizontal
-                                                            size={16}
-                                                        />
-                                                    </button>
+                                                    <div className="note-detail-actions">
+                                                        <button
+                                                            type="button"
+                                                            className={`note-detail-action-btn ${
+                                                                isActiveInPip
+                                                                    ? "disabled note-detail-open-active"
+                                                                    : ""
+                                                            }`}
+                                                            title={
+                                                                isActiveInPip
+                                                                    ? "Note is already open in editor"
+                                                                    : "Open editor"
+                                                            }
+                                                            aria-label={
+                                                                isActiveInPip
+                                                                    ? "Note is already open in editor"
+                                                                    : "Open editor"
+                                                            }
+                                                            disabled={
+                                                                isActiveInPip
+                                                            }
+                                                            onClick={() =>
+                                                                !isActiveInPip &&
+                                                                openNoteInPip(
+                                                                    selectedNote
+                                                                )
+                                                            }
+                                                        >
+                                                            <PenLine
+                                                                size={16}
+                                                            />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            className={`note-detail-action-btn ${
+                                                                selectedNote.shareCode
+                                                                    ? "note-detail-action-shared"
+                                                                    : ""
+                                                            }`}
+                                                            title={
+                                                                selectedNote.shareCode
+                                                                    ? "Shared"
+                                                                    : "Share"
+                                                            }
+                                                            aria-label={
+                                                                selectedNote.shareCode
+                                                                    ? "Shared"
+                                                                    : "Share"
+                                                            }
+                                                            onClick={() =>
+                                                                setShareModalNoteId(
+                                                                    selectedNoteId!
+                                                                )
+                                                            }
+                                                        >
+                                                            <Share2 size={16} />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            className="note-detail-action-btn"
+                                                            id="noteDetailMoreBtn"
+                                                            data-context-menu-trigger
+                                                            title="More actions"
+                                                            aria-label="More actions"
+                                                            aria-haspopup="true"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                const rect = (
+                                                                    e.currentTarget as HTMLElement
+                                                                ).getBoundingClientRect();
+                                                                setNoteContextMenuAnchor(
+                                                                    {
+                                                                        x: rect.left,
+                                                                        y:
+                                                                            rect.bottom +
+                                                                            4,
+                                                                        noteId: selectedNoteId!,
+                                                                    }
+                                                                );
+                                                            }}
+                                                        >
+                                                            <MoreHorizontal
+                                                                size={16}
+                                                            />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div
                                                 ref={detailContentRef}
                                                 className="note-detail-content"
                                             >
-                                                <NoteEditor
-                                                    key={selectedNoteId!}
-                                                    editorKey={selectedNoteId!}
-                                                    initialContent={
-                                                        selectedNote.content ??
-                                                        ""
-                                                    }
-                                                    onChange={() => {}}
-                                                    placeholder=""
-                                                    className="note-detail-lexical-root note-detail-content-readonly"
-                                                    readOnly
-                                                />
+                                                {!(selectedNote.content ?? "").trim() ? (
+                                                    <div className="note-detail-empty">
+                                                        <FileText size={32} strokeWidth={1.2} />
+                                                        <p>This note is empty</p>
+                                                        <button
+                                                            type="button"
+                                                            className="note-detail-empty-edit-btn"
+                                                            onClick={() => openNoteInPip(selectedNote)}
+                                                        >
+                                                            <PenLine size={14} />
+                                                            Edit note
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <NoteEditor
+                                                        key={selectedNoteId!}
+                                                        editorKey={selectedNoteId!}
+                                                        initialContent={
+                                                            selectedNote.content ??
+                                                            ""
+                                                        }
+                                                        onChange={() => {}}
+                                                        placeholder=""
+                                                        className="note-detail-lexical-root note-detail-content-readonly"
+                                                        readOnly
+                                                    />
+                                                )}
                                             </div>
                                         </div>
                                     );
@@ -3075,46 +3094,6 @@ export function MainContent() {
                                         return;
                                     }
 
-                                    setSelectedNoteId(
-                                        noteContextMenuAnchor!.noteId
-                                    );
-                                    addNoteToPip(
-                                        noteContextMenuAnchor!.noteId,
-                                        true
-                                    );
-                                    setNoteContextMenuAnchor(null);
-                                }}
-                            >
-                                Edit
-                            </button>
-                            <button
-                                type="button"
-                                className={`pip-context-menu-item${
-                                    isNoteActiveInPipDetail
-                                        ? " pip-context-menu-item-disabled"
-                                        : ""
-                                }`}
-                                disabled={isNoteActiveInPipDetail}
-                                title={
-                                    isNoteActiveInPipDetail
-                                        ? "Note is already open in editor"
-                                        : undefined
-                                }
-                                onClick={() => {
-                                    if (isNoteActiveInPipDetail) return;
-
-                                    // Block note opening during tutorial until it's time
-                                    if (
-                                        tutorialInProgress &&
-                                        !tutorialReadyForNoteOpen
-                                    ) {
-                                        setToastMessage(
-                                            "Follow the tutorial steps in the floating window first"
-                                        );
-                                        setNoteContextMenuAnchor(null);
-                                        return;
-                                    }
-
                                     // Tutorial tracking: close tutorial PiP and show confetti before opening real editor
                                     if (
                                         tutorialInProgress &&
@@ -3142,7 +3121,7 @@ export function MainContent() {
                                     setNoteContextMenuAnchor(null);
                                 }}
                             >
-                                Open
+                                Edit
                             </button>
                             <button
                                 type="button"

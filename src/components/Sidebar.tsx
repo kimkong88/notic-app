@@ -27,7 +27,6 @@ import { BOOKMARKS_SENTINEL, ROOT_SENTINEL } from "../store/types";
 import {
     ChevronDown,
     PenLine,
-    Pencil,
     CirclePlus,
     FolderPlus,
     Folder as FolderIcon,
@@ -190,7 +189,7 @@ function RecentTabList({
     expandedSidebarFolderIds,
     toggleFolderExpanded,
     openInPipNoteIds: _openInPipNoteIds,
-    addNoteToPip,
+    addNoteToPip: _addNoteToPip,
     openNoteInPip,
     selectedNoteIds,
     setSelection,
@@ -213,14 +212,10 @@ function RecentTabList({
     );
     const openInPipActiveNoteId = useUIStore((s) => s.openInPipActiveNoteId);
     const openInPipNoteIdsFromStore = useUIStore((s) => s.openInPipNoteIds);
-    const detailEditNoteIdRecent = useUIStore((s) => s.detailEditNoteId);
     const isNoteActiveInPip =
         Boolean(noteContextMenuAnchor) &&
         pipIsOpenRecentProp &&
         noteContextMenuAnchor!.noteId === openInPipActiveNoteId;
-    const isNoteEditedInMainRecent =
-        Boolean(noteContextMenuAnchor) &&
-        noteContextMenuAnchor!.noteId === detailEditNoteIdRecent;
     const setShareModalNoteId = useUIStore((s) => s.setShareModalNoteId);
     const setMoveToFolderModal = useUIStore((s) => s.setMoveToFolderModal);
     const setMoveToWorkspaceModal = useUIStore(
@@ -622,16 +617,6 @@ function RecentTabList({
                                             <PenLine size={12} />
                                         </span>
                                     )}
-                                    {detailEditNoteIdRecent ===
-                                        note.sessionId && (
-                                        <span
-                                            className="sidebar-note-open-indicator sidebar-note-editing-indicator"
-                                            aria-hidden
-                                            title="Editing in main view"
-                                        >
-                                            <Pencil size={12} />
-                                        </span>
-                                    )}
                                 </div>
                             );
                         })}
@@ -888,16 +873,6 @@ function RecentTabList({
                                                     <PenLine size={12} />
                                                 </span>
                                             )}
-                                            {detailEditNoteIdRecent ===
-                                                note.sessionId && (
-                                                <span
-                                                    className="sidebar-note-open-indicator sidebar-note-editing-indicator"
-                                                    aria-hidden
-                                                    title="Editing in main view"
-                                                >
-                                                    <Pencil size={12} />
-                                                </span>
-                                            )}
                                         </div>
                                     );
                                 })}
@@ -948,72 +923,25 @@ function RecentTabList({
                                 <button
                                     type="button"
                                     className={`pip-context-menu-item${
-                                        isNoteActiveInPip ||
-                                        isNoteEditedInMainRecent
+                                        isNoteActiveInPip
                                             ? " pip-context-menu-item-disabled"
                                             : ""
                                     }`}
-                                    disabled={
-                                        isNoteActiveInPip ||
-                                        isNoteEditedInMainRecent
-                                    }
+                                    disabled={isNoteActiveInPip}
                                     title={
-                                        isNoteEditedInMainRecent
-                                            ? "Already editing in main view"
-                                            : isNoteActiveInPip
+                                        isNoteActiveInPip
                                             ? "Note is already open in editor"
                                             : undefined
                                     }
                                     onClick={() => {
-                                        if (
-                                            isNoteActiveInPip ||
-                                            isNoteEditedInMainRecent
-                                        )
-                                            return;
-                                        setSelectedNoteId(
-                                            noteContextMenuAnchor.noteId
-                                        );
-                                        addNoteToPip(
-                                            noteContextMenuAnchor.noteId,
-                                            true
-                                        );
-                                        setNoteContextMenuAnchor(null);
-                                    }}
-                                >
-                                    Edit
-                                </button>
-                                <button
-                                    type="button"
-                                    className={`pip-context-menu-item${
-                                        isNoteActiveInPip ||
-                                        isNoteEditedInMainRecent
-                                            ? " pip-context-menu-item-disabled"
-                                            : ""
-                                    }`}
-                                    disabled={
-                                        isNoteActiveInPip ||
-                                        isNoteEditedInMainRecent
-                                    }
-                                    title={
-                                        isNoteEditedInMainRecent
-                                            ? "Finish editing in main view first"
-                                            : isNoteActiveInPip
-                                            ? "Note is already open in editor"
-                                            : undefined
-                                    }
-                                    onClick={() => {
-                                        if (
-                                            isNoteActiveInPip ||
-                                            isNoteEditedInMainRecent
-                                        )
-                                            return;
+                                        if (isNoteActiveInPip) return;
                                         openNoteInPip(
                                             noteContextMenuAnchor.noteId
                                         );
                                         setNoteContextMenuAnchor(null);
                                     }}
                                 >
-                                    Open
+                                    Edit
                                 </button>
                                 <button
                                     type="button"
@@ -1476,14 +1404,10 @@ function FoldersTabList({
     const openInPipActiveNoteIdFolders = useUIStore(
         (s) => s.openInPipActiveNoteId
     );
-    const detailEditNoteIdFolders = useUIStore((s) => s.detailEditNoteId);
     const isNoteActiveInPipFolders =
         Boolean(noteContextMenuAnchor) &&
         _pipIsOpen &&
         noteContextMenuAnchor!.noteId === openInPipActiveNoteIdFolders;
-    const isNoteEditedInMainFolders =
-        Boolean(noteContextMenuAnchor) &&
-        noteContextMenuAnchor!.noteId === detailEditNoteIdFolders;
     const setMoveToFolderModal = useUIStore((s) => s.setMoveToFolderModal);
     const setMoveToWorkspaceModal = useUIStore(
         (s) => s.setMoveToWorkspaceModal
@@ -2369,16 +2293,6 @@ function FoldersTabList({
                                             <PenLine size={12} />
                                         </span>
                                     )}
-                                    {detailEditNoteIdFolders ===
-                                        note.sessionId && (
-                                        <span
-                                            className="sidebar-note-open-indicator sidebar-note-editing-indicator"
-                                            aria-hidden
-                                            title="Editing in main view"
-                                        >
-                                            <Pencil size={12} />
-                                        </span>
-                                    )}
                                 </div>
                             );
                         })}
@@ -2765,16 +2679,6 @@ function FoldersTabList({
                                             <PenLine size={12} />
                                         </span>
                                     )}
-                                    {detailEditNoteIdFolders ===
-                                        note.sessionId && (
-                                        <span
-                                            className="sidebar-note-open-indicator sidebar-note-editing-indicator"
-                                            aria-hidden
-                                            title="Editing in main view"
-                                        >
-                                            <Pencil size={12} />
-                                        </span>
-                                    )}
                                 </div>
                             );
                         })}
@@ -3070,70 +2974,23 @@ function FoldersTabList({
                             <button
                                 type="button"
                                 className={`pip-context-menu-item${
-                                    isNoteActiveInPipFolders ||
-                                    isNoteEditedInMainFolders
+                                    isNoteActiveInPipFolders
                                         ? " pip-context-menu-item-disabled"
                                         : ""
                                 }`}
-                                disabled={
-                                    isNoteActiveInPipFolders ||
-                                    isNoteEditedInMainFolders
-                                }
+                                disabled={isNoteActiveInPipFolders}
                                 title={
-                                    isNoteEditedInMainFolders
-                                        ? "Already editing in main view"
-                                        : isNoteActiveInPipFolders
+                                    isNoteActiveInPipFolders
                                         ? "Note is already open in editor"
                                         : undefined
                                 }
                                 onClick={() => {
-                                    if (
-                                        isNoteActiveInPipFolders ||
-                                        isNoteEditedInMainFolders
-                                    )
-                                        return;
-                                    setSelectedNoteId(
-                                        noteContextMenuAnchor.noteId
-                                    );
-                                    addNoteToPip(
-                                        noteContextMenuAnchor.noteId,
-                                        true
-                                    );
-                                    setNoteContextMenuAnchor(null);
-                                }}
-                            >
-                                Edit
-                            </button>
-                            <button
-                                type="button"
-                                className={`pip-context-menu-item${
-                                    isNoteActiveInPipFolders ||
-                                    isNoteEditedInMainFolders
-                                        ? " pip-context-menu-item-disabled"
-                                        : ""
-                                }`}
-                                disabled={
-                                    isNoteActiveInPipFolders ||
-                                    isNoteEditedInMainFolders
-                                }
-                                title={
-                                    isNoteEditedInMainFolders
-                                        ? "Finish editing in main view first"
-                                        : isNoteActiveInPipFolders
-                                        ? "Note is already open in editor"
-                                        : undefined
-                                }
-                                onClick={() => {
-                                    if (
-                                        isNoteActiveInPipFolders ||
-                                        isNoteEditedInMainFolders
-                                    )
-                                        return;
+                                    if (isNoteActiveInPipFolders) return;
                                     openNoteInPip(noteContextMenuAnchor.noteId);
                                     setNoteContextMenuAnchor(null);
                                 }}
                             >
-                                Open
+                                Edit
                             </button>
                             <button
                                 type="button"
@@ -4191,15 +4048,18 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
 
     const openNoteInPip = useCallback(
         (noteId: string) => {
+            // On mobile, open in bottom sheet instead of PiP
+            if (window.innerWidth <= 768) {
+                const ui = useUIStore.getState();
+                ui.addNoteToBottomSheet(noteId, true);
+                ui.setBottomSheetOpen(true);
+                return;
+            }
             if (!isDocumentPipSupported()) {
                 setPipUnsupportedModalOpen(true);
                 return;
             }
             const ui = useUIStore.getState();
-            if (ui.detailEditNoteId === noteId) {
-                ui.setToastMessage("Finish editing in main view first.");
-                return;
-            }
             const ids = ui.openInPipNoteIds;
             const isSubscribed = useSubscriptionStore.getState().isSubscribed;
             const atLimit =
