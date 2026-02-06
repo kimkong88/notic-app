@@ -561,6 +561,7 @@ export function MainContent() {
     const setBottomSheetOpen = useUIStore((s) => s.setBottomSheetOpen);
     const setInstallPromptEvent = useUIStore((s) => s.setInstallPromptEvent);
     const setMobileSidebarOpen = useUIStore((s) => s.setMobileSidebarOpen);
+    const editorModalOpen = useUIStore((s) => s.editorModalOpen);
 
     const handleInstall = useCallback(async () => {
         if (!installPromptEvent) return;
@@ -814,10 +815,7 @@ export function MainContent() {
             setBottomSheetOpen(true);
             return;
         }
-        if (!isDocumentPipSupported()) {
-            setPipUnsupportedModalOpen(true);
-            return;
-        }
+        // Add note to PiP tab state (shared by PiP window + EditorModal)
         const noteId = note.sessionId;
         const ui = useUIStore.getState();
         const ids = ui.openInPipNoteIds;
@@ -827,7 +825,6 @@ export function MainContent() {
             ids.length >= FREE_PIP_TAB_LIMIT &&
             !ids.includes(noteId);
         if (atLimit) {
-            // Replace oldest tab so the new note opens and the previous newest remains
             const newIds = [...ids.slice(1), noteId];
             ui.setOpenInPipNoteIds(newIds);
             ui.setOpenInPipActiveNoteId(noteId);
@@ -837,6 +834,12 @@ export function MainContent() {
         } else {
             addNoteToPip(noteId, true);
             setOpenInPipActiveNoteId(noteId);
+        }
+
+        // Fallback: if PiP not supported, use editor modal
+        if (!isDocumentPipSupported()) {
+            ui.setEditorModalOpen(true);
+            return;
         }
 
         if (pipWindow && !pipWindow.closed) {
@@ -877,7 +880,10 @@ export function MainContent() {
             },
             noteIds: state.openInPipNoteIds,
             activeId: state.openInPipActiveNoteId,
-            onError: () => setPipUnsupportedModalOpen(true),
+            onError: () => {
+                // PiP request failed at runtime — fall back to editor modal
+                ui.setEditorModalOpen(true);
+            },
         });
     };
 
@@ -1658,7 +1664,31 @@ export function MainContent() {
                                         </div>
                                     </div>
 
-                                    {isDocumentPipSupported() ? (
+                                    {window.innerWidth <= 768 ? (
+                                        <div className="onboarding-ctas">
+                                            <button
+                                                type="button"
+                                                className="onboarding-cta onboarding-cta-primary"
+                                                onClick={() => {
+                                                    const workspaceId =
+                                                        currentWorkspaceId ??
+                                                        undefined;
+                                                    const newId = addNote({
+                                                        workspaceId,
+                                                    });
+                                                    trackEvent("note_created");
+                                                    setSelectedNoteId(newId);
+                                                    const newNote =
+                                                        useNotesStore.getState()
+                                                            .notes[newId];
+                                                    if (newNote)
+                                                        openNoteInPip(newNote);
+                                                }}
+                                            >
+                                                Create note
+                                            </button>
+                                        </div>
+                                    ) : isDocumentPipSupported() ? (
                                         <div className="onboarding-ctas">
                                             <button
                                                 type="button"
@@ -1914,7 +1944,8 @@ export function MainContent() {
                                 (() => {
                                     const isActiveInPip =
                                         openInPipActiveNoteId ===
-                                            selectedNoteId && pipIsOpen;
+                                            selectedNoteId &&
+                                        (pipIsOpen || editorModalOpen);
                                     return (
                                         <div className="note-detail-view">
                                             <div className="note-detail-header">
@@ -2039,23 +2070,38 @@ export function MainContent() {
                                                 ref={detailContentRef}
                                                 className="note-detail-content"
                                             >
-                                                {!(selectedNote.content ?? "").trim() ? (
+                                                {!(
+                                                    selectedNote.content ?? ""
+                                                ).trim() ? (
                                                     <div className="note-detail-empty">
-                                                        <FileText size={32} strokeWidth={1.2} />
-                                                        <p>This note is empty</p>
+                                                        <FileText
+                                                            size={32}
+                                                            strokeWidth={1.2}
+                                                        />
+                                                        <p>
+                                                            This note is empty
+                                                        </p>
                                                         <button
                                                             type="button"
                                                             className="note-detail-empty-edit-btn"
-                                                            onClick={() => openNoteInPip(selectedNote)}
+                                                            onClick={() =>
+                                                                openNoteInPip(
+                                                                    selectedNote
+                                                                )
+                                                            }
                                                         >
-                                                            <PenLine size={14} />
+                                                            <PenLine
+                                                                size={14}
+                                                            />
                                                             Edit note
                                                         </button>
                                                     </div>
                                                 ) : (
                                                     <NoteEditor
                                                         key={selectedNoteId!}
-                                                        editorKey={selectedNoteId!}
+                                                        editorKey={
+                                                            selectedNoteId!
+                                                        }
                                                         initialContent={
                                                             selectedNote.content ??
                                                             ""
@@ -3042,7 +3088,8 @@ export function MainContent() {
                     const menuNote = notes[noteContextMenuAnchor!.noteId];
                     if (!menuNote) return null;
                     const isNoteActiveInPipDetail =
-                        openInPipActiveNoteId === selectedNoteId && pipIsOpen;
+                        openInPipActiveNoteId === selectedNoteId &&
+                        (pipIsOpen || editorModalOpen);
                     const isBookmarked = menuNote.isBookmarked === true;
                     return createPortal(
                         <div

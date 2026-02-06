@@ -3994,10 +3994,6 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
         );
     const hasSidebarItems = allSidebarFolderIds.length > 0;
 
-    const setPipUnsupportedModalOpen = useUIStore(
-        (s) => s.setPipUnsupportedModalOpen
-    );
-
     /** Click outside selectables: clear multi-select (match notic extension). */
     useEffect(() => {
         const onDocumentClick = (e: MouseEvent) => {
@@ -4015,14 +4011,16 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
     }, [selectedNoteIds.length, selectedFolderIds.length, setSelection]);
 
     const handleOpenNotesClick = () => {
-        if (!isDocumentPipSupported()) {
-            setPipUnsupportedModalOpen(true);
-            return;
-        }
         const noteIds = firstNoteId ? [firstNoteId] : [];
         const activeId = firstNoteId ?? null;
         setOpenInPipNoteIds(noteIds);
         setOpenInPipActiveNoteId(activeId);
+
+        if (!isDocumentPipSupported()) {
+            useUIStore.getState().setEditorModalOpen(true);
+            return;
+        }
+
         void openPipWithNote(null, {
             isDarkMode,
             onClose: () => {
@@ -4042,7 +4040,7 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
             },
             noteIds,
             activeId,
-            onError: () => setPipUnsupportedModalOpen(true),
+            onError: () => useUIStore.getState().setEditorModalOpen(true),
         });
     };
 
@@ -4055,10 +4053,6 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                 ui.setBottomSheetOpen(true);
                 return;
             }
-            if (!isDocumentPipSupported()) {
-                setPipUnsupportedModalOpen(true);
-                return;
-            }
             const ui = useUIStore.getState();
             const ids = ui.openInPipNoteIds;
             const isSubscribed = useSubscriptionStore.getState().isSubscribed;
@@ -4067,7 +4061,6 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                 ids.length >= FREE_PIP_TAB_LIMIT &&
                 !ids.includes(noteId);
             if (atLimit) {
-                // Replace oldest tab so the new note opens and the previous newest remains
                 const newIds = [...ids.slice(1), noteId];
                 ui.setOpenInPipNoteIds(newIds);
                 ui.setOpenInPipActiveNoteId(noteId);
@@ -4078,6 +4071,13 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                 addNoteToPip(noteId, true);
                 setOpenInPipActiveNoteId(noteId);
             }
+
+            // Fallback: if PiP not supported, use editor modal
+            if (!isDocumentPipSupported()) {
+                ui.setEditorModalOpen(true);
+                return;
+            }
+
             const pipWin = getPipWindow();
             if (pipWin && !pipWin.closed) {
                 const state = useUIStore.getState();
@@ -4133,15 +4133,10 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                 },
                 noteIds: state.openInPipNoteIds,
                 activeId: state.openInPipActiveNoteId,
-                onError: () => setPipUnsupportedModalOpen(true),
+                onError: () => useUIStore.getState().setEditorModalOpen(true),
             });
         },
-        [
-            addNoteToPip,
-            setOpenInPipActiveNoteId,
-            isDarkMode,
-            setPipUnsupportedModalOpen,
-        ]
+        [addNoteToPip, setOpenInPipActiveNoteId, isDarkMode]
     );
 
     const [pendingNoteRenameId, setPendingNoteRenameId] = useState<

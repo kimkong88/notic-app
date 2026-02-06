@@ -2,8 +2,8 @@ import { useRef, useCallback, useEffect } from "react";
 import { useUIStore, useNotesStore, useWorkspaceStore } from "../store";
 import { Sidebar } from "./Sidebar";
 import { MainContent } from "./MainContent";
-import { PipPanel } from "./PipPanel";
 import { MobileBottomSheet } from "./MobileBottomSheet";
+import { EditorModal } from "./EditorModal";
 import {
     sendNotesUpdateToPip,
     getPipWindow,
@@ -523,8 +523,6 @@ export function Layout() {
                 )}
                 <MainContent />
             </div>
-            <PipPanel />
-
             {/* Mobile FAB – hidden on desktop, when bottom sheet is open, or when viewing a note detail */}
             {!bottomSheetOpen && !selectedNoteId && (
                 <button
@@ -540,6 +538,9 @@ export function Layout() {
 
             {/* Mobile bottom sheet editor */}
             <MobileBottomSheet />
+
+            {/* Desktop editor modal (PiP fallback for non-PiP browsers) */}
+            <EditorModal />
 
             {pipUnsupportedModalOpen && (
                 <div

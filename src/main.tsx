@@ -46,7 +46,7 @@ async function init() {
         }
     }
 
-    // If a PiP-related promise rejects and our catch doesn't run, show the unsupported modal
+    // If a PiP-related promise rejects and our catch doesn't run, fall back to editor modal
     window.addEventListener("unhandledrejection", (event) => {
         const msg = String(event.reason?.message ?? event.reason ?? "");
         if (
@@ -55,7 +55,7 @@ async function init() {
             )
         ) {
             try {
-                useUIStore.getState().setPipUnsupportedModalOpen(true);
+                useUIStore.getState().setEditorModalOpen(true);
             } catch (_) {}
             event.preventDefault?.();
         }
