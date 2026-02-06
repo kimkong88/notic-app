@@ -29,6 +29,7 @@ import {
     CloudSync,
     Download,
     X,
+    Menu,
 } from "lucide-react";
 import { SettingsView } from "./SettingsView";
 import {
@@ -562,6 +563,7 @@ export function MainContent() {
     const installBarDismissed = useUIStore((s) => s.installBarDismissed);
     const setInstallBarDismissed = useUIStore((s) => s.setInstallBarDismissed);
     const setInstallPromptEvent = useUIStore((s) => s.setInstallPromptEvent);
+    const setMobileSidebarOpen = useUIStore((s) => s.setMobileSidebarOpen);
 
     const handleInstall = useCallback(async () => {
         if (!installPromptEvent) return;
@@ -1555,6 +1557,14 @@ export function MainContent() {
             )}
             <main className="main-content">
                 <div className="breadcrumbs-row" id="mainHeaderRow">
+                    <button
+                        type="button"
+                        className="mobile-menu-btn"
+                        onClick={() => setMobileSidebarOpen(true)}
+                        aria-label="Open menu"
+                    >
+                        <Menu size={20} />
+                    </button>
                     <div className="breadcrumbs" id="breadcrumbs">
                         {breadcrumbItems.map((item, index) => (
                             <Fragment key={index}>

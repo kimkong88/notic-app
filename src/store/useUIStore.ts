@@ -55,6 +55,8 @@ interface UIState {
     installPromptEvent: any | null;
     /** When true, user dismissed the install bar (stored in localStorage). */
     installBarDismissed: boolean;
+    /** Mobile sidebar open state (overlay drawer). Only used on mobile breakpoint. */
+    mobileSidebarOpen: boolean;
 }
 
 interface UIActions {
@@ -100,6 +102,7 @@ interface UIActions {
     setTutorialShowCreateHint: (value: boolean) => void;
     setInstallPromptEvent: (event: any | null) => void;
     setInstallBarDismissed: (value: boolean) => void;
+    setMobileSidebarOpen: (value: boolean) => void;
 }
 
 const SIDEBAR_WIDTH_DEFAULT = 280;
@@ -211,6 +214,7 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
         setInstallBarDismissedStorage(value);
         set({ installBarDismissed: value });
     },
+    setMobileSidebarOpen: (value) => set({ mobileSidebarOpen: value }),
 }));
 
 export { SIDEBAR_WIDTH_MIN, SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_DEFAULT };

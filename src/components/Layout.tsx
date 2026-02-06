@@ -45,6 +45,8 @@ export function Layout() {
     );
     const toastMessage = useUIStore((s) => s.toastMessage);
     const setToastMessage = useUIStore((s) => s.setToastMessage);
+    const mobileSidebarOpen = useUIStore((s) => s.mobileSidebarOpen);
+    const setMobileSidebarOpen = useUIStore((s) => s.setMobileSidebarOpen);
     const serverNewerBannerVisible = useUIStore(
         (s) => s.serverNewerBannerVisible
     );
@@ -73,6 +75,22 @@ export function Layout() {
         currentTab,
         isTrashView,
         setCurrentView,
+    ]);
+
+    const currentView = useUIStore((s) => s.currentView);
+
+    /** Close mobile sidebar whenever user navigates (selects note, changes tab, etc.) */
+    useEffect(() => {
+        if (mobileSidebarOpen) {
+            setMobileSidebarOpen(false);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [
+        selectedNoteId,
+        selectedSidebarContext,
+        currentTab,
+        isTrashView,
+        currentView,
     ]);
 
     /** Best-effort: ask PiP to flush editors before main app unloads (e.g. refresh) so content isn't lost (match notic). */
@@ -425,7 +443,20 @@ export function Layout() {
     }, [toastMessage, setToastMessage]);
 
     return (
-        <div className="dashboard-container">
+        <div
+            className={`dashboard-container${
+                mobileSidebarOpen ? " mobile-sidebar-open" : ""
+            }`}
+        >
+            {/* Mobile backdrop */}
+            {mobileSidebarOpen && (
+                <div
+                    className="mobile-sidebar-backdrop"
+                    onClick={() => setMobileSidebarOpen(false)}
+                />
+            )}
+
+            {/* Single sidebar: on desktop uses flex layout; on mobile becomes fixed overlay via CSS */}
             <Sidebar
                 collapsed={sidebarCollapsed}
                 width={sidebarCollapsed ? 0 : sidebarWidth}
