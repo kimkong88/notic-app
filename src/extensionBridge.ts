@@ -10,33 +10,35 @@
  *   notic-extension-ready — Content script is loaded and ready
  */
 
-import { useNotesStore } from './store/useNotesStore';
-import { useWorkspaceStore } from './store/useWorkspaceStore';
-import { useUIStore } from './store/useUIStore';
-import { extractTitle } from './utils/noteUtils';
-import type { NoteData, Folder, WorkspaceInfo } from './store/types';
+import { useNotesStore } from "./store/useNotesStore";
+import { useWorkspaceStore } from "./store/useWorkspaceStore";
+import { useUIStore } from "./store/useUIStore";
+import { extractTitle } from "./utils/noteUtils";
+import type { NoteData, Folder, WorkspaceInfo } from "./store/types";
 
 // ── Extension ID (set via env or hard-coded after publishing) ──
-export const EXTENSION_ID = import.meta.env.VITE_EXTENSION_ID as string | undefined;
+export const EXTENSION_ID = import.meta.env.VITE_EXTENSION_ID as
+    | string
+    | undefined;
 
 // ── Message types from extension content script ──
 
 interface ClipMessage {
-    type: 'notic-clip';
+    type: "notic-clip";
     text: string;
     sourceUrl?: string;
     pageTitle?: string;
 }
 
 interface MigrateMessage {
-    type: 'notic-migrate';
+    type: "notic-migrate";
     notes: MigrateNote[];
     folders: MigrateFolder[];
     workspaces: MigrateWorkspace[];
 }
 
 interface ExtensionReadyMessage {
-    type: 'notic-extension-ready';
+    type: "notic-extension-ready";
 }
 
 /** Shape of notes coming from extension chrome.storage migration */
@@ -84,7 +86,7 @@ function handleClip(msg: ClipMessage): void {
     const { text, sourceUrl, pageTitle } = msg;
 
     // Build note content — prefix with source link if available
-    let content = '';
+    let content = "";
     if (sourceUrl && pageTitle) {
         content = `Source: [${pageTitle}](${sourceUrl})\n\n`;
     } else if (sourceUrl) {
@@ -96,13 +98,13 @@ function handleClip(msg: ClipMessage): void {
     const workspaces = useWorkspaceStore.getState().workspaces;
     const currentWsId = useWorkspaceStore.getState().currentWorkspaceId;
     const firstWsId = Object.keys(workspaces)[0];
-    const wsId = currentWsId ?? firstWsId ?? 'workspace_1';
+    const wsId = currentWsId ?? firstWsId ?? "workspace_1";
 
     // Create note via store
     const sessionId = useNotesStore.getState().addNote({ workspaceId: wsId });
 
     // Populate content
-    const title = pageTitle || extractTitle(content) || 'Clipped Note';
+    const title = pageTitle || extractTitle(content) || "Clipped Note";
     const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
 
     useNotesStore.getState().updateNote(sessionId, {
@@ -116,11 +118,15 @@ function handleClip(msg: ClipMessage): void {
     useNotesStore.getState().setSelectedNoteId(sessionId);
 
     // Show toast
-    useUIStore.getState().setToastMessage('Saved to Notic');
+    useUIStore.getState().setToastMessage("Saved to Notic");
 }
 
 function handleMigrate(msg: MigrateMessage): void {
-    const { notes: incomingNotes, folders: incomingFolders, workspaces: incomingWorkspaces } = msg;
+    const {
+        notes: incomingNotes,
+        folders: incomingFolders,
+        workspaces: incomingWorkspaces,
+    } = msg;
 
     const notesStore = useNotesStore.getState();
     const wsStore = useWorkspaceStore.getState();
@@ -176,7 +182,7 @@ function handleMigrate(msg: MigrateMessage): void {
                 content: note.content,
                 lastModified: note.lastModified,
                 createdAt: note.createdAt,
-                title: note.title || extractTitle(note.content) || 'Untitled',
+                title: note.title || extractTitle(note.content) || "Untitled",
                 wordCount: note.wordCount ?? 0,
                 folderId: note.folderId,
                 displayName: note.displayName,
@@ -195,12 +201,16 @@ function handleMigrate(msg: MigrateMessage): void {
     }
 
     // Confirm migration to extension
-    window.postMessage({ type: 'notic-migrate-done', importedCount }, '*');
+    window.postMessage({ type: "notic-migrate-done", importedCount }, "*");
 
     if (importedCount > 0) {
-        useUIStore.getState().setToastMessage(
-            `Migrated ${importedCount} note${importedCount === 1 ? '' : 's'} from extension`
-        );
+        useUIStore
+            .getState()
+            .setToastMessage(
+                `Migrated ${importedCount} note${
+                    importedCount === 1 ? "" : "s"
+                } from extension`
+            );
     }
 }
 
@@ -211,16 +221,16 @@ function onExtensionMessage(event: MessageEvent): void {
     if (event.source !== window) return;
 
     const data = event.data as ExtensionMessage | undefined;
-    if (!data || typeof data.type !== 'string') return;
+    if (!data || typeof data.type !== "string") return;
 
     switch (data.type) {
-        case 'notic-clip':
+        case "notic-clip":
             handleClip(data);
             break;
-        case 'notic-migrate':
+        case "notic-migrate":
             handleMigrate(data);
             break;
-        case 'notic-extension-ready':
+        case "notic-extension-ready":
             // Extension content script is ready — no action needed for now
             break;
     }
@@ -231,7 +241,7 @@ function onExtensionMessage(event: MessageEvent): void {
  * Call once during app initialization (e.g., in main.tsx).
  */
 export function initExtensionBridge(): void {
-    window.addEventListener('message', onExtensionMessage);
+    window.addEventListener("message", onExtensionMessage);
 }
 
 /**
@@ -247,20 +257,23 @@ export function handleUrlParams(): void {
     const params = new URLSearchParams(window.location.search);
     let handled = false;
 
-    const action = params.get('action');
-    const search = params.get('search');
+    const action = params.get("action");
+    const search = params.get("search");
 
-    if (action === 'new-note') {
+    if (action === "new-note") {
         // Create a new note in the current workspace
-        const wsId = useWorkspaceStore.getState().currentWorkspaceId
-            ?? Object.keys(useWorkspaceStore.getState().workspaces)[0]
-            ?? 'workspace_1';
-        const sessionId = useNotesStore.getState().addNote({ workspaceId: wsId });
+        const wsId =
+            useWorkspaceStore.getState().currentWorkspaceId ??
+            Object.keys(useWorkspaceStore.getState().workspaces)[0] ??
+            "workspace_1";
+        const sessionId = useNotesStore
+            .getState()
+            .addNote({ workspaceId: wsId });
         useNotesStore.getState().setSelectedNoteId(sessionId);
         handled = true;
     }
 
-    if (action === 'pip') {
+    if (action === "pip") {
         // PiP requires user gesture — open editor modal as fallback
         useUIStore.getState().setEditorModalOpen(true);
         handled = true;
@@ -274,7 +287,7 @@ export function handleUrlParams(): void {
     // Clean URL params
     if (handled) {
         const cleanUrl = window.location.origin + window.location.pathname;
-        window.history.replaceState(null, '', cleanUrl);
+        window.history.replaceState(null, "", cleanUrl);
     }
 }
 
@@ -287,15 +300,28 @@ export async function isExtensionInstalled(): Promise<boolean> {
     if (!EXTENSION_ID) return false;
 
     // chrome.runtime.sendMessage is only available on pages listed in externally_connectable
-    type SendMessageFn = (id: string, msg: unknown, cb: (response: unknown) => void) => void;
-    const chromeRuntime = (globalThis as unknown as { chrome?: { runtime?: { sendMessage?: SendMessageFn } } }).chrome?.runtime;
+    type SendMessageFn = (
+        id: string,
+        msg: unknown,
+        cb: (response: unknown) => void
+    ) => void;
+    const chromeRuntime = (
+        globalThis as unknown as {
+            chrome?: { runtime?: { sendMessage?: SendMessageFn } };
+        }
+    ).chrome?.runtime;
     const sendMessage = chromeRuntime?.sendMessage;
     if (!sendMessage) return false;
 
     return new Promise<boolean>((resolve) => {
         try {
-            sendMessage(EXTENSION_ID!, { type: 'ping' }, (response) => {
-                // If chrome.runtime.lastError is set, extension is not installed
+            sendMessage(EXTENSION_ID!, { type: "ping" }, (response) => {
+                // Access lastError to suppress "Unchecked runtime.lastError" console warning
+                const _lastError = (globalThis as Record<string, unknown>)
+                    .chrome as
+                    | { runtime?: { lastError?: unknown } }
+                    | undefined;
+                void _lastError?.runtime?.lastError;
                 resolve(!!response);
             });
         } catch {
