@@ -1052,48 +1052,6 @@ body.dark-mode .sidebar-content::-webkit-scrollbar-thumb:hover {
   color: var(--text-primary);
 }
 
-/* Mobile toolbar (hidden on desktop, shown on mobile via media query) */
-.mobile-toolbar {
-  display: none;
-  align-items: center;
-  justify-content: space-evenly;
-  padding: 8px 12px;
-  border-top: 1px solid var(--border-primary);
-  flex-shrink: 0;
-  gap: 4px;
-}
-
-.mobile-toolbar-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  background: transparent;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  color: var(--text-secondary);
-  transition: background 0.15s, color 0.15s;
-}
-
-.mobile-toolbar-btn:hover:not(:disabled),
-.mobile-toolbar-btn:active:not(:disabled) {
-  background: var(--hover-background);
-  color: var(--text-primary);
-}
-
-.mobile-toolbar-btn.active {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-}
-
-.mobile-toolbar-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
 /* Sidebar footer */
 .sidebar-footer {
   padding: 16px;
@@ -5332,14 +5290,33 @@ body.dark-mode a.modal-btn-cta-upgrade:hover {
     max-width: 8rem;
   }
 
-  /* Hide floating toolbar on mobile – it overflows the drawer */
+  /* Hide floating toolbar when sidebar is closed (it would peek past the transform) */
   .sidebar-toolbar {
     display: none !important;
   }
 
-  /* Mobile toolbar – horizontal action bar above footer */
-  .mobile-toolbar {
+  /* Show toolbar as floating island near sidebar edge when open */
+  .mobile-sidebar-open .sidebar-toolbar {
     display: flex !important;
+    right: -64px !important; /* 8px gap from sidebar edge */
+    top: 60px !important;
+    cursor: default;
+  }
+
+  .mobile-sidebar-open .sidebar-toolbar:active {
+    cursor: default;
+  }
+
+  .mobile-sidebar-open .toolbar-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .mobile-sidebar-open .toolbar-btn i,
+  .mobile-sidebar-open .toolbar-btn svg {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
   }
 
   /* Editor padding adjustments for mobile */

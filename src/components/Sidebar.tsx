@@ -4563,6 +4563,7 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
 
     // Draggable toolbar – match extension dashboard-toolbar.ts (position relative to sidebar, constrain, persist)
     const handleToolbarMouseDown = useCallback((e: React.MouseEvent) => {
+        if (window.innerWidth <= 768) return;
         if ((e.target as HTMLElement).closest(".toolbar-btn")) return;
         const el = toolbarRef.current;
         const sidebar = sidebarRef.current;
@@ -5387,76 +5388,6 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                         )}
                     </div>
 
-                    {/* Mobile toolbar – replaces the floating toolbar on small screens */}
-                    <div
-                        className="mobile-toolbar"
-                        role="toolbar"
-                        aria-label="Quick actions"
-                    >
-                        <button
-                            type="button"
-                            className="mobile-toolbar-btn"
-                            title="New Note"
-                            onClick={handleNewNote}
-                            aria-label="New Note"
-                        >
-                            <CirclePlus size={18} />
-                        </button>
-                        <button
-                            type="button"
-                            className="mobile-toolbar-btn"
-                            title="New Folder"
-                            disabled={currentTab === "recent"}
-                            aria-label="New Folder"
-                            onClick={
-                                currentTab === "folders"
-                                    ? handleNewFolder
-                                    : undefined
-                            }
-                        >
-                            <FolderPlus size={18} />
-                        </button>
-                        <button
-                            type="button"
-                            className="mobile-toolbar-btn"
-                            title="Sort"
-                            onClick={openSortMenu}
-                            aria-label="Sort"
-                            aria-haspopup="true"
-                            aria-expanded={sortMenuOpen}
-                        >
-                            <ArrowUpDown size={18} />
-                        </button>
-                        <button
-                            type="button"
-                            className="mobile-toolbar-btn"
-                            title={
-                                isAllExpanded ? "Collapse All" : "Expand All"
-                            }
-                            disabled={!hasSidebarItems}
-                            onClick={handleExpandCollapseAll}
-                            aria-label={
-                                isAllExpanded ? "Collapse All" : "Expand All"
-                            }
-                        >
-                            {isAllExpanded ? (
-                                <ChevronsUp size={18} />
-                            ) : (
-                                <ChevronsDown size={18} />
-                            )}
-                        </button>
-                        <button
-                            type="button"
-                            className={`mobile-toolbar-btn${
-                                isTrashView ? " active" : ""
-                            }`}
-                            title="Trash"
-                            onClick={handleTrashClick}
-                            aria-label="Trash"
-                        >
-                            <Trash2 size={18} />
-                        </button>
-                    </div>
 
                     {/* Footer: auth slot (avatar + dropdown like extension), Settings, Theme */}
                     <div className="sidebar-footer">

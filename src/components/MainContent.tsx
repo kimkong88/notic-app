@@ -866,9 +866,7 @@ export function MainContent() {
         void openPipWithNote(null, {
             isDarkMode,
             onClose: () => {
-                cleanupEmptyPipNotes(
-                    useUIStore.getState().openInPipNoteIds
-                );
+                cleanupEmptyPipNotes(useUIStore.getState().openInPipNoteIds);
                 useUIStore.getState().setOpenInPipNoteIds([]);
                 useUIStore.getState().setOpenInPipActiveNoteId(null);
             },

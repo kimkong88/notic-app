@@ -11,7 +11,7 @@ import { NOTE_CHAR_WARNING, NOTE_CHAR_LIMIT } from "../utils/noteUtils";
 import { FREE_PIP_TAB_LIMIT } from "../constants";
 import { db } from "../db";
 import { openBillingPage } from "../api/backend";
-import { sortTabsByPinned, clampContextMenuPosition } from "../utils/tabUtils";
+
 
 const SAVE_DEBOUNCE_MS = 700;
 const PIP_COLOR_OPTIONS: Array<{ label: string; value: string }> = [
