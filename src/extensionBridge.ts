@@ -161,10 +161,10 @@ async function handleScreenshot(msg: ScreenshotMessage): Promise<void> {
         const wsId = currentWsId ?? firstWsId ?? "workspace_1";
 
         // Create note
-        const sessionId = useNotesStore.getState().addNote({ workspaceId: wsId });
-        const title = pageTitle
-            ? `Screenshot — ${pageTitle}`
-            : "Screenshot";
+        const sessionId = useNotesStore
+            .getState()
+            .addNote({ workspaceId: wsId });
+        const title = pageTitle ? `Screenshot — ${pageTitle}` : "Screenshot";
         const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
 
         useNotesStore.getState().updateNote(sessionId, {
