@@ -22,6 +22,7 @@ export function trackEvent(
   eventData?: Record<string, string | number | boolean>
 ): void {
   try {
+    if (import.meta.env.DEV) return
     if (typeof window !== 'undefined' && window.umami?.track) {
       if (eventData && Object.keys(eventData).length > 0) {
         window.umami.track(eventName, eventData)

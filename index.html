@@ -29,9 +29,9 @@
     <meta name="twitter:image" content="https://app.getnotic.io/opengraph-image.png" />
     <!-- Robots -->
     <meta name="robots" content="index, follow" />
-    <!-- Umami analytics (non-blocking, skipped when offline) -->
+    <!-- Umami analytics (non-blocking, skipped when offline and in dev) -->
     <script>
-      if (navigator.onLine) {
+      if (navigator.onLine && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
         (function() {
           var script = document.createElement('script');
           script.defer = true;
