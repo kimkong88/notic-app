@@ -14,6 +14,7 @@ import { useNotesStore } from "./store/useNotesStore";
 import { useWorkspaceStore } from "./store/useWorkspaceStore";
 import { useUIStore } from "./store/useUIStore";
 import { extractTitle } from "./utils/noteUtils";
+import { uploadImage } from "./api/upload";
 import type { NoteData, Folder, WorkspaceInfo } from "./store/types";
 
 // ── Extension ID (set via env or hard-coded after publishing) ──
@@ -35,6 +36,13 @@ interface MigrateMessage {
     notes: MigrateNote[];
     folders: MigrateFolder[];
     workspaces: MigrateWorkspace[];
+}
+
+interface ScreenshotMessage {
+    type: "notic-screenshot";
+    dataUrl: string;
+    sourceUrl?: string;
+    pageTitle?: string;
 }
 
 interface ExtensionReadyMessage {
@@ -78,7 +86,11 @@ interface MigrateWorkspace {
     lastModified?: number;
 }
 
-type ExtensionMessage = ClipMessage | MigrateMessage | ExtensionReadyMessage;
+type ExtensionMessage =
+    | ClipMessage
+    | ScreenshotMessage
+    | MigrateMessage
+    | ExtensionReadyMessage;
 
 // ── Handlers ──
 
@@ -114,6 +126,59 @@ function handleClip(msg: ClipMessage): void {
 
     // Show toast
     useUIStore.getState().setToastMessage("Saved to Notic");
+}
+
+async function handleScreenshot(msg: ScreenshotMessage): Promise<void> {
+    const { dataUrl, sourceUrl, pageTitle } = msg;
+
+    useUIStore.getState().setToastMessage("Uploading screenshot...");
+
+    try {
+        // Convert data URL to File
+        const res = await fetch(dataUrl);
+        const blob = await res.blob();
+        const file = new File([blob], "screenshot.jpg", { type: "image/jpeg" });
+
+        // Upload via /upload/image → CloudFront URL
+        const { url: imageUrl } = await uploadImage(file);
+
+        // Build note content
+        let content = "";
+        if (sourceUrl && pageTitle) {
+            content += `## Screenshot — ${pageTitle}\n\n`;
+            content += `Source: [${pageTitle}](${sourceUrl})\n\n`;
+        } else if (sourceUrl) {
+            content += `## Screenshot\n\nSource: ${sourceUrl}\n\n`;
+        } else {
+            content += `## Screenshot\n\n`;
+        }
+        content += `![Screenshot](${imageUrl})`;
+
+        // Get current workspace
+        const workspaces = useWorkspaceStore.getState().workspaces;
+        const currentWsId = useWorkspaceStore.getState().currentWorkspaceId;
+        const firstWsId = Object.keys(workspaces)[0];
+        const wsId = currentWsId ?? firstWsId ?? "workspace_1";
+
+        // Create note
+        const sessionId = useNotesStore.getState().addNote({ workspaceId: wsId });
+        const title = pageTitle
+            ? `Screenshot — ${pageTitle}`
+            : "Screenshot";
+        const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
+
+        useNotesStore.getState().updateNote(sessionId, {
+            content,
+            title,
+            wordCount,
+            hasEverHadContent: true,
+        });
+
+        useNotesStore.getState().setSelectedNoteId(sessionId);
+        useUIStore.getState().setToastMessage("Screenshot saved to Notic");
+    } catch {
+        useUIStore.getState().setToastMessage("Failed to upload screenshot");
+    }
 }
 
 function handleMigrate(msg: MigrateMessage): void {
@@ -221,6 +286,9 @@ function onExtensionMessage(event: MessageEvent): void {
     switch (data.type) {
         case "notic-clip":
             handleClip(data);
+            break;
+        case "notic-screenshot":
+            void handleScreenshot(data);
             break;
         case "notic-migrate":
             handleMigrate(data);
