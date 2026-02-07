@@ -83,16 +83,11 @@ type ExtensionMessage = ClipMessage | MigrateMessage | ExtensionReadyMessage;
 // ── Handlers ──
 
 function handleClip(msg: ClipMessage): void {
-    const { text, sourceUrl, pageTitle } = msg;
+    const { text, pageTitle } = msg;
 
-    // Build note content — prefix with source link if available
-    let content = "";
-    if (sourceUrl && pageTitle) {
-        content = `Source: [${pageTitle}](${sourceUrl})\n\n`;
-    } else if (sourceUrl) {
-        content = `Source: ${sourceUrl}\n\n`;
-    }
-    content += text;
+    // Content is already fully formatted by the extension background script
+    // (includes source links, markdown formatting, etc.)
+    const content = text;
 
     // Get current workspace
     const workspaces = useWorkspaceStore.getState().workspaces;
