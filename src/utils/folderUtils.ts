@@ -112,3 +112,30 @@ export function getFolderNoteCountRecursive(
   )
   return direct + childCount
 }
+
+/** Flat list of folders with path (roots first, then children). Match notic getFlatFolders. */
+export function getFlatFoldersWithPath(
+  foldersList: Folder[]
+): { id: string; name: string; path: string }[] {
+  const result: { id: string; name: string; path: string }[] = []
+  const folderMap = new Map<string, Folder>()
+  foldersList.forEach((f) => folderMap.set(f.id, f))
+  const roots = foldersList
+    .filter((f) => f.parentId == null)
+    .sort((a, b) =>
+      (a.displayName ?? a.name).localeCompare(b.displayName ?? b.name)
+    )
+  function add(folder: Folder, parentPath: string): void {
+    const name = folder.displayName ?? folder.name
+    const path = parentPath ? `${parentPath}/${name}` : name
+    result.push({ id: folder.id, name, path })
+    const children = foldersList
+      .filter((f) => f.parentId === folder.id)
+      .sort((a, b) =>
+        (a.displayName ?? a.name).localeCompare(b.displayName ?? b.name)
+      )
+    children.forEach((c) => add(c, path))
+  }
+  roots.forEach((r) => add(r, ''))
+  return result
+}

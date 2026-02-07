@@ -5,11 +5,14 @@
  */
 
 declare global {
-  interface Window {
-    umami?: {
-      track: (eventName: string, eventData?: Record<string, string | number | boolean>) => void
+    interface Window {
+        umami?: {
+            track: (
+                eventName: string,
+                eventData?: Record<string, string | number | boolean>
+            ) => void;
+        };
     }
-  }
 }
 
 /**
@@ -18,19 +21,19 @@ declare global {
  * pip_opened, sign_in_completed, etc.
  */
 export function trackEvent(
-  eventName: string,
-  eventData?: Record<string, string | number | boolean>
+    eventName: string,
+    eventData?: Record<string, string | number | boolean>
 ): void {
-  try {
-    if (import.meta.env.DEV) return
-    if (typeof window !== 'undefined' && window.umami?.track) {
-      if (eventData && Object.keys(eventData).length > 0) {
-        window.umami.track(eventName, eventData)
-      } else {
-        window.umami.track(eventName)
-      }
+    try {
+        if (import.meta.env.DEV) return;
+        if (typeof window !== "undefined" && window.umami?.track) {
+            if (eventData && Object.keys(eventData).length > 0) {
+                window.umami.track(eventName, eventData);
+            } else {
+                window.umami.track(eventName);
+            }
+        }
+    } catch {
+        // ignore
     }
-  } catch {
-    // ignore
-  }
 }

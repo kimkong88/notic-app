@@ -14,16 +14,26 @@ import { HorizontalRulePlugin } from "@lexical/react/LexicalHorizontalRulePlugin
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { ClickableLinkPlugin } from "@lexical/react/LexicalClickableLinkPlugin";
 import { AutoLinkPlugin } from "@lexical/react/LexicalAutoLinkPlugin";
+import { TabIndentationPlugin } from "@lexical/react/LexicalTabIndentationPlugin";
 import {
     $getRoot,
+    $getSelection,
+    $isRangeSelection,
     $createParagraphNode,
+    KEY_DOWN_COMMAND,
+    COMMAND_PRIORITY_HIGH,
     type EditorState,
     type LexicalEditor,
 } from "lexical";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { ListNode, ListItemNode } from "@lexical/list";
 import { CodeNode, CodeHighlightNode } from "@lexical/code";
-import { LinkNode, AutoLinkNode } from "@lexical/link";
+import {
+    LinkNode,
+    AutoLinkNode,
+    TOGGLE_LINK_COMMAND,
+    $isLinkNode,
+} from "@lexical/link";
 import { HorizontalRuleNode } from "@lexical/react/LexicalHorizontalRuleNode";
 import { ImageNode, IMAGE } from "../nodes/ImageNode";
 import {
@@ -278,6 +288,47 @@ function RegisterFlushRefPlugin({
     return null;
 }
 
+/** Ctrl+K to insert/remove link. */
+function LinkShortcutPlugin() {
+    const [editor] = useLexicalComposerContext();
+    useEffect(() => {
+        return editor.registerCommand(
+            KEY_DOWN_COMMAND,
+            (event: KeyboardEvent) => {
+                if (
+                    event.key === "k" &&
+                    (event.ctrlKey || event.metaKey) &&
+                    !event.shiftKey &&
+                    !event.altKey
+                ) {
+                    event.preventDefault();
+                    editor.update(() => {
+                        const selection = $getSelection();
+                        if (!$isRangeSelection(selection)) return;
+                        const node = selection.anchor.getNode();
+                        const parent = node.getParent();
+                        if ($isLinkNode(parent)) {
+                            editor.dispatchCommand(TOGGLE_LINK_COMMAND, null);
+                        } else {
+                            const url = window.prompt("Enter URL:");
+                            if (url?.trim()) {
+                                editor.dispatchCommand(
+                                    TOGGLE_LINK_COMMAND,
+                                    url.trim()
+                                );
+                            }
+                        }
+                    });
+                    return true;
+                }
+                return false;
+            },
+            COMMAND_PRIORITY_HIGH
+        );
+    }, [editor]);
+    return null;
+}
+
 const initialConfigNodes = [
     HeadingNode,
     QuoteNode,
@@ -372,6 +423,7 @@ export function NoteEditor({
                         />
                         <SlashCommandPlugin />
                         <ImageDropPastePlugin />
+                        <LinkShortcutPlugin />
                         <FlushOnUnmountPlugin onFlush={onFlush} />
                         <FlushOnBlurPlugin onFlush={onFlush} />
                         <RegisterFlushRefPlugin
@@ -386,6 +438,7 @@ export function NoteEditor({
                 <LinkPlugin />
                 <ClickableLinkPlugin />
                 <AutoLinkPlugin matchers={AUTO_LINK_MATCHERS} />
+                {!readOnly && <TabIndentationPlugin />}
             </LexicalComposer>
         </div>
     );
