@@ -3964,7 +3964,9 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
         notesInWorkspace.length > 0 ? notesInWorkspace[0].sessionId : null;
 
     const pipWindow = getPipWindow();
-    const pipIsOpen = pipWindow != null && !pipWindow.closed;
+    const editorModalOpen = useUIStore((s) => s.editorModalOpen);
+    const pipIsOpen =
+        (pipWindow != null && !pipWindow.closed) || editorModalOpen;
 
     /** Folders tab: only current workspace's notes and folders (no fallback to all data). */
     const notesForFoldersTab = notesInWorkspace;
@@ -4031,7 +4033,7 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                     const n = notes[id];
                     if (
                         n?.createdFromPip === true &&
-                        n.hasEverHadContent !== true
+                        (n.content?.trim() ?? "") === ""
                     )
                         removeNote(id);
                 });
@@ -4124,7 +4126,7 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
                         const n = notes[id];
                         if (
                             n?.createdFromPip === true &&
-                            n.hasEverHadContent !== true
+                            (n.content?.trim() ?? "") === ""
                         )
                             removeNote(id);
                     });

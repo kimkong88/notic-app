@@ -80,7 +80,7 @@ type ResizeEdge = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw" | null;
  */
 export function EditorModal() {
     const editorModalOpen = useUIStore((s) => s.editorModalOpen);
-    const setEditorModalOpen = useUIStore((s) => s.setEditorModalOpen);
+    const closeEditorModal = useUIStore((s) => s.closeEditorModal);
     const noteIds = useUIStore((s) => s.openInPipNoteIds);
     const activeNoteId = useUIStore((s) => s.openInPipActiveNoteId);
     const setOpenInPipNoteIds = useUIStore((s) => s.setOpenInPipNoteIds);
@@ -284,7 +284,6 @@ export function EditorModal() {
             if (
                 noteAfterFlush &&
                 noteAfterFlush.createdFromPip === true &&
-                noteAfterFlush.hasEverHadContent !== true &&
                 (noteAfterFlush.content?.trim() ?? "") === ""
             ) {
                 removeNote(noteId);
@@ -311,6 +310,9 @@ export function EditorModal() {
     const handleFlush = useCallback(
         (markdown: string) => {
             if (!effectiveActiveId) return;
+            // Guard: don't flush if the note was already removed (prevents
+            // FlushOnUnmountPlugin from re-creating a deleted note via upsert)
+            if (!useNotesStore.getState().notes[effectiveActiveId]) return;
             updateNote(effectiveActiveId, { content: markdown });
         },
         [effectiveActiveId, updateNote]
@@ -328,16 +330,13 @@ export function EditorModal() {
             if (
                 n &&
                 n.createdFromPip === true &&
-                n.hasEverHadContent !== true &&
                 (n.content?.trim() ?? "") === ""
             ) {
                 removeNote(id);
             }
         });
-        setOpenInPipNoteIds([]);
-        setOpenInPipActiveNoteId(null);
-        setEditorModalOpen(false);
-    }, [noteIds, removeNote, setOpenInPipNoteIds, setOpenInPipActiveNoteId, setEditorModalOpen]);
+        closeEditorModal();
+    }, [noteIds, removeNote, closeEditorModal]);
 
     const handleCloseAll = useCallback(() => {
         setContextMenu(null);
@@ -352,22 +351,13 @@ export function EditorModal() {
             if (
                 n &&
                 n.createdFromPip === true &&
-                n.hasEverHadContent !== true &&
                 (n.content?.trim() ?? "") === ""
             ) {
                 removeNote(id);
             }
         });
-        setOpenInPipNoteIds([]);
-        setOpenInPipActiveNoteId(null);
-        setEditorModalOpen(false);
-    }, [
-        noteIds,
-        removeNote,
-        setOpenInPipNoteIds,
-        setOpenInPipActiveNoteId,
-        setEditorModalOpen,
-    ]);
+        closeEditorModal();
+    }, [noteIds, removeNote, closeEditorModal]);
 
     // Context menu actions
     const handleTabContextMenu = useCallback(
@@ -422,10 +412,36 @@ export function EditorModal() {
     const handleCloseOthers = useCallback(
         (noteId: string) => {
             setContextMenu(null);
+            // Flush active content if active tab is being closed
+            if (effectiveActiveId && effectiveActiveId !== noteId) {
+                if (contentTimeoutRef.current) {
+                    clearTimeout(contentTimeoutRef.current);
+                    contentTimeoutRef.current = null;
+                }
+                flushRef.current?.();
+            }
+            // Auto-delete empty notes that are being closed
+            noteIds.forEach((id) => {
+                if (id === noteId) return; // keep the surviving tab
+                const n = useNotesStore.getState().notes[id];
+                if (
+                    n &&
+                    n.createdFromPip === true &&
+                    (n.content?.trim() ?? "") === ""
+                ) {
+                    removeNote(id);
+                }
+            });
             setOpenInPipNoteIds([noteId]);
             setOpenInPipActiveNoteId(noteId);
         },
-        [setOpenInPipNoteIds, setOpenInPipActiveNoteId]
+        [
+            noteIds,
+            effectiveActiveId,
+            removeNote,
+            setOpenInPipNoteIds,
+            setOpenInPipActiveNoteId,
+        ]
     );
 
     const handleCloseAfter = useCallback(
@@ -440,6 +456,18 @@ export function EditorModal() {
                 }
                 flushRef.current?.();
             }
+            // Auto-delete empty notes that are being closed
+            noteIds.forEach((id) => {
+                if (next.includes(id)) return; // keep surviving tabs
+                const n = useNotesStore.getState().notes[id];
+                if (
+                    n &&
+                    n.createdFromPip === true &&
+                    (n.content?.trim() ?? "") === ""
+                ) {
+                    removeNote(id);
+                }
+            });
             setOpenInPipNoteIds(next);
             if (effectiveActiveId && !next.includes(effectiveActiveId)) {
                 setOpenInPipActiveNoteId(next[0] ?? null);
@@ -448,10 +476,32 @@ export function EditorModal() {
         [
             noteIds,
             effectiveActiveId,
+            removeNote,
             setOpenInPipNoteIds,
             setOpenInPipActiveNoteId,
         ]
     );
+
+    // ESC key to close
+    useEffect(() => {
+        if (!editorModalOpen) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                // If a sub-modal (rename, context menu) is open, close that first
+                if (renameState) {
+                    setRenameState(null);
+                    return;
+                }
+                if (contextMenu) {
+                    setContextMenu(null);
+                    return;
+                }
+                handleClose();
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [editorModalOpen, renameState, contextMenu, handleClose]);
 
     if (!editorModalOpen) return null;
 

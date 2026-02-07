@@ -319,6 +319,9 @@ export function PipView() {
     /** Flush current tab to store immediately (tab switch / beforeunload). */
     const handleFlush = useCallback(
         (noteId: string) => (markdown: string) => {
+            // Guard: don't flush if the note was already removed (prevents
+            // FlushOnUnmountPlugin from re-creating a deleted note via upsert)
+            if (!useNotesStore.getState().notes[noteId]) return;
             applyNoteUpdate(noteId, { content: markdown });
         },
         [applyNoteUpdate]

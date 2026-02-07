@@ -322,11 +322,7 @@ export function Layout() {
                 ui.removeNoteFromPip(noteId);
                 if (isEmpty) {
                     const note = useNotesStore.getState().notes[noteId];
-                    if (
-                        note &&
-                        note.createdFromPip === true &&
-                        note.hasEverHadContent !== true
-                    ) {
+                    if (note && note.createdFromPip === true) {
                         useNotesStore.getState().removeNote(noteId);
                     }
                 }

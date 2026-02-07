@@ -251,7 +251,6 @@ export function MobileBottomSheet() {
             if (
                 noteAfterFlush &&
                 noteAfterFlush.createdFromPip === true &&
-                noteAfterFlush.hasEverHadContent !== true &&
                 (noteAfterFlush.content?.trim() ?? "") === ""
             ) {
                 removeNote(noteId);
@@ -278,6 +277,9 @@ export function MobileBottomSheet() {
     const handleFlush = useCallback(
         (markdown: string) => {
             if (!effectiveActiveId) return;
+            // Guard: don't flush if the note was already removed (prevents
+            // FlushOnUnmountPlugin from re-creating a deleted note via upsert)
+            if (!useNotesStore.getState().notes[effectiveActiveId]) return;
             updateNote(effectiveActiveId, { content: markdown });
         },
         [effectiveActiveId, updateNote]
@@ -300,7 +302,6 @@ export function MobileBottomSheet() {
                 if (
                     n &&
                     n.createdFromPip === true &&
-                    n.hasEverHadContent !== true &&
                     (n.content?.trim() ?? "") === ""
                 ) {
                     removeNote(id);

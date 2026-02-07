@@ -117,6 +117,8 @@ interface UIActions {
     addNoteToBottomSheet: (noteId: string, setActive?: boolean) => void;
     removeNoteFromBottomSheet: (noteId: string) => void;
     setEditorModalOpen: (value: boolean) => void;
+    /** Atomically close editor modal and clear all PiP tab state. */
+    closeEditorModal: () => void;
 }
 
 const SIDEBAR_WIDTH_DEFAULT = 280;
@@ -250,6 +252,12 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
         });
     },
     setEditorModalOpen: (value) => set({ editorModalOpen: value }),
+    closeEditorModal: () =>
+        set({
+            editorModalOpen: false,
+            openInPipNoteIds: [],
+            openInPipActiveNoteId: null,
+        }),
     removeNoteFromBottomSheet: (noteId) => {
         const { bottomSheetNoteIds, bottomSheetActiveNoteId } = get();
         const next = bottomSheetNoteIds.filter((id) => id !== noteId);

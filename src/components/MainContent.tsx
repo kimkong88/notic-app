@@ -871,7 +871,7 @@ export function MainContent() {
                     const n = notes[id];
                     if (
                         n?.createdFromPip === true &&
-                        n.hasEverHadContent !== true
+                        (n.content?.trim() ?? "") === ""
                     )
                         removeNote(id);
                 });
@@ -1091,7 +1091,7 @@ export function MainContent() {
         e.stopPropagation();
 
         const isOpenInPip = openInPipNoteIds.includes(note.sessionId);
-        const shouldDisable = isOpenInPip && pipIsOpen;
+        const shouldDisable = isOpenInPip && (pipIsOpen || editorModalOpen);
         if (shouldDisable) return;
         if (isOpenInPip) closeNoteInPip(note.sessionId);
         else {
@@ -2132,7 +2132,8 @@ export function MainContent() {
                                                     note.sessionId
                                                 );
                                             const shouldDisable =
-                                                isOpenInPip && pipIsOpen;
+                                                isOpenInPip &&
+                                                (pipIsOpen || editorModalOpen);
                                             const displayName =
                                                 note.displayName ||
                                                 note.title ||

@@ -125,27 +125,78 @@ describe("useUIStore", () => {
         });
     });
 
+    describe("closeEditorModal (atomic action)", () => {
+        /**
+         * closeEditorModal() atomically clears editorModalOpen,
+         * openInPipNoteIds, and openInPipActiveNoteId in a single
+         * store update. This prevents the bug where calling
+         * setEditorModalOpen(false) alone leaves stale pip state.
+         */
+        it("clears all three states atomically", () => {
+            useUIStore.getState().addNoteToPip("n1");
+            useUIStore.getState().addNoteToPip("n2");
+            useUIStore.getState().setEditorModalOpen(true);
+
+            useUIStore.getState().closeEditorModal();
+
+            expect(useUIStore.getState().editorModalOpen).toBe(false);
+            expect(useUIStore.getState().openInPipNoteIds).toEqual([]);
+            expect(useUIStore.getState().openInPipActiveNoteId).toBe(null);
+        });
+
+        it("is safe to call when already closed", () => {
+            useUIStore.getState().closeEditorModal();
+            expect(useUIStore.getState().editorModalOpen).toBe(false);
+            expect(useUIStore.getState().openInPipNoteIds).toEqual([]);
+            expect(useUIStore.getState().openInPipActiveNoteId).toBe(null);
+        });
+
+        it("prevents stale sidebar indicators (regression)", () => {
+            useUIStore.getState().addNoteToPip("n1");
+            useUIStore.getState().setEditorModalOpen(true);
+            expect(useUIStore.getState().openInPipNoteIds.includes("n1")).toBe(
+                true
+            );
+
+            useUIStore.getState().closeEditorModal();
+
+            // Sidebar indicator must be gone
+            expect(useUIStore.getState().openInPipNoteIds.includes("n1")).toBe(
+                false
+            );
+        });
+
+        it("does not affect bottom sheet state", () => {
+            useUIStore.getState().addNoteToBottomSheet("bs1", true);
+            useUIStore.getState().setBottomSheetOpen(true);
+            useUIStore.getState().addNoteToPip("n1");
+            useUIStore.getState().setEditorModalOpen(true);
+
+            useUIStore.getState().closeEditorModal();
+
+            // Bottom sheet should be unaffected
+            expect(useUIStore.getState().bottomSheetOpen).toBe(true);
+            expect(useUIStore.getState().bottomSheetNoteIds).toEqual(["bs1"]);
+            expect(useUIStore.getState().bottomSheetActiveNoteId).toBe("bs1");
+        });
+    });
+
     describe("editor modal close cleanup (regression)", () => {
         /**
          * Bug: closing editor modal set editorModalOpen=false but did NOT
          * clear openInPipNoteIds / openInPipActiveNoteId. Sidebar indicators
          * persisted because they check openInPipNoteIds.includes(noteId).
          *
-         * Fix: handleClose must also clear PiP tab state.
-         * These tests verify the store-level invariant.
+         * Fix: closeEditorModal() atomically clears all PiP tab state.
          */
         it("closing modal must clear pip note ids to remove sidebar indicators", () => {
-            // Simulate opening modal with a note
             useUIStore.getState().addNoteToPip("n1");
             useUIStore.getState().setEditorModalOpen(true);
             expect(useUIStore.getState().openInPipNoteIds).toEqual(["n1"]);
             expect(useUIStore.getState().openInPipActiveNoteId).toBe("n1");
             expect(useUIStore.getState().editorModalOpen).toBe(true);
 
-            // Simulate handleClose: clear everything
-            useUIStore.getState().setOpenInPipNoteIds([]);
-            useUIStore.getState().setOpenInPipActiveNoteId(null);
-            useUIStore.getState().setEditorModalOpen(false);
+            useUIStore.getState().closeEditorModal();
 
             expect(useUIStore.getState().openInPipNoteIds).toEqual([]);
             expect(useUIStore.getState().openInPipActiveNoteId).toBe(null);
@@ -163,25 +214,20 @@ describe("useUIStore", () => {
                 "n3",
             ]);
 
-            // Close modal - all ids must be cleared
-            useUIStore.getState().setOpenInPipNoteIds([]);
-            useUIStore.getState().setOpenInPipActiveNoteId(null);
-            useUIStore.getState().setEditorModalOpen(false);
+            useUIStore.getState().closeEditorModal();
 
             expect(useUIStore.getState().openInPipNoteIds).toEqual([]);
             expect(useUIStore.getState().openInPipActiveNoteId).toBe(null);
         });
     });
 
-    describe("detail edit button disabled state (regression)", () => {
+    describe("note active in editor check (regression)", () => {
         /**
-         * Bug: detail view edit button only checked pipIsOpen (actual PiP
-         * window) to disable. When using editor modal, pipIsOpen is always
-         * false so the button stayed enabled even though the note was being
-         * edited in the modal.
+         * Bug: detail view edit button and context menu actions only checked
+         * pipIsOpen to disable. The editor modal was not considered.
          *
-         * Fix: check (pipIsOpen || editorModalOpen) instead.
-         * These tests verify the store state the UI relies on.
+         * Fix: check (pipIsOpen || editorModalOpen) everywhere.
+         * This helper mirrors the check used in MainContent and Sidebar.
          */
         function isNoteActiveInEditor(
             selectedNoteId: string,
@@ -191,6 +237,21 @@ describe("useUIStore", () => {
                 useUIStore.getState();
             return (
                 openInPipActiveNoteId === selectedNoteId &&
+                (pipIsOpen || editorModalOpen)
+            );
+        }
+
+        /**
+         * Sidebar uses openInPipNoteIds.includes() && (pipIsOpen || editorModalOpen)
+         * to show indicator AND gate actions. This helper mirrors that.
+         */
+        function isNoteOpenInEditor(
+            noteId: string,
+            pipIsOpen: boolean
+        ): boolean {
+            const { openInPipNoteIds, editorModalOpen } = useUIStore.getState();
+            return (
+                openInPipNoteIds.includes(noteId) &&
                 (pipIsOpen || editorModalOpen)
             );
         }
@@ -217,16 +278,40 @@ describe("useUIStore", () => {
             expect(isNoteActiveInEditor("n2", false)).toBe(false);
         });
 
-        it("returns false after modal is closed and state cleaned up", () => {
+        it("returns false after closeEditorModal()", () => {
             useUIStore.getState().addNoteToPip("n1");
             useUIStore.getState().setEditorModalOpen(true);
             expect(isNoteActiveInEditor("n1", false)).toBe(true);
 
-            // Close and clean up
-            useUIStore.getState().setOpenInPipNoteIds([]);
-            useUIStore.getState().setOpenInPipActiveNoteId(null);
-            useUIStore.getState().setEditorModalOpen(false);
+            useUIStore.getState().closeEditorModal();
             expect(isNoteActiveInEditor("n1", false)).toBe(false);
+        });
+
+        it("isNoteOpenInEditor gates sidebar indicator correctly", () => {
+            useUIStore.getState().addNoteToPip("n1");
+            useUIStore.getState().addNoteToPip("n2");
+
+            // Neither PiP nor modal open — indicator should be off
+            expect(isNoteOpenInEditor("n1", false)).toBe(false);
+
+            // Modal open — indicator should be on for both
+            useUIStore.getState().setEditorModalOpen(true);
+            expect(isNoteOpenInEditor("n1", false)).toBe(true);
+            expect(isNoteOpenInEditor("n2", false)).toBe(true);
+
+            // Unknown note — indicator off
+            expect(isNoteOpenInEditor("n3", false)).toBe(false);
+
+            // After close — all indicators off
+            useUIStore.getState().closeEditorModal();
+            expect(isNoteOpenInEditor("n1", false)).toBe(false);
+            expect(isNoteOpenInEditor("n2", false)).toBe(false);
+        });
+
+        it("pip open alone still activates indicators (no regression)", () => {
+            useUIStore.getState().addNoteToPip("n1");
+            expect(isNoteOpenInEditor("n1", true)).toBe(true);
+            expect(isNoteActiveInEditor("n1", true)).toBe(true);
         });
     });
 
@@ -239,23 +324,20 @@ describe("useUIStore", () => {
         it("note is indicated while modal is open", () => {
             useUIStore.getState().addNoteToPip("n1");
             useUIStore.getState().setEditorModalOpen(true);
-            expect(
-                useUIStore.getState().openInPipNoteIds.includes("n1")
-            ).toBe(true);
+            expect(useUIStore.getState().openInPipNoteIds.includes("n1")).toBe(
+                true
+            );
         });
 
-        it("note is NOT indicated after modal close + cleanup", () => {
+        it("note is NOT indicated after closeEditorModal()", () => {
             useUIStore.getState().addNoteToPip("n1");
             useUIStore.getState().setEditorModalOpen(true);
 
-            // Close
-            useUIStore.getState().setOpenInPipNoteIds([]);
-            useUIStore.getState().setOpenInPipActiveNoteId(null);
-            useUIStore.getState().setEditorModalOpen(false);
+            useUIStore.getState().closeEditorModal();
 
-            expect(
-                useUIStore.getState().openInPipNoteIds.includes("n1")
-            ).toBe(false);
+            expect(useUIStore.getState().openInPipNoteIds.includes("n1")).toBe(
+                false
+            );
         });
 
         it("closing a single tab removes only that indicator", () => {
@@ -265,12 +347,12 @@ describe("useUIStore", () => {
 
             // Close just n1
             useUIStore.getState().removeNoteFromPip("n1");
-            expect(
-                useUIStore.getState().openInPipNoteIds.includes("n1")
-            ).toBe(false);
-            expect(
-                useUIStore.getState().openInPipNoteIds.includes("n2")
-            ).toBe(true);
+            expect(useUIStore.getState().openInPipNoteIds.includes("n1")).toBe(
+                false
+            );
+            expect(useUIStore.getState().openInPipNoteIds.includes("n2")).toBe(
+                true
+            );
         });
     });
 });
