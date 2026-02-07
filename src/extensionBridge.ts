@@ -300,11 +300,36 @@ function onExtensionMessage(event: MessageEvent): void {
 }
 
 /**
+ * Check localStorage for a pending clip stashed by an external extension
+ * (e.g., YouTube Search Plus). This avoids timing issues — the clip data
+ * persists in localStorage until the app is ready to process it.
+ */
+function checkPendingClip(): void {
+    const raw = localStorage.getItem("notic-pending-clip");
+    if (!raw) return;
+    localStorage.removeItem("notic-pending-clip");
+    try {
+        const data = JSON.parse(raw) as ClipMessage;
+        if (data.type === "notic-clip") {
+            handleClip(data);
+        }
+    } catch {
+        // Invalid JSON — discard
+    }
+}
+
+/**
  * Start listening for messages from the Notic Chrome extension.
  * Call once during app initialization (e.g., in main.tsx).
  */
 export function initExtensionBridge(): void {
     window.addEventListener("message", onExtensionMessage);
+
+    // Pick up any clip stashed in localStorage before the listener was ready
+    checkPendingClip();
+
+    // Listen for clips arriving while the app is already running
+    window.addEventListener("notic-clip-available", checkPendingClip);
 }
 
 /**
