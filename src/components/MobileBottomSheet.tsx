@@ -491,6 +491,7 @@ export function MobileBottomSheet() {
                     type="button"
                     className="mobile-bs-header-btn"
                     onClick={handleMinimize}
+                    onTouchStart={(e) => e.stopPropagation()}
                     aria-label="Close"
                     title="Close"
                 >
