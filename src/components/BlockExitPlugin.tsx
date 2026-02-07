@@ -42,7 +42,6 @@ import {
     type ElementNode,
 } from "lexical";
 import { $isQuoteNode } from "@lexical/rich-text";
-import { $isTableNode } from "@lexical/table";
 import { $isCodeNode } from "@lexical/code";
 
 /* ── helpers ─────────────────────────────────────────────────────────── */
@@ -52,7 +51,7 @@ import { $isCodeNode } from "@lexical/code";
 function $findBlockAncestor(node: LexicalNode): ElementNode | null {
     let current: LexicalNode | null = node;
     while (current) {
-        const parent = current.getParent();
+        const parent: LexicalNode | null = current.getParent();
         if (parent && $isRootNode(parent) && !$isParagraphNode(current)) {
             return $isElementNode(current) ? current : null;
         }

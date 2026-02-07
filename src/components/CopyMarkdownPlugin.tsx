@@ -12,6 +12,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import {
     $getRoot,
     $getSelection,
+    $isRangeSelection,
     COPY_COMMAND,
     CUT_COMMAND,
     COMMAND_PRIORITY_CRITICAL,
@@ -64,7 +65,7 @@ export function CopyMarkdownPlugin() {
             event.clipboardData?.setData("text/html", html);
 
             // Cut: remove selected content
-            if (isCut) {
+            if (isCut && $isRangeSelection(selection)) {
                 selection.removeText();
             }
 
