@@ -3574,6 +3574,54 @@ body.dark-mode .note-detail-action-btn.note-detail-open-active:not(.note-detail-
 .note-editor-text-bold { font-weight: 700; }
 .note-editor-text-italic { font-style: italic; }
 
+/* --- Table styles --- */
+.note-editor-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75em 0;
+  font-size: 0.95em;
+  table-layout: auto;
+  border: 1px solid var(--border-primary, #e4e4e7);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.note-editor-table-cell,
+.note-editor-table-cell-header {
+  border: 1px solid var(--border-primary, #e4e4e7);
+  padding: 8px 12px;
+  text-align: left;
+  vertical-align: top;
+  min-width: 60px;
+}
+.note-editor-table-cell-header {
+  font-weight: 600;
+  background: var(--bg-secondary, #f4f4f5);
+}
+.note-editor-table-cell p,
+.note-editor-table-cell-header p {
+  margin: 0;
+}
+/* Horizontal scroll wrapper (added by TablePlugin hasHorizontalScroll) */
+.note-editor-content-editable div[data-lexical-scroll-table="true"] {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+/* Dark mode base */
+body.dark-mode .note-editor-table {
+  border-color: var(--border-primary, #3f3f46);
+}
+body.dark-mode .note-editor-table-cell,
+body.dark-mode .note-editor-table-cell-header {
+  border-color: var(--border-primary, #3f3f46);
+}
+body.dark-mode .note-editor-table-cell-header {
+  background: var(--bg-tertiary, #3f3f46);
+}
+/* Table selection highlight (Lexical adds these) */
+.note-editor-table td.selectedCell,
+.note-editor-table th.selectedCell {
+  background: var(--accent-light, rgba(99, 102, 241, 0.15));
+}
 
 /* PiP iframe full-page view (/pip) – match notic pip.css */
 .pip-container {
@@ -3873,6 +3921,39 @@ body.pip-page.dark-mode[data-note-theme="high-contrast"] .pip-content .note-edit
 }
 body.pip-page.dark-mode[data-note-theme="high-contrast"] .pip-content .note-container hr {
   border-top-color: var(--note-theme-hc-dark-border);
+}
+/* Table borders and header backgrounds per note theme (PiP) */
+body.pip-page[data-note-theme="sepia"] .pip-content .note-editor-table,
+body.pip-page[data-note-theme="sepia"] .pip-content .note-editor-table-cell,
+body.pip-page[data-note-theme="sepia"] .pip-content .note-editor-table-cell-header {
+  border-color: var(--note-theme-sepia-border);
+}
+body.pip-page[data-note-theme="sepia"] .pip-content .note-editor-table-cell-header {
+  background: var(--note-theme-sepia-th-bg);
+}
+body.pip-page[data-note-theme="dark"] .pip-content .note-editor-table,
+body.pip-page[data-note-theme="dark"] .pip-content .note-editor-table-cell,
+body.pip-page[data-note-theme="dark"] .pip-content .note-editor-table-cell-header {
+  border-color: var(--note-theme-dark-border);
+}
+body.pip-page[data-note-theme="dark"] .pip-content .note-editor-table-cell-header {
+  background: var(--note-theme-dark-th-bg);
+}
+body.pip-page[data-note-theme="high-contrast"] .pip-content .note-editor-table,
+body.pip-page[data-note-theme="high-contrast"] .pip-content .note-editor-table-cell,
+body.pip-page[data-note-theme="high-contrast"] .pip-content .note-editor-table-cell-header {
+  border-color: var(--note-theme-hc-light-border);
+}
+body.pip-page[data-note-theme="high-contrast"] .pip-content .note-editor-table-cell-header {
+  background: var(--note-theme-hc-light-th-bg);
+}
+body.pip-page.dark-mode[data-note-theme="high-contrast"] .pip-content .note-editor-table,
+body.pip-page.dark-mode[data-note-theme="high-contrast"] .pip-content .note-editor-table-cell,
+body.pip-page.dark-mode[data-note-theme="high-contrast"] .pip-content .note-editor-table-cell-header {
+  border-color: var(--note-theme-hc-dark-border);
+}
+body.pip-page.dark-mode[data-note-theme="high-contrast"] .pip-content .note-editor-table-cell-header {
+  background: var(--note-theme-hc-dark-th-bg);
 }
 
 /* Slash command: horizontal format strip (match notic extension pip.css) */

@@ -35,25 +35,21 @@ import {
     $isLinkNode,
 } from "@lexical/link";
 import { HorizontalRuleNode } from "@lexical/react/LexicalHorizontalRuleNode";
-import { ImageNode, IMAGE } from "../nodes/ImageNode";
+import { TablePlugin } from "@lexical/react/LexicalTablePlugin";
+import { TableNode, TableCellNode, TableRowNode } from "@lexical/table";
+import { ImageNode } from "../nodes/ImageNode";
 import {
     $convertFromMarkdownString,
     $convertToMarkdownString,
-    type Transformer,
 } from "@lexical/markdown";
-import {
-    HEADING,
-    QUOTE,
-    CHECK_LIST,
-    UNORDERED_LIST,
-    ORDERED_LIST,
-    MULTILINE_ELEMENT_TRANSFORMERS,
-    TEXT_FORMAT_TRANSFORMERS,
-    TEXT_MATCH_TRANSFORMERS,
-} from "@lexical/markdown";
+import { MARKDOWN_TRANSFORMERS } from "../transformers";
 import { SlashCommandPlugin } from "./SlashCommandPlugin";
 import { ImageDropPastePlugin } from "./ImageDropPastePlugin";
 import { EditorToolbarPlugin } from "./EditorToolbarPlugin";
+import { BlockExitPlugin } from "./BlockExitPlugin";
+import { MarkdownPastePlugin } from "./MarkdownPastePlugin";
+import { CopyMarkdownPlugin } from "./CopyMarkdownPlugin";
+import { TaskListShortcutPlugin } from "./TaskListShortcutPlugin";
 
 const URL_REGEX =
     /https?:\/\/(?:www\.)?[-\w@:%.+~#=]{1,256}\.[a-zA-Z]{2,}(?:[-\w()@:%+.~#?&/=]*)/;
@@ -65,19 +61,6 @@ const AUTO_LINK_MATCHERS = [
             ? { index: m.index, length: m[0].length, text: m[0], url: m[0] }
             : null;
     },
-];
-
-/** Markdown transformers: CHECK_LIST before UNORDERED_LIST; IMAGE before other text-match (match notic). */
-const MARKDOWN_TRANSFORMERS: Transformer[] = [
-    HEADING,
-    QUOTE,
-    CHECK_LIST,
-    UNORDERED_LIST,
-    ORDERED_LIST,
-    ...MULTILINE_ELEMENT_TRANSFORMERS,
-    ...TEXT_FORMAT_TRANSFORMERS,
-    IMAGE,
-    ...TEXT_MATCH_TRANSFORMERS,
 ];
 
 const editorTheme = {
@@ -99,6 +82,9 @@ const editorTheme = {
     code: "note-editor-code",
     link: "note-editor-link",
     image: "note-editor-image",
+    table: "note-editor-table",
+    tableCell: "note-editor-table-cell",
+    tableCellHeader: "note-editor-table-cell-header",
     text: {
         bold: "note-editor-text-bold",
         italic: "note-editor-text-italic",
@@ -340,6 +326,9 @@ const initialConfigNodes = [
     AutoLinkNode,
     HorizontalRuleNode,
     ImageNode,
+    TableNode,
+    TableCellNode,
+    TableRowNode,
 ];
 
 export function NoteEditor({
@@ -424,6 +413,10 @@ export function NoteEditor({
                         <SlashCommandPlugin />
                         <ImageDropPastePlugin />
                         <LinkShortcutPlugin />
+                        <BlockExitPlugin />
+                        <MarkdownPastePlugin />
+                        <CopyMarkdownPlugin />
+                        <TaskListShortcutPlugin />
                         <FlushOnUnmountPlugin onFlush={onFlush} />
                         <FlushOnBlurPlugin onFlush={onFlush} />
                         <RegisterFlushRefPlugin
@@ -432,6 +425,12 @@ export function NoteEditor({
                         />
                     </>
                 )}
+                <TablePlugin
+                    hasCellMerge={false}
+                    hasCellBackgroundColor={false}
+                    hasTabHandler={true}
+                    hasHorizontalScroll={true}
+                />
                 <ListPlugin />
                 <CheckListPlugin />
                 <HorizontalRulePlugin />

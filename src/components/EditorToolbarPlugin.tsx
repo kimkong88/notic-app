@@ -32,9 +32,16 @@ import {
     Minus,
     Link as LinkIcon,
     Image as ImageIcon,
+    Table2,
 } from "lucide-react";
 import { TOGGLE_LINK_COMMAND } from "@lexical/link";
 import { $isLinkNode } from "@lexical/link";
+import {
+    $createTableNode,
+    $createTableRowNode,
+    $createTableCellNode,
+    TableCellHeaderStates,
+} from "@lexical/table";
 import { uploadImage } from "../api/upload";
 import { $createImageNode } from "../nodes/ImageNode";
 
@@ -177,6 +184,45 @@ export function EditorToolbarPlugin() {
                         block.insertAfter(hr);
                         hr.insertAfter(para);
                         para.selectStart();
+                        break;
+                    }
+                    case "table": {
+                        const anchorNode = selection.anchor.getNode();
+                        const block = anchorNode.getTopLevelElement();
+                        if (!block) break;
+                        const tableNode = $createTableNode();
+                        const rows = 3;
+                        const cols = 3;
+                        for (let r = 0; r < rows; r++) {
+                            const rowNode = $createTableRowNode();
+                            for (let c = 0; c < cols; c++) {
+                                const cellNode = $createTableCellNode(
+                                    r === 0
+                                        ? TableCellHeaderStates.ROW
+                                        : TableCellHeaderStates.NO_STATUS
+                                );
+                                const p = $createParagraphNode();
+                                cellNode.append(p);
+                                rowNode.append(cellNode);
+                            }
+                            tableNode.append(rowNode);
+                        }
+                        const trailing = $createParagraphNode();
+                        block.insertAfter(tableNode);
+                        tableNode.insertAfter(trailing);
+                        const firstRow = tableNode.getFirstChild();
+                        const firstCell =
+                            firstRow && "getFirstChild" in firstRow
+                                ? (
+                                      firstRow as import("@lexical/table").TableRowNode
+                                  ).getFirstChild()
+                                : null;
+                        if (firstCell && "getFirstChild" in firstCell) {
+                            const p = (
+                                firstCell as import("@lexical/table").TableCellNode
+                            ).getFirstChild();
+                            if (p) p.selectStart();
+                        }
                         break;
                     }
                     default:
@@ -375,6 +421,16 @@ export function EditorToolbarPlugin() {
                 onMouseDown={(e) => onToolbarButtonMouseDown(e, "quote")}
             >
                 <Quote size={16} />
+            </button>
+            <button
+                type="button"
+                className="note-detail-toolbar-btn"
+                data-format="table"
+                title="Table"
+                aria-label="Table"
+                onMouseDown={(e) => onToolbarButtonMouseDown(e, "table")}
+            >
+                <Table2 size={16} />
             </button>
             <button
                 type="button"

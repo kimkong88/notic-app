@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@lexical/react": "^0.40.0",
+    "@lexical/table": "^0.40.0",
     "@react-oauth/google": "^0.13.4",
     "dexie": "^4.3.0",
     "fflate": "^0.8.2",

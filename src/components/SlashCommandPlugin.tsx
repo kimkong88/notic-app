@@ -33,8 +33,15 @@ import {
     Minus,
     Link as LinkIcon,
     Image,
+    Table2,
 } from "lucide-react";
 import { TOGGLE_LINK_COMMAND } from "@lexical/link";
+import {
+    $createTableNode,
+    $createTableRowNode,
+    $createTableCellNode,
+    TableCellHeaderStates,
+} from "@lexical/table";
 import { uploadImage } from "../api/upload";
 import { $createImageNode } from "../nodes/ImageNode";
 
@@ -212,6 +219,54 @@ export function SlashCommandPlugin() {
                     editor.dispatchCommand(TOGGLE_LINK_COMMAND, url.trim());
                 });
             }
+        });
+    }, [editor, restoreSelection, applyAndClose]);
+
+    const insertTable = useCallback(() => {
+        applyAndClose(() => {
+            editor.update(() => {
+                restoreSelection();
+                const sel = $getSelection();
+                if (!$isRangeSelection(sel)) return;
+                const anchor = sel.anchor.getNode();
+                const block = anchor.getTopLevelElement();
+                if (!block) return;
+
+                const tableNode = $createTableNode();
+                const rows = 3;
+                const cols = 3;
+                for (let r = 0; r < rows; r++) {
+                    const rowNode = $createTableRowNode();
+                    for (let c = 0; c < cols; c++) {
+                        const cellNode = $createTableCellNode(
+                            r === 0
+                                ? TableCellHeaderStates.ROW
+                                : TableCellHeaderStates.NO_STATUS
+                        );
+                        const para = $createParagraphNode();
+                        cellNode.append(para);
+                        rowNode.append(cellNode);
+                    }
+                    tableNode.append(rowNode);
+                }
+                const trailingPara = $createParagraphNode();
+                block.insertAfter(tableNode);
+                tableNode.insertAfter(trailingPara);
+                // Select first cell
+                const firstRow = tableNode.getFirstChild();
+                const firstCell =
+                    firstRow && "getFirstChild" in firstRow
+                        ? (
+                              firstRow as import("@lexical/table").TableRowNode
+                          ).getFirstChild()
+                        : null;
+                if (firstCell && "getFirstChild" in firstCell) {
+                    const p = (
+                        firstCell as import("@lexical/table").TableCellNode
+                    ).getFirstChild();
+                    if (p) p.selectStart();
+                }
+            });
         });
     }, [editor, restoreSelection, applyAndClose]);
 
@@ -399,6 +454,7 @@ export function SlashCommandPlugin() {
             action: () => insertListType("check"),
         },
         { title: "Quote", Icon: Quote, action: () => replaceBlockWithQuote() },
+        { title: "Table", Icon: Table2, action: () => insertTable() },
         { title: "Divider", Icon: Minus, action: () => insertHorizontalRule() },
         { title: "Link", Icon: LinkIcon, action: () => insertLink() },
         { title: "Image", Icon: Image, action: () => triggerImageUpload() },
