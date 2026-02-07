@@ -240,7 +240,6 @@ export function initExtensionBridge(): void {
  *   ?action=new-note  — create and select a new note
  *   ?action=pip       — open the editor modal (PiP requires user gesture; modal is the fallback)
  *   ?search=...       — set search query
- *   ?clip=...         — create note from clipped content (URL-encoded)
  *
  * Cleans URL params after handling via history.replaceState.
  */
@@ -250,7 +249,6 @@ export function handleUrlParams(): void {
 
     const action = params.get('action');
     const search = params.get('search');
-    const clip = params.get('clip');
 
     if (action === 'new-note') {
         // Create a new note in the current workspace
@@ -270,13 +268,6 @@ export function handleUrlParams(): void {
 
     if (search) {
         useNotesStore.getState().setSearchQuery(search);
-        handled = true;
-    }
-
-    if (clip) {
-        // Create note from URL-encoded clip content
-        const content = decodeURIComponent(clip);
-        handleClip({ type: 'notic-clip', text: content });
         handled = true;
     }
 
