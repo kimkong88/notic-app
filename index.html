@@ -44,6 +44,18 @@
         })();
       }
     </script>
+    <!-- Microsoft Clarity (non-blocking, prod only) -->
+    <script>
+      (function() {
+        var id = '%VITE_CLARITY_ID%';
+        if (!id || id.indexOf('VITE_') === 0 || location.hostname === 'localhost' || location.hostname === '127.0.0.1') return;
+        (function(c,l,a,r,i,t,y){
+          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+          t=l.createElement(r);t.async=1;t.src='https://www.clarity.ms/tag/'+i;
+          y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window,document,'clarity','script',id);
+      })();
+    </script>
     <!-- JSON-LD: Organization -->
     <script type="application/ld+json">
     {"@context":"https://schema.org","@type":"Organization","name":"Notic","url":"https://app.getnotic.io","logo":"https://app.getnotic.io/logo.svg","description":"Floating notepad with instant access. Local-first sticky notes, Markdown, folders, cloud sync."}
