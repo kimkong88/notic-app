@@ -7,7 +7,7 @@ import { getPipWindow } from "../pip/documentPip";
 /** Icon paths: files in public (copy of extension assets), not inline SVG. */
 const NOTION_ICON_URL = "/notion.svg";
 const OBSIDIAN_ICON_URL = "/obsidian.svg";
-import { ArrowLeft, Download, Check } from "lucide-react";
+import { ArrowLeft, Download, Check, Share } from "lucide-react";
 import {
     getNotionAuthorizeUrl,
     getNotionStatus,
@@ -829,33 +829,103 @@ export function SettingsView() {
 
                 <section className="settings-section settings-section-install">
                     <h4 className="settings-section-title">Installation</h4>
-                    <p className="settings-section-desc">
-                        {installPromptEvent
-                            ? "Install Notic as a desktop app for quick access and a native experience."
-                            : "Notic is already installed or your browser doesn't support installation."}
-                    </p>
-                    {installPromptEvent ? (
-                        <button
-                            type="button"
-                            className="modal-btn modal-btn-primary"
-                            onClick={handleInstall}
-                        >
-                            <Download size={16} aria-hidden />
-                            Install Notic
-                        </button>
-                    ) : (
-                        <div
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "8px",
-                                color: "var(--text-secondary)",
-                            }}
-                        >
-                            <Check size={16} aria-hidden />
-                            <span>Already installed</span>
-                        </div>
-                    )}
+                    {(() => {
+                        const isStandalone =
+                            window.matchMedia("(display-mode: standalone)")
+                                .matches ||
+                            (navigator as any).standalone === true;
+                        const isIOS =
+                            /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                            (navigator.platform === "MacIntel" &&
+                                navigator.maxTouchPoints > 1);
+
+                        if (installPromptEvent) {
+                            return (
+                                <>
+                                    <p className="settings-section-desc">
+                                        Install Notic as a desktop app for quick
+                                        access and a native experience.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        className="modal-btn modal-btn-primary"
+                                        onClick={handleInstall}
+                                    >
+                                        <Download size={16} aria-hidden />
+                                        Install Notic
+                                    </button>
+                                </>
+                            );
+                        }
+                        if (isStandalone) {
+                            return (
+                                <>
+                                    <p className="settings-section-desc">
+                                        Notic is installed and running as an
+                                        app.
+                                    </p>
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: "8px",
+                                            color: "var(--text-secondary)",
+                                        }}
+                                    >
+                                        <Check size={16} aria-hidden />
+                                        <span>Already installed</span>
+                                    </div>
+                                </>
+                            );
+                        }
+                        if (isIOS) {
+                            return (
+                                <>
+                                    <p className="settings-section-desc">
+                                        To install Notic on your device, open
+                                        this page in <strong>Safari</strong>,
+                                        then:
+                                    </p>
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            gap: "6px",
+                                            color: "var(--text-secondary)",
+                                            fontSize: "13px",
+                                            lineHeight: "1.5",
+                                        }}
+                                    >
+                                        <span>
+                                            1. Tap the{" "}
+                                            <Share
+                                                size={14}
+                                                style={{
+                                                    verticalAlign: "middle",
+                                                    display: "inline",
+                                                }}
+                                                aria-hidden
+                                            />{" "}
+                                            <strong>Share</strong> button
+                                        </span>
+                                        <span>
+                                            2. Scroll down and tap{" "}
+                                            <strong>Add to Home Screen</strong>
+                                        </span>
+                                    </div>
+                                </>
+                            );
+                        }
+                        return (
+                            <>
+                                <p className="settings-section-desc">
+                                    Your browser doesn&apos;t support app
+                                    installation. Try using Chrome or Edge for
+                                    the best experience.
+                                </p>
+                            </>
+                        );
+                    })()}
                 </section>
 
                 <section className="settings-section settings-section-integrations-link">

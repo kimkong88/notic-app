@@ -526,17 +526,20 @@ export function Layout() {
                 <MainContent />
             </div>
             {/* Mobile FAB – hidden on desktop, when bottom sheet is open, viewing a note detail, settings, or trash */}
-            {!bottomSheetOpen && !selectedNoteId && currentView !== "settings" && !isTrashView && (
-                <button
-                    type="button"
-                    className="mobile-fab"
-                    onClick={handleFabClick}
-                    aria-label="Open editor"
-                    title="Open editor"
-                >
-                    <PenLine size={22} />
-                </button>
-            )}
+            {!bottomSheetOpen &&
+                !selectedNoteId &&
+                currentView !== "settings" &&
+                !isTrashView && (
+                    <button
+                        type="button"
+                        className="mobile-fab"
+                        onClick={handleFabClick}
+                        aria-label="Open editor"
+                        title="Open editor"
+                    >
+                        <PenLine size={22} />
+                    </button>
+                )}
 
             {/* Mobile bottom sheet editor */}
             <MobileBottomSheet />
