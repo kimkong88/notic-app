@@ -675,8 +675,8 @@ export function EditorModal() {
                 <div
                     className="pip-context-menu show"
                     style={{
-                        left: contextMenu.x - clamped.x,
-                        top: contextMenu.y - clamped.y,
+                        left: contextMenu.x,
+                        top: contextMenu.y,
                     }}
                     onClick={(e) => e.stopPropagation()}
                     ref={(el) => {
@@ -684,11 +684,11 @@ export function EditorModal() {
                         const r = el.getBoundingClientRect();
                         if (r.right > window.innerWidth)
                             el.style.left = `${
-                                window.innerWidth - r.width - 10 - clamped.x
+                                window.innerWidth - r.width - 10
                             }px`;
                         if (r.bottom > window.innerHeight)
                             el.style.top = `${
-                                window.innerHeight - r.height - 10 - clamped.y
+                                window.innerHeight - r.height - 10
                             }px`;
                     }}
                 >

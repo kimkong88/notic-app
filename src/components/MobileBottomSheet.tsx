@@ -219,7 +219,13 @@ export function MobileBottomSheet() {
         });
         addNoteToBottomSheet(newId, true);
         triggerSyncAfterUserAction(db);
-    }, [addNote, currentWorkspaceId, addNoteToBottomSheet, noteIds, isSubscribed]);
+    }, [
+        addNote,
+        currentWorkspaceId,
+        addNoteToBottomSheet,
+        noteIds,
+        isSubscribed,
+    ]);
 
     const handleSwitchTab = useCallback(
         (noteId: string) => {
