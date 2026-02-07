@@ -82,12 +82,12 @@ export function Layout() {
         setCurrentView,
     ]);
 
-    /** Selecting a note or folder exits trash view. Centralised so every tab component benefits. */
+    /** Any sidebar navigation (note, date group, folder) exits trash view. */
     useEffect(() => {
-        if (selectedNoteId && useUIStore.getState().isTrashView) {
+        if (useUIStore.getState().isTrashView) {
             setIsTrashView(false);
         }
-    }, [selectedNoteId, setIsTrashView]);
+    }, [selectedNoteId, selectedSidebarContext, setIsTrashView]);
 
     const currentView = useUIStore((s) => s.currentView);
 
