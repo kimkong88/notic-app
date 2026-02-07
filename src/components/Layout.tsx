@@ -517,8 +517,8 @@ export function Layout() {
                 )}
                 <MainContent />
             </div>
-            {/* Mobile FAB – hidden on desktop, when bottom sheet is open, or when viewing a note detail */}
-            {!bottomSheetOpen && !selectedNoteId && (
+            {/* Mobile FAB – hidden on desktop, when bottom sheet is open, viewing a note detail, settings, or trash */}
+            {!bottomSheetOpen && !selectedNoteId && currentView !== "settings" && !isTrashView && (
                 <button
                     type="button"
                     className="mobile-fab"
