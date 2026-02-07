@@ -3498,7 +3498,8 @@ body.dark-mode .note-detail-action-btn.note-detail-open-active:not(.note-detail-
   border-left: 3px solid var(--border-primary);
   color: var(--text-secondary);
 }
-.note-editor-list-ol, .note-editor-list-ul { margin: 0.5em 0; padding-left: 1.5em; }
+.note-editor-list-ul { margin: 0.5em 0; padding-left: 1.5em; list-style-type: disc; }
+.note-editor-list-ol { margin: 0.5em 0; padding-left: 1.5em; list-style-type: decimal; }
 .note-editor-listitem { margin: 0.2em 0; }
 .note-editor-listitem-checked { text-decoration: line-through; color: var(--text-muted); }
 .note-editor-code {

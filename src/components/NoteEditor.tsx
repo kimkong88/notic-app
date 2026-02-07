@@ -13,6 +13,7 @@ import { CheckListPlugin } from "@lexical/react/LexicalCheckListPlugin";
 import { HorizontalRulePlugin } from "@lexical/react/LexicalHorizontalRulePlugin";
 import { LinkPlugin } from "@lexical/react/LexicalLinkPlugin";
 import { ClickableLinkPlugin } from "@lexical/react/LexicalClickableLinkPlugin";
+import { AutoLinkPlugin } from "@lexical/react/LexicalAutoLinkPlugin";
 import {
     $getRoot,
     $createParagraphNode,
@@ -22,7 +23,7 @@ import {
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { ListNode, ListItemNode } from "@lexical/list";
 import { CodeNode, CodeHighlightNode } from "@lexical/code";
-import { LinkNode } from "@lexical/link";
+import { LinkNode, AutoLinkNode } from "@lexical/link";
 import { HorizontalRuleNode } from "@lexical/react/LexicalHorizontalRuleNode";
 import { ImageNode, IMAGE } from "../nodes/ImageNode";
 import {
@@ -43,6 +44,18 @@ import {
 import { SlashCommandPlugin } from "./SlashCommandPlugin";
 import { ImageDropPastePlugin } from "./ImageDropPastePlugin";
 import { EditorToolbarPlugin } from "./EditorToolbarPlugin";
+
+const URL_REGEX =
+    /https?:\/\/(?:www\.)?[-\w@:%.+~#=]{1,256}\.[a-zA-Z]{2,}(?:[-\w()@:%+.~#?&/=]*)/;
+
+const AUTO_LINK_MATCHERS = [
+    (text: string) => {
+        const m = URL_REGEX.exec(text);
+        return m
+            ? { index: m.index, length: m[0].length, text: m[0], url: m[0] }
+            : null;
+    },
+];
 
 /** Markdown transformers: CHECK_LIST before UNORDERED_LIST; IMAGE before other text-match (match notic). */
 const MARKDOWN_TRANSFORMERS: Transformer[] = [
@@ -273,6 +286,7 @@ const initialConfigNodes = [
     CodeNode,
     CodeHighlightNode,
     LinkNode,
+    AutoLinkNode,
     HorizontalRuleNode,
     ImageNode,
 ];
@@ -371,6 +385,7 @@ export function NoteEditor({
                 <HorizontalRulePlugin />
                 <LinkPlugin />
                 <ClickableLinkPlugin />
+                <AutoLinkPlugin matchers={AUTO_LINK_MATCHERS} />
             </LexicalComposer>
         </div>
     );
