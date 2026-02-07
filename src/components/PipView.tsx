@@ -11,6 +11,7 @@ import { NOTE_CHAR_WARNING, NOTE_CHAR_LIMIT } from "../utils/noteUtils";
 import { FREE_PIP_TAB_LIMIT } from "../constants";
 import { db } from "../db";
 import { openBillingPage } from "../api/backend";
+import { sortTabsByPinned, clampContextMenuPosition } from "../utils/tabUtils";
 
 const SAVE_DEBOUNCE_MS = 700;
 const PIP_COLOR_OPTIONS: Array<{ label: string; value: string }> = [
@@ -142,6 +143,20 @@ export function PipView() {
         return [...pinned, ...unpinned];
     }, [noteIds, pinnedTabIds]);
 
+    // Cleanup timeouts on unmount
+    useEffect(() => {
+        return () => {
+            if (contentTimeoutRef.current) {
+                clearTimeout(contentTimeoutRef.current);
+                contentTimeoutRef.current = null;
+            }
+            if (submenuCloseTimerRef.current) {
+                clearTimeout(submenuCloseTimerRef.current);
+                submenuCloseTimerRef.current = null;
+            }
+        };
+    }, []);
+
     useEffect(() => {
         document.body.classList.add("pip-page");
         document.body.classList.toggle("dark-mode", isDark);
@@ -249,6 +264,12 @@ export function PipView() {
                     "*"
                 );
             }
+            // Auto-focus editor after tab switch
+            requestAnimationFrame(() => {
+                document
+                    .querySelector<HTMLElement>("[contenteditable]")
+                    ?.focus();
+            });
         },
         [effectiveActiveId, setOpenInPipActiveNoteId]
     );
@@ -292,6 +313,8 @@ export function PipView() {
     /** Update store immediately so PiP tab title reflects content; debounce only postMessage to parent. */
     const handleContentChange = useCallback(
         (noteId: string) => (newContent: string) => {
+            // Guard: don't update if the note was already removed
+            if (!useNotesStore.getState().notes[noteId]) return;
             updateNote(noteId, { content: newContent });
             if (contentTimeoutRef.current)
                 clearTimeout(contentTimeoutRef.current);

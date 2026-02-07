@@ -53,6 +53,7 @@ import {
 import { useAuthStore } from "../store/useAuthStore";
 import { useSubscriptionStore } from "../store/useSubscriptionStore";
 import { FREE_PIP_TAB_LIMIT } from "../constants";
+import { cleanupEmptyPipNotes } from "../utils/tabUtils";
 import {
     db,
     loadPartitionIntoStores,
@@ -4026,17 +4027,9 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
         void openPipWithNote(null, {
             isDarkMode,
             onClose: () => {
-                const ids = useUIStore.getState().openInPipNoteIds;
-                const notes = useNotesStore.getState().notes;
-                const removeNote = useNotesStore.getState().removeNote;
-                ids.forEach((id) => {
-                    const n = notes[id];
-                    if (
-                        n?.createdFromPip === true &&
-                        (n.content?.trim() ?? "") === ""
-                    )
-                        removeNote(id);
-                });
+                cleanupEmptyPipNotes(
+                    useUIStore.getState().openInPipNoteIds
+                );
                 useUIStore.getState().setOpenInPipNoteIds([]);
                 useUIStore.getState().setOpenInPipActiveNoteId(null);
             },
@@ -4119,17 +4112,9 @@ export function Sidebar({ collapsed, width }: SidebarProps) {
             void openPipWithNote(null, {
                 isDarkMode,
                 onClose: () => {
-                    const ids = useUIStore.getState().openInPipNoteIds;
-                    const notes = useNotesStore.getState().notes;
-                    const removeNote = useNotesStore.getState().removeNote;
-                    ids.forEach((id) => {
-                        const n = notes[id];
-                        if (
-                            n?.createdFromPip === true &&
-                            (n.content?.trim() ?? "") === ""
-                        )
-                            removeNote(id);
-                    });
+                    cleanupEmptyPipNotes(
+                        useUIStore.getState().openInPipNoteIds
+                    );
                     useUIStore.getState().setOpenInPipNoteIds([]);
                     useUIStore.getState().setOpenInPipActiveNoteId(null);
                 },

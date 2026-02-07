@@ -64,6 +64,7 @@ import type { SyncLogEntry } from "../sync-change-log";
 import { useSubscriptionStore } from "../store/useSubscriptionStore";
 import { publishNote, unpublishNote, openBillingPage } from "../api/backend";
 import { FREE_PIP_TAB_LIMIT } from "../constants";
+import { cleanupEmptyPipNotes } from "../utils/tabUtils";
 
 const SHARE_PUBLIC_BASE =
     (typeof import.meta !== "undefined" &&
@@ -864,17 +865,9 @@ export function MainContent() {
         void openPipWithNote(null, {
             isDarkMode,
             onClose: () => {
-                const ids = useUIStore.getState().openInPipNoteIds;
-                const notes = useNotesStore.getState().notes;
-                const removeNote = useNotesStore.getState().removeNote;
-                ids.forEach((id) => {
-                    const n = notes[id];
-                    if (
-                        n?.createdFromPip === true &&
-                        (n.content?.trim() ?? "") === ""
-                    )
-                        removeNote(id);
-                });
+                cleanupEmptyPipNotes(
+                    useUIStore.getState().openInPipNoteIds
+                );
                 useUIStore.getState().setOpenInPipNoteIds([]);
                 useUIStore.getState().setOpenInPipActiveNoteId(null);
             },

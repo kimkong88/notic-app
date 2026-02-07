@@ -7,6 +7,7 @@ import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
+import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { CheckListPlugin } from "@lexical/react/LexicalCheckListPlugin";
 import { HorizontalRulePlugin } from "@lexical/react/LexicalHorizontalRulePlugin";
@@ -100,6 +101,8 @@ export interface NoteEditorProps {
     showToolbar?: boolean;
     /** When true, render content as read-only (same Lexical + markdown rendering, no editing). Used for detail view. */
     readOnly?: boolean;
+    /** When true, auto-focus the editor on mount (used in PiP / EditorModal / bottom sheet). */
+    autoFocus?: boolean;
     /** Optional ref to register imperative flush (e.g. so PiP can flush on main-app selection change). */
     registerFlushRef?: React.MutableRefObject<(() => void) | null>;
 }
@@ -284,6 +287,7 @@ export function NoteEditor({
     editorKey = "default",
     showToolbar = false,
     readOnly = false,
+    autoFocus = false,
     registerFlushRef,
 }: NoteEditorProps) {
     const initialConfig = useMemo(
@@ -343,6 +347,7 @@ export function NoteEditor({
                 </div>
                 {!readOnly && (
                     <>
+                        {autoFocus && <AutoFocusPlugin />}
                         <OnChangePlugin
                             ignoreSelectionChange
                             onChange={handleChange}

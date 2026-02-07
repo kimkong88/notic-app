@@ -21,6 +21,7 @@ import {
     subscribeServerNewer,
     stopPeriodicPullCheck,
 } from "../sync";
+import { cleanupEmptyPipNotes } from "../utils/tabUtils";
 
 const SIDEBAR_WIDTH_MIN = 200;
 const SIDEBAR_WIDTH_MAX = 480;
@@ -321,10 +322,7 @@ export function Layout() {
                 const isEmpty = event.data.isEmpty === true;
                 ui.removeNoteFromPip(noteId);
                 if (isEmpty) {
-                    const note = useNotesStore.getState().notes[noteId];
-                    if (note && note.createdFromPip === true) {
-                        useNotesStore.getState().removeNote(noteId);
-                    }
+                    cleanupEmptyPipNotes([noteId]);
                 }
                 const after = useUIStore.getState();
                 const notesAfterClose = useNotesStore.getState().notes;

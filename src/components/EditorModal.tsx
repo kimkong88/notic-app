@@ -7,19 +7,17 @@ import {
 } from "../store";
 import { NoteEditor } from "./NoteEditor";
 import { Plus, X, Pin, GripHorizontal } from "lucide-react";
-import { FREE_PIP_TAB_LIMIT } from "../constants";
+import { FREE_PIP_TAB_LIMIT, TAB_COLOR_OPTIONS } from "../constants";
 import { triggerSyncAfterUserAction } from "../sync";
 import { openBillingPage } from "../api/backend";
 import { db } from "../db";
+import {
+    cleanupEmptyPipNotes,
+    sortTabsByPinned,
+    clampContextMenuPosition,
+} from "../utils/tabUtils";
 
 const SAVE_DEBOUNCE_MS = 700;
-const COLOR_OPTIONS: Array<{ label: string; value: string }> = [
-    { label: "Default", value: "" },
-    { label: "Blue", value: "#3b82f6" },
-    { label: "Green", value: "#22c55e" },
-    { label: "Purple", value: "#a855f7" },
-    { label: "Orange", value: "#f97316" },
-];
 
 // --- Position / size persistence ---
 const MODAL_RECT_KEY = "notic_editorModalRect";
@@ -94,7 +92,6 @@ export function EditorModal() {
     const notes = useNotesStore((s) => s.notes);
     const updateNote = useNotesStore((s) => s.updateNote);
     const addNote = useNotesStore((s) => s.addNote);
-    const removeNote = useNotesStore((s) => s.removeNote);
     const currentWorkspaceId = useWorkspaceStore((s) => s.currentWorkspaceId);
     const isSubscribed = useSubscriptionStore((s) => s.isSubscribed);
 
@@ -144,11 +141,24 @@ export function EditorModal() {
         : noteIds[0] ?? null;
     const activeNote = effectiveActiveId ? notes[effectiveActiveId] : null;
 
-    const sortedNoteIds = useMemo(() => {
-        const pinned = noteIds.filter((id) => pinnedTabIds.has(id));
-        const unpinned = noteIds.filter((id) => !pinnedTabIds.has(id));
-        return [...pinned, ...unpinned];
-    }, [noteIds, pinnedTabIds]);
+    const sortedNoteIds = useMemo(
+        () => sortTabsByPinned(noteIds, pinnedTabIds),
+        [noteIds, pinnedTabIds]
+    );
+
+    // Cleanup timeouts on unmount
+    useEffect(() => {
+        return () => {
+            if (contentTimeoutRef.current) {
+                clearTimeout(contentTimeoutRef.current);
+                contentTimeoutRef.current = null;
+            }
+            if (submenuCloseTimerRef.current) {
+                clearTimeout(submenuCloseTimerRef.current);
+                submenuCloseTimerRef.current = null;
+            }
+        };
+    }, []);
 
     // Close context menu on outside click
     useEffect(() => {
@@ -265,6 +275,12 @@ export function EditorModal() {
                 flushRef.current?.();
             }
             setOpenInPipActiveNoteId(noteId);
+            // Auto-focus editor after tab switch
+            requestAnimationFrame(() => {
+                modalRef.current
+                    ?.querySelector<HTMLElement>("[contenteditable]")
+                    ?.focus();
+            });
         },
         [effectiveActiveId, setOpenInPipActiveNoteId]
     );
@@ -279,23 +295,17 @@ export function EditorModal() {
                 }
                 flushRef.current?.();
             }
-            // Auto-delete empty notes
-            const noteAfterFlush = useNotesStore.getState().notes[noteId];
-            if (
-                noteAfterFlush &&
-                noteAfterFlush.createdFromPip === true &&
-                (noteAfterFlush.content?.trim() ?? "") === ""
-            ) {
-                removeNote(noteId);
-            }
+            cleanupEmptyPipNotes([noteId]);
             removeNoteFromPip(noteId);
         },
-        [effectiveActiveId, removeNote, removeNoteFromPip]
+        [effectiveActiveId, removeNoteFromPip]
     );
 
     const handleContentChange = useCallback(
         (newContent: string) => {
             if (!effectiveActiveId) return;
+            // Guard: don't update if the note was already removed
+            if (!useNotesStore.getState().notes[effectiveActiveId]) return;
             updateNote(effectiveActiveId, { content: newContent });
             if (contentTimeoutRef.current)
                 clearTimeout(contentTimeoutRef.current);
@@ -324,19 +334,9 @@ export function EditorModal() {
             contentTimeoutRef.current = null;
         }
         flushRef.current?.();
-        // Auto-delete empty notes created from editor
-        noteIds.forEach((id) => {
-            const n = useNotesStore.getState().notes[id];
-            if (
-                n &&
-                n.createdFromPip === true &&
-                (n.content?.trim() ?? "") === ""
-            ) {
-                removeNote(id);
-            }
-        });
+        cleanupEmptyPipNotes(noteIds);
         closeEditorModal();
-    }, [noteIds, removeNote, closeEditorModal]);
+    }, [noteIds, closeEditorModal]);
 
     const handleCloseAll = useCallback(() => {
         setContextMenu(null);
@@ -345,19 +345,9 @@ export function EditorModal() {
             contentTimeoutRef.current = null;
         }
         flushRef.current?.();
-        // Auto-delete empty notes
-        noteIds.forEach((id) => {
-            const n = useNotesStore.getState().notes[id];
-            if (
-                n &&
-                n.createdFromPip === true &&
-                (n.content?.trim() ?? "") === ""
-            ) {
-                removeNote(id);
-            }
-        });
+        cleanupEmptyPipNotes(noteIds);
         closeEditorModal();
-    }, [noteIds, removeNote, closeEditorModal]);
+    }, [noteIds, closeEditorModal]);
 
     // Context menu actions
     const handleTabContextMenu = useCallback(
@@ -420,25 +410,13 @@ export function EditorModal() {
                 }
                 flushRef.current?.();
             }
-            // Auto-delete empty notes that are being closed
-            noteIds.forEach((id) => {
-                if (id === noteId) return; // keep the surviving tab
-                const n = useNotesStore.getState().notes[id];
-                if (
-                    n &&
-                    n.createdFromPip === true &&
-                    (n.content?.trim() ?? "") === ""
-                ) {
-                    removeNote(id);
-                }
-            });
+            cleanupEmptyPipNotes(noteIds.filter((id) => id !== noteId));
             setOpenInPipNoteIds([noteId]);
             setOpenInPipActiveNoteId(noteId);
         },
         [
             noteIds,
             effectiveActiveId,
-            removeNote,
             setOpenInPipNoteIds,
             setOpenInPipActiveNoteId,
         ]
@@ -456,18 +434,7 @@ export function EditorModal() {
                 }
                 flushRef.current?.();
             }
-            // Auto-delete empty notes that are being closed
-            noteIds.forEach((id) => {
-                if (next.includes(id)) return; // keep surviving tabs
-                const n = useNotesStore.getState().notes[id];
-                if (
-                    n &&
-                    n.createdFromPip === true &&
-                    (n.content?.trim() ?? "") === ""
-                ) {
-                    removeNote(id);
-                }
-            });
+            cleanupEmptyPipNotes(noteIds.filter((id) => !next.includes(id)));
             setOpenInPipNoteIds(next);
             if (effectiveActiveId && !next.includes(effectiveActiveId)) {
                 setOpenInPipActiveNoteId(next[0] ?? null);
@@ -476,13 +443,12 @@ export function EditorModal() {
         [
             noteIds,
             effectiveActiveId,
-            removeNote,
             setOpenInPipNoteIds,
             setOpenInPipActiveNoteId,
         ]
     );
 
-    // ESC key to close
+    // Keyboard shortcuts: ESC to close, Ctrl+W close tab, Ctrl+T new tab, Ctrl+Tab/Ctrl+Shift+Tab cycle tabs
     useEffect(() => {
         if (!editorModalOpen) return;
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -497,11 +463,50 @@ export function EditorModal() {
                     return;
                 }
                 handleClose();
+                return;
+            }
+            // Ctrl/Cmd shortcuts
+            if (e.ctrlKey || e.metaKey) {
+                if (e.key === "w") {
+                    e.preventDefault();
+                    if (effectiveActiveId && noteIds.length > 0) {
+                        handleCloseTab(
+                            e as unknown as React.MouseEvent,
+                            effectiveActiveId
+                        );
+                    }
+                    return;
+                }
+                if (e.key === "t") {
+                    e.preventDefault();
+                    handleAddNote();
+                    return;
+                }
+                if (e.key === "Tab") {
+                    e.preventDefault();
+                    if (noteIds.length < 2) return;
+                    const curIdx = noteIds.indexOf(effectiveActiveId ?? "");
+                    const next = e.shiftKey
+                        ? (curIdx - 1 + noteIds.length) % noteIds.length
+                        : (curIdx + 1) % noteIds.length;
+                    handleSwitchTab(noteIds[next]);
+                    return;
+                }
             }
         };
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [editorModalOpen, renameState, contextMenu, handleClose]);
+    }, [
+        editorModalOpen,
+        renameState,
+        contextMenu,
+        handleClose,
+        effectiveActiveId,
+        noteIds,
+        handleCloseTab,
+        handleAddNote,
+        handleSwitchTab,
+    ]);
 
     if (!editorModalOpen) return null;
 
@@ -653,6 +658,7 @@ export function EditorModal() {
                         onChange={handleContentChange}
                         onFlush={handleFlush}
                         placeholder="Type / for commands…"
+                        autoFocus
                         registerFlushRef={flushRef}
                     />
                 ) : (
@@ -679,18 +685,7 @@ export function EditorModal() {
                         top: contextMenu.y,
                     }}
                     onClick={(e) => e.stopPropagation()}
-                    ref={(el) => {
-                        if (!el) return;
-                        const r = el.getBoundingClientRect();
-                        if (r.right > window.innerWidth)
-                            el.style.left = `${
-                                window.innerWidth - r.width - 10
-                            }px`;
-                        if (r.bottom > window.innerHeight)
-                            el.style.top = `${
-                                window.innerHeight - r.height - 10
-                            }px`;
-                    }}
+                    ref={clampContextMenuPosition}
                 >
                     <button
                         type="button"
@@ -731,7 +726,7 @@ export function EditorModal() {
                                 hoveredSubmenu === "color" ? "show" : ""
                             }`}
                         >
-                            {COLOR_OPTIONS.map((opt) => (
+                            {TAB_COLOR_OPTIONS.map((opt) => (
                                 <button
                                     key={opt.value || "default"}
                                     type="button"

@@ -7,10 +7,15 @@ import {
 } from "../store";
 import { NoteEditor } from "./NoteEditor";
 import { Plus, X, Pin } from "lucide-react";
-import { FREE_PIP_TAB_LIMIT } from "../constants";
+import { FREE_PIP_TAB_LIMIT, TAB_COLOR_OPTIONS } from "../constants";
 import { triggerSyncAfterUserAction } from "../sync";
 import { openBillingPage } from "../api/backend";
 import { db } from "../db";
+import {
+    cleanupEmptyPipNotes,
+    sortTabsByPinned,
+    clampContextMenuPosition,
+} from "../utils/tabUtils";
 import {
     resolveSnapTarget,
     SNAP_CLOSED,
@@ -19,13 +24,6 @@ import {
 } from "../utils/bottomSheetSnap";
 
 const SAVE_DEBOUNCE_MS = 700;
-const COLOR_OPTIONS: Array<{ label: string; value: string }> = [
-    { label: "Default", value: "" },
-    { label: "Blue", value: "#3b82f6" },
-    { label: "Green", value: "#22c55e" },
-    { label: "Purple", value: "#a855f7" },
-    { label: "Orange", value: "#f97316" },
-];
 
 /**
  * Mobile bottom sheet editor with tabs — mirrors PiP functionality.
@@ -48,13 +46,15 @@ export function MobileBottomSheet() {
     const notes = useNotesStore((s) => s.notes);
     const updateNote = useNotesStore((s) => s.updateNote);
     const addNote = useNotesStore((s) => s.addNote);
-    const removeNote = useNotesStore((s) => s.removeNote);
     const currentWorkspaceId = useWorkspaceStore((s) => s.currentWorkspaceId);
     const isSubscribed = useSubscriptionStore((s) => s.isSubscribed);
     const setToastMessage = useUIStore((s) => s.setToastMessage);
     const [showTabLimitModal, setShowTabLimitModal] = useState(false);
 
     const contentTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+        null
+    );
+    const animationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
         null
     );
     const flushRef = useRef<(() => void) | null>(null);
@@ -87,11 +87,24 @@ export function MobileBottomSheet() {
         : noteIds[0] ?? null;
     const activeNote = effectiveActiveId ? notes[effectiveActiveId] : null;
 
-    const sortedNoteIds = useMemo(() => {
-        const pinned = noteIds.filter((id) => pinnedTabIds.has(id));
-        const unpinned = noteIds.filter((id) => !pinnedTabIds.has(id));
-        return [...pinned, ...unpinned];
-    }, [noteIds, pinnedTabIds]);
+    const sortedNoteIds = useMemo(
+        () => sortTabsByPinned(noteIds, pinnedTabIds),
+        [noteIds, pinnedTabIds]
+    );
+
+    // Cleanup timeouts on unmount
+    useEffect(() => {
+        return () => {
+            if (contentTimeoutRef.current) {
+                clearTimeout(contentTimeoutRef.current);
+                contentTimeoutRef.current = null;
+            }
+            if (animationTimeoutRef.current) {
+                clearTimeout(animationTimeoutRef.current);
+                animationTimeoutRef.current = null;
+            }
+        };
+    }, []);
 
     // Close context menu on outside click
     useEffect(() => {
@@ -119,7 +132,8 @@ export function MobileBottomSheet() {
         setSnapHeight(SNAP_CLOSED);
         setDragHeight(null);
         // Flush content and unmount after transition completes
-        setTimeout(() => {
+        animationTimeoutRef.current = setTimeout(() => {
+            animationTimeoutRef.current = null;
             if (contentTimeoutRef.current) {
                 clearTimeout(contentTimeoutRef.current);
                 contentTimeoutRef.current = null;
@@ -128,6 +142,26 @@ export function MobileBottomSheet() {
             setBottomSheetOpen(false);
         }, 250);
     }, [setBottomSheetOpen]);
+
+    // ESC key to dismiss context menu / rename / close bottom sheet
+    useEffect(() => {
+        if (!bottomSheetOpen) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                if (renameState) {
+                    setRenameState(null);
+                    return;
+                }
+                if (contextMenu) {
+                    setContextMenu(null);
+                    return;
+                }
+                handleMinimize();
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [bottomSheetOpen, renameState, contextMenu, handleMinimize]);
 
     // --- Drag handlers ---
     const handleDragStart = useCallback(
@@ -190,7 +224,8 @@ export function MobileBottomSheet() {
                 setDragHeight(null);
                 setSnapHeight(SNAP_CLOSED);
                 // Wait for transition to finish, then flush and unmount
-                setTimeout(() => {
+                animationTimeoutRef.current = setTimeout(() => {
+                    animationTimeoutRef.current = null;
                     if (contentTimeoutRef.current) {
                         clearTimeout(contentTimeoutRef.current);
                         contentTimeoutRef.current = null;
@@ -237,6 +272,12 @@ export function MobileBottomSheet() {
                 flushRef.current?.();
             }
             setBottomSheetActiveNoteId(noteId);
+            // Auto-focus editor after tab switch
+            requestAnimationFrame(() => {
+                sheetRef.current
+                    ?.querySelector<HTMLElement>("[contenteditable]")
+                    ?.focus();
+            });
         },
         [effectiveActiveId, setBottomSheetActiveNoteId]
     );
@@ -252,23 +293,17 @@ export function MobileBottomSheet() {
                 }
                 flushRef.current?.();
             }
-            // Auto-delete empty notes created from bottom sheet (same as PiP)
-            const noteAfterFlush = useNotesStore.getState().notes[noteId];
-            if (
-                noteAfterFlush &&
-                noteAfterFlush.createdFromPip === true &&
-                (noteAfterFlush.content?.trim() ?? "") === ""
-            ) {
-                removeNote(noteId);
-            }
+            cleanupEmptyPipNotes([noteId]);
             removeNoteFromBottomSheet(noteId);
         },
-        [effectiveActiveId, removeNote, removeNoteFromBottomSheet]
+        [effectiveActiveId, removeNoteFromBottomSheet]
     );
 
     const handleContentChange = useCallback(
         (newContent: string) => {
             if (!effectiveActiveId) return;
+            // Guard: don't update if the note was already removed
+            if (!useNotesStore.getState().notes[effectiveActiveId]) return;
             updateNote(effectiveActiveId, { content: newContent });
             if (contentTimeoutRef.current)
                 clearTimeout(contentTimeoutRef.current);
@@ -296,30 +331,20 @@ export function MobileBottomSheet() {
         setSnapHeight(SNAP_CLOSED);
         setDragHeight(null);
         // Flush, cleanup, and unmount after transition completes
-        setTimeout(() => {
+        animationTimeoutRef.current = setTimeout(() => {
+            animationTimeoutRef.current = null;
             if (contentTimeoutRef.current) {
                 clearTimeout(contentTimeoutRef.current);
                 contentTimeoutRef.current = null;
             }
             flushRef.current?.();
-            // Auto-delete empty notes
-            noteIds.forEach((id) => {
-                const n = useNotesStore.getState().notes[id];
-                if (
-                    n &&
-                    n.createdFromPip === true &&
-                    (n.content?.trim() ?? "") === ""
-                ) {
-                    removeNote(id);
-                }
-            });
+            cleanupEmptyPipNotes(noteIds);
             setBottomSheetNoteIds([]);
             setBottomSheetActiveNoteId(null);
             setBottomSheetOpen(false);
         }, 250);
     }, [
         noteIds,
-        removeNote,
         setBottomSheetNoteIds,
         setBottomSheetActiveNoteId,
         setBottomSheetOpen,
@@ -378,10 +403,11 @@ export function MobileBottomSheet() {
     const handleCloseOthers = useCallback(
         (noteId: string) => {
             setContextMenu(null);
+            cleanupEmptyPipNotes(noteIds.filter((id) => id !== noteId));
             setBottomSheetNoteIds([noteId]);
             setBottomSheetActiveNoteId(noteId);
         },
-        [setBottomSheetNoteIds, setBottomSheetActiveNoteId]
+        [noteIds, setBottomSheetNoteIds, setBottomSheetActiveNoteId]
     );
 
     // Compute the inline height style (must be above early return to keep hook order stable)
@@ -545,18 +571,7 @@ export function MobileBottomSheet() {
                     className="pip-context-menu show"
                     style={{ left: contextMenu.x, top: contextMenu.y }}
                     onClick={(e) => e.stopPropagation()}
-                    ref={(el) => {
-                        if (!el) return;
-                        const rect = el.getBoundingClientRect();
-                        if (rect.right > window.innerWidth)
-                            el.style.left = `${
-                                window.innerWidth - rect.width - 10
-                            }px`;
-                        if (rect.bottom > window.innerHeight)
-                            el.style.top = `${
-                                window.innerHeight - rect.height - 10
-                            }px`;
-                    }}
+                    ref={clampContextMenuPosition}
                 >
                     <button
                         type="button"
@@ -578,7 +593,7 @@ export function MobileBottomSheet() {
                         </span>
                         <span className="pip-context-menu-item-chevron">›</span>
                         <div className="pip-context-menu-submenu show">
-                            {COLOR_OPTIONS.map((opt) => (
+                            {TAB_COLOR_OPTIONS.map((opt) => (
                                 <button
                                     key={opt.value || "default"}
                                     type="button"

@@ -204,10 +204,20 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
     removeNoteFromPip: (noteId) => {
         const { openInPipNoteIds, openInPipActiveNoteId } = get();
         const next = openInPipNoteIds.filter((id) => id !== noteId);
-        const nextActive =
-            openInPipActiveNoteId === noteId
-                ? next[0] ?? null
-                : openInPipActiveNoteId;
+        let nextActive: string | null;
+        if (openInPipActiveNoteId === noteId) {
+            // Prefer the tab after the removed one, then before, then null
+            const removedIdx = openInPipNoteIds.indexOf(noteId);
+            const afterIdx = openInPipNoteIds.findIndex(
+                (id, i) => i > removedIdx && id !== noteId
+            );
+            nextActive =
+                afterIdx !== -1
+                    ? openInPipNoteIds[afterIdx]
+                    : next[next.length - 1] ?? null;
+        } else {
+            nextActive = openInPipActiveNoteId;
+        }
         set({ openInPipNoteIds: next, openInPipActiveNoteId: nextActive });
     },
     setPipActiveNote: (noteId) => set({ openInPipActiveNoteId: noteId }),

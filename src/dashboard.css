@@ -2415,6 +2415,15 @@ body.dark-mode .settings-note-preview-highcontrast {
   font-size: 18px;
   font-weight: 600;
   color: var(--text-primary);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.note-title > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .note-list-color {
@@ -2430,6 +2439,7 @@ body.dark-mode .settings-note-preview-highcontrast {
   transition: opacity 0.2s, color 0.2s;
   width: 24px;
   height: 24px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
