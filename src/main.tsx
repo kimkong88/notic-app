@@ -15,6 +15,7 @@ import {
 } from "./sync";
 import { useUIStore } from "./store";
 import { getGoogleClientId } from "./auth";
+import { trackEvent } from "./analytics";
 
 async function init() {
     // In dev, unregister any existing PWA service worker so we don't get Workbox
@@ -69,6 +70,7 @@ async function init() {
 
     // Detect when app is installed (hide install UI)
     window.addEventListener("appinstalled", () => {
+        trackEvent("app_installed");
         useUIStore.getState().setInstallPromptEvent(null);
         useUIStore.getState().setInstallBarDismissed(true);
     });

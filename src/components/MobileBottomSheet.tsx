@@ -70,6 +70,7 @@ export function MobileBottomSheet() {
         noteId: string;
         value: string;
     } | null>(null);
+    const [colorSubmenuOpen, setColorSubmenuOpen] = useState(false);
 
     // --- Drag-to-snap state ---
     const [snapHeight, setSnapHeight] = useState(SNAP_CLOSED); // start closed; animate to default on open
@@ -355,6 +356,7 @@ export function MobileBottomSheet() {
         (e: React.MouseEvent, noteId: string) => {
             e.preventDefault();
             e.stopPropagation();
+            setColorSubmenuOpen(false);
             setContextMenu({ x: e.clientX, y: e.clientY, noteId });
         },
         []
@@ -408,6 +410,32 @@ export function MobileBottomSheet() {
             setBottomSheetActiveNoteId(noteId);
         },
         [noteIds, setBottomSheetNoteIds, setBottomSheetActiveNoteId]
+    );
+
+    const handleCloseAfter = useCallback(
+        (noteId: string) => {
+            setContextMenu(null);
+            const idx = noteIds.indexOf(noteId);
+            const next = noteIds.slice(0, idx + 1);
+            if (effectiveActiveId && !next.includes(effectiveActiveId)) {
+                if (contentTimeoutRef.current) {
+                    clearTimeout(contentTimeoutRef.current);
+                    contentTimeoutRef.current = null;
+                }
+                flushRef.current?.();
+            }
+            cleanupEmptyPipNotes(noteIds.filter((id) => !next.includes(id)));
+            setBottomSheetNoteIds(next);
+            if (effectiveActiveId && !next.includes(effectiveActiveId)) {
+                setBottomSheetActiveNoteId(next[0] ?? null);
+            }
+        },
+        [
+            noteIds,
+            effectiveActiveId,
+            setBottomSheetNoteIds,
+            setBottomSheetActiveNoteId,
+        ]
     );
 
     // Compute the inline height style (must be above early return to keep hook order stable)
@@ -587,22 +615,32 @@ export function MobileBottomSheet() {
                     >
                         Rename
                     </button>
-                    <div className="pip-context-menu-item pip-context-menu-item-has-submenu">
+                    <div
+                        className="pip-context-menu-item pip-context-menu-item-has-submenu"
+                        onClick={() => setColorSubmenuOpen((v) => !v)}
+                    >
                         <span className="pip-context-menu-item-label">
                             Change color
                         </span>
                         <span className="pip-context-menu-item-chevron">›</span>
-                        <div className="pip-context-menu-submenu show">
+                        <div
+                            className={`pip-context-menu-submenu ${
+                                colorSubmenuOpen ? "show" : ""
+                            }`}
+                        >
                             {TAB_COLOR_OPTIONS.map((opt) => (
                                 <button
                                     key={opt.value || "default"}
                                     type="button"
                                     className="pip-context-menu-submenu-item"
-                                    onClick={() => {
+                                    onClick={(e) => {
+                                        e.stopPropagation();
                                         handleSetColor(
                                             contextMenu.noteId,
                                             opt.value
                                         );
+                                        setContextMenu(null);
+                                        setColorSubmenuOpen(false);
                                     }}
                                 >
                                     <span
@@ -637,6 +675,13 @@ export function MobileBottomSheet() {
                         onClick={() => handleCloseOthers(contextMenu.noteId)}
                     >
                         Close others
+                    </button>
+                    <button
+                        type="button"
+                        className="pip-context-menu-item"
+                        onClick={() => handleCloseAfter(contextMenu.noteId)}
+                    >
+                        Close after
                     </button>
                     <button
                         type="button"

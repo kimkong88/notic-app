@@ -570,6 +570,7 @@ export function MainContent() {
             await installPromptEvent.prompt();
             const result = await installPromptEvent.userChoice;
             if (result.outcome === "accepted") {
+                trackEvent("app_installed");
                 setInstallPromptEvent(null);
                 setInstallBarDismissed(true);
             }
