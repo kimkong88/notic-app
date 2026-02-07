@@ -16,6 +16,11 @@ import {
 import { useUIStore } from "./store";
 import { getGoogleClientId } from "./auth";
 import { trackEvent } from "./analytics";
+import {
+    initExtensionBridge,
+    handleUrlParams,
+    isExtensionInstalled,
+} from "./extensionBridge";
 
 async function init() {
     // In dev, unregister any existing PWA service worker so we don't get Workbox
@@ -66,6 +71,17 @@ async function init() {
     window.addEventListener("beforeinstallprompt", (e) => {
         e.preventDefault(); // Prevent default browser install prompt
         useUIStore.getState().setInstallPromptEvent(e);
+    });
+
+    // Listen for messages from Chrome extension (clip notes, migration, etc.)
+    initExtensionBridge();
+
+    // Handle URL parameters from extension or external links (?action=new-note, ?action=pip, ?search=..., ?clip=...)
+    handleUrlParams();
+
+    // Detect if Chrome extension is installed (non-blocking)
+    isExtensionInstalled().then((detected) => {
+        if (detected) useUIStore.getState().setIsExtensionDetected(true);
     });
 
     // Detect when app is installed (hide install UI)

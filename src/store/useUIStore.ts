@@ -65,6 +65,8 @@ interface UIState {
     bottomSheetActiveNoteId: string | null;
     /** Editor modal open state (fallback for non-PiP browsers on desktop). */
     editorModalOpen: boolean;
+    /** Whether the Notic Chrome extension is detected (via externally_connectable ping). */
+    isExtensionDetected: boolean;
 }
 
 interface UIActions {
@@ -119,6 +121,7 @@ interface UIActions {
     setEditorModalOpen: (value: boolean) => void;
     /** Atomically close editor modal and clear all PiP tab state. */
     closeEditorModal: () => void;
+    setIsExtensionDetected: (value: boolean) => void;
 }
 
 const SIDEBAR_WIDTH_DEFAULT = 280;
@@ -172,6 +175,7 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
     bottomSheetNoteIds: [],
     bottomSheetActiveNoteId: null,
     editorModalOpen: false,
+    isExtensionDetected: false,
 
     setIsDarkMode: (value) => set({ isDarkMode: value }),
     setSidebarCollapsed: (value) => set({ sidebarCollapsed: value }),
@@ -268,6 +272,7 @@ export const useUIStore = create<UIState & UIActions>((set, get) => ({
             openInPipNoteIds: [],
             openInPipActiveNoteId: null,
         }),
+    setIsExtensionDetected: (value) => set({ isExtensionDetected: value }),
     removeNoteFromBottomSheet: (noteId) => {
         const { bottomSheetNoteIds, bottomSheetActiveNoteId } = get();
         const next = bottomSheetNoteIds.filter((id) => id !== noteId);
