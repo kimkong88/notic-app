@@ -66,6 +66,7 @@ export function Layout() {
     );
     const currentTab = useNotesStore((s) => s.currentTab);
     const isTrashView = useUIStore((s) => s.isTrashView);
+    const setIsTrashView = useUIStore((s) => s.setIsTrashView);
     const isResizing = useRef(false);
 
     /** Any navigation (selection, tab, trash) exits settings. Single place – no per-handler logic. */
@@ -80,6 +81,13 @@ export function Layout() {
         isTrashView,
         setCurrentView,
     ]);
+
+    /** Selecting a note or folder exits trash view. Centralised so every tab component benefits. */
+    useEffect(() => {
+        if (selectedNoteId && useUIStore.getState().isTrashView) {
+            setIsTrashView(false);
+        }
+    }, [selectedNoteId, setIsTrashView]);
 
     const currentView = useUIStore((s) => s.currentView);
 
